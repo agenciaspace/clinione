@@ -1,22 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { MapPin, Phone, Mail, Globe, Clock, Calendar, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-
-type WorkingHourPeriod = { start: string; end: string }[];
-
-type WorkingHours = {
-  monday: WorkingHourPeriod;
-  tuesday: WorkingHourPeriod;
-  wednesday: WorkingHourPeriod;
-  thursday: WorkingHourPeriod;
-  friday: WorkingHourPeriod;
-  saturday: WorkingHourPeriod;
-  sunday: WorkingHourPeriod;
-};
+import { WorkingHours } from '@/types';
 
 type ClinicData = {
   id: string;
@@ -130,25 +118,8 @@ const PublicClinicPage: React.FC = () => {
           }
           
           if (!clinicQuery.data) {
-            // If no data, create example preview clinic
-            const exampleClinic: ClinicData = {
-              id: "preview-example",
-              name: "Example Clinic",
-              logo: null,
-              description: "This is an example of how your public page will look. Add your clinic information to customize this page.",
-              address: "123 Example St, City, State",
-              phone: "(555) 123-4567",
-              email: "contact@example-clinic.com",
-              website: "www.example-clinic.com",
-              facebook_id: null,
-              instagram_id: null,
-              working_hours: defaultWorkingHours,
-              slug: "example-clinic",
-              is_published: false
-            };
-            setClinic(exampleClinic);
-            setIsLoading(false);
-            return;
+            // If no data, just show an error message instead of creating a mock clinic
+            throw new Error("No clinic data found. Please create a clinic first.");
           }
         } else if (slug) {
           // Public mode, fetch by slug
@@ -175,6 +146,15 @@ const PublicClinicPage: React.FC = () => {
         const clinicData = clinicQuery.data;
         console.log("Clinic found:", clinicData);
         
+        // Ensure working_hours is properly parsed
+        let workingHoursData = defaultWorkingHours;
+        
+        if (clinicData.working_hours) {
+          if (typeof clinicData.working_hours === 'object') {
+            workingHoursData = clinicData.working_hours as WorkingHours;
+          }
+        }
+        
         setClinic({
           id: clinicData.id,
           name: clinicData.name,
@@ -186,7 +166,7 @@ const PublicClinicPage: React.FC = () => {
           website: clinicData.website,
           facebook_id: clinicData.facebook_id,
           instagram_id: clinicData.instagram_id,
-          working_hours: clinicData.working_hours || defaultWorkingHours,
+          working_hours: workingHoursData,
           slug: clinicData.slug,
           is_published: clinicData.is_published
         });

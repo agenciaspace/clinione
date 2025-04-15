@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,10 +25,8 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [clinicExists, setClinicExists] = useState(false);
   
-  // Use the custom domain instead of the application base URL
   const baseUrl = "https://clini.one";
 
-  // Verify if the clinic exists and is valid
   useEffect(() => {
     const checkClinic = async () => {
       if (!clinicId) {
@@ -115,7 +112,6 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
   };
 
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Remove special characters and replace spaces with hyphens
     const value = e.target.value
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, '-')
@@ -144,7 +140,6 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
     try {
       console.log("Updating slug for clinic:", clinicId);
       
-      // Check if the slug already exists
       const { data: existingSlug, error: slugCheckError } = await supabase
         .from('clinics')
         .select('id')
@@ -185,7 +180,6 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
     }
   };
 
-  // Format: clini.one/c/slug
   const publicUrl = slug ? `${baseUrl}/c/${slug}` : '';
 
   if (!clinicExists && clinicId) {

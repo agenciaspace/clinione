@@ -18,19 +18,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { WorkingHours } from '@/types';
 
 // Define the expected structure for working hours
 type WorkingHourPeriod = { start: string; end: string }[];
-
-type WorkingHours = {
-  monday: WorkingHourPeriod;
-  tuesday: WorkingHourPeriod;
-  wednesday: WorkingHourPeriod;
-  thursday: WorkingHourPeriod;
-  friday: WorkingHourPeriod;
-  saturday: WorkingHourPeriod;
-  sunday: WorkingHourPeriod;
-};
 
 type Clinic = {
   id: string;
@@ -109,23 +100,30 @@ const ClinicProfile: React.FC = () => {
         } else if (data && data.length > 0) {
           console.log("Clinics found:", data);
           
-          const formattedClinics = data.map(clinicData => ({
-            id: clinicData.id,
-            name: clinicData.name,
-            slug: clinicData.slug,
-            logo: clinicData.logo,
-            address: clinicData.address,
-            phone: clinicData.phone,
-            email: clinicData.email,
-            website: clinicData.website,
-            about: clinicData.description || '',
-            socialMedia: {
-              facebook: clinicData.facebook_id || '',
-              instagram: clinicData.instagram_id || '',
-            },
-            workingHours: clinicData.working_hours || defaultWorkingHours,
-            is_published: clinicData.is_published
-          }));
+          const formattedClinics: Clinic[] = data.map(clinicData => {
+            // Ensure working_hours is parsed correctly or use default
+            const workingHoursData = clinicData.working_hours ? 
+              (typeof clinicData.working_hours === 'object' ? clinicData.working_hours as WorkingHours : defaultWorkingHours) :
+              defaultWorkingHours;
+              
+            return {
+              id: clinicData.id,
+              name: clinicData.name,
+              slug: clinicData.slug,
+              logo: clinicData.logo,
+              address: clinicData.address,
+              phone: clinicData.phone,
+              email: clinicData.email,
+              website: clinicData.website,
+              about: clinicData.description || '',
+              socialMedia: {
+                facebook: clinicData.facebook_id || '',
+                instagram: clinicData.instagram_id || '',
+              },
+              workingHours: workingHoursData,
+              is_published: clinicData.is_published
+            };
+          });
           
           setClinics(formattedClinics);
           
@@ -279,12 +277,24 @@ const ClinicProfile: React.FC = () => {
     try {
       setIsCreating(true);
       
+      // Get the current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Authentication error", {
+          description: "You must be logged in to create a clinic."
+        });
+        setIsCreating(false);
+        return false;
+      }
+      
       // Format the data for Supabase
       const newClinicData = {
         name: values.name,
         description: values.description || '',
         slug: values.slug || undefined,
-        working_hours: defaultWorkingHours
+        working_hours: defaultWorkingHours,
+        owner_id: user.id // Add the owner_id field
       };
       
       console.log("Creating new clinic:", newClinicData);
@@ -317,7 +327,7 @@ const ClinicProfile: React.FC = () => {
             facebook: data[0].facebook_id || '',
             instagram: data[0].instagram_id || '',
           },
-          workingHours: data[0].working_hours || defaultWorkingHours,
+          workingHours: data[0].working_hours as WorkingHours || defaultWorkingHours,
           is_published: data[0].is_published
         };
         
