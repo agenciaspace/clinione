@@ -32,6 +32,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Primeiro definir o listener de mudanças de estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Evento de autenticação:", event);
+        console.log("Sessão:", session);
+        
         if (session && session.user) {
           setUser({
             id: session.user.id,
@@ -40,8 +43,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: session.user.user_metadata?.role || 'user',
             clinicId: session.user.user_metadata?.clinicId
           });
+          console.log("ID do usuário definido:", session.user.id);
         } else {
           setUser(null);
+          console.log("Usuário definido como null");
         }
         setIsLoading(false);
       }
@@ -52,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session && session.user) {
+        console.log("Sessão existente encontrada:", session.user.id);
         setUser({
           id: session.user.id,
           name: session.user.user_metadata?.name || 'Usuário',
