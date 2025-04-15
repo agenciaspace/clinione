@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
@@ -21,7 +20,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { WorkingHours } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Define a estrutura esperada para o horário de funcionamento
 type WorkingHourPeriod = { start: string; end: string }[];
 
 type Clinic = {
@@ -42,7 +40,6 @@ type Clinic = {
   is_published: boolean | null;
 };
 
-// Modelo de horários padrão
 const defaultWorkingHours: WorkingHours = {
   monday: [{ start: '08:00', end: '18:00' }],
   tuesday: [{ start: '08:00', end: '18:00' }],
@@ -53,7 +50,6 @@ const defaultWorkingHours: WorkingHours = {
   sunday: [],
 };
 
-// Esquema de validação para criação de clínica
 const createClinicSchema = z.object({
   name: z.string().min(3, "O nome da clínica deve ter pelo menos 3 caracteres"),
   slug: z.string().min(3, "A URL deve ter pelo menos 3 caracteres")
@@ -73,9 +69,8 @@ const ClinicProfile: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth(); // Usar o contexto de autenticação
+  const { user } = useAuth();
 
-  // Configuração do formulário para criar novas clínicas
   const createClinicForm = useForm<CreateClinicFormValues>({
     resolver: zodResolver(createClinicSchema),
     defaultValues: {
@@ -85,7 +80,6 @@ const ClinicProfile: React.FC = () => {
     },
   });
 
-  // Buscar todas as clínicas do usuário atual
   useEffect(() => {
     const fetchClinics = async () => {
       setIsLoading(true);
@@ -103,7 +97,6 @@ const ClinicProfile: React.FC = () => {
           console.log("Clínicas encontradas:", data);
           
           const formattedClinics = data.map(clinicData => {
-            // Garantir que working_hours seja analisado corretamente ou usar o padrão
             let workingHoursData: WorkingHours;
             
             if (clinicData.working_hours) {
@@ -138,7 +131,6 @@ const ClinicProfile: React.FC = () => {
           
           setClinics(formattedClinics);
           
-          // Selecionar a primeira clínica por padrão
           if (formattedClinics.length > 0 && !selectedClinicId) {
             setSelectedClinicId(formattedClinics[0].id);
             setClinic(formattedClinics[0]);
@@ -159,7 +151,6 @@ const ClinicProfile: React.FC = () => {
     fetchClinics();
   }, []);
 
-  // Atualizar clínica selecionada quando mudar
   useEffect(() => {
     if (selectedClinicId && clinics.length > 0) {
       const selectedClinic = clinics.find(c => c.id === selectedClinicId);
@@ -240,7 +231,6 @@ const ClinicProfile: React.FC = () => {
         throw error;
       }
       
-      // Atualizar a clínica na lista
       setClinics(prev => 
         prev.map(c => c.id === selectedClinicId ? { ...c, ...formData } : c)
       );
@@ -278,7 +268,6 @@ const ClinicProfile: React.FC = () => {
       });
     }
     
-    // Atualizar a clínica na lista
     setClinics(prev => 
       prev.map(c => c.id === selectedClinicId ? updatedClinic : c)
     );
@@ -288,163 +277,101 @@ const ClinicProfile: React.FC = () => {
     try {
       setIsCreating(true);
       
-      console.log("Status do usuário atual:", user);
-      
-      // Verificar se temos acesso ao usuário através do contexto de autenticação
       if (!user || !user.id) {
-        // Se não tiver o usuário do contexto, tentar obter do Supabase
-        const { data: authData } = await supabase.auth.getUser();
-        
-        if (!authData || !authData.user) {
-          toast.error("Erro de autenticação", {
-            description: "Você precisa estar logado para criar uma clínica."
-          });
-          setIsCreating(false);
-          return false;
-        }
-        
-        // Usar o ID do usuário autenticado do Supabase
-        const userId = authData.user.id;
-        console.log("ID do usuário obtido do Supabase:", userId);
-        
-        // Formatar os dados para o Supabase
-        const newClinicData = {
-          name: values.name,
-          description: values.description || '',
-          slug: values.slug || undefined,
-          working_hours: defaultWorkingHours,
-          owner_id: userId
-        };
-        
-        console.log("Criando nova clínica:", newClinicData);
-        
-        const { data, error } = await supabase
-          .from('clinics')
-          .insert(newClinicData)
-          .select();
-        
-        if (error) {
-          console.error("Erro ao criar clínica:", error);
-          throw error;
-        }
-        
-        console.log("Clínica criada:", data);
-        
-        // Formatar a nova clínica
-        if (data && data.length > 0) {
-          const newClinic: Clinic = {
-            id: data[0].id,
-            name: data[0].name,
-            slug: data[0].slug,
-            logo: data[0].logo,
-            address: data[0].address,
-            phone: data[0].phone,
-            email: data[0].email,
-            website: data[0].website,
-            about: data[0].description || '',
-            socialMedia: {
-              facebook: data[0].facebook_id || '',
-              instagram: data[0].instagram_id || '',
-            },
-            workingHours: data[0].working_hours as WorkingHours || defaultWorkingHours,
-            is_published: data[0].is_published
-          };
-          
-          // Adicionar à lista de clínicas
-          setClinics([newClinic, ...clinics]);
-          
-          // Selecionar a nova clínica
-          setSelectedClinicId(newClinic.id);
-          setClinic(newClinic);
-          setFormData(newClinic);
-          
-          toast.success("Clínica criada", {
-            description: "Sua nova clínica foi criada com sucesso."
-          });
-          
-          // Resetar formulário e fechar diálogo
-          createClinicForm.reset();
-          setIsCreating(false);
-          
-          return true;
-        }
-      } else {
-        // Usar o ID do usuário do contexto de autenticação
-        const userId = user.id;
-        console.log("ID do usuário obtido do contexto:", userId);
-        
-        // Formatar os dados para o Supabase
-        const newClinicData = {
-          name: values.name,
-          description: values.description || '',
-          slug: values.slug || undefined,
-          working_hours: defaultWorkingHours,
-          owner_id: userId
-        };
-        
-        console.log("Criando nova clínica:", newClinicData);
-        
-        const { data, error } = await supabase
-          .from('clinics')
-          .insert(newClinicData)
-          .select();
-        
-        if (error) {
-          console.error("Erro ao criar clínica:", error);
-          throw error;
-        }
-        
-        console.log("Clínica criada:", data);
-        
-        // Formatar a nova clínica
-        if (data && data.length > 0) {
-          const newClinic: Clinic = {
-            id: data[0].id,
-            name: data[0].name,
-            slug: data[0].slug,
-            logo: data[0].logo,
-            address: data[0].address,
-            phone: data[0].phone,
-            email: data[0].email,
-            website: data[0].website,
-            about: data[0].description || '',
-            socialMedia: {
-              facebook: data[0].facebook_id || '',
-              instagram: data[0].instagram_id || '',
-            },
-            workingHours: data[0].working_hours as WorkingHours || defaultWorkingHours,
-            is_published: data[0].is_published
-          };
-          
-          // Adicionar à lista de clínicas
-          setClinics([newClinic, ...clinics]);
-          
-          // Selecionar a nova clínica
-          setSelectedClinicId(newClinic.id);
-          setClinic(newClinic);
-          setFormData(newClinic);
-          
-          toast.success("Clínica criada", {
-            description: "Sua nova clínica foi criada com sucesso."
-          });
-          
-          // Resetar formulário e fechar diálogo
-          createClinicForm.reset();
-          setIsCreating(false);
-          
-          return true;
-        }
+        toast.error("Erro de autenticação", {
+          description: "Você precisa estar logado para criar uma clínica."
+        });
+        setIsCreating(false);
+        return false;
       }
+      
+      const newClinicData = {
+        name: values.name,
+        description: values.description || '',
+        slug: values.slug || undefined,
+        working_hours: defaultWorkingHours,
+        owner_id: user.id
+      };
+      
+      console.log("Criando nova clínica:", newClinicData);
+      
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        toast.error("Sessão expirada", {
+          description: "Sua sessão expirou. Por favor, faça login novamente."
+        });
+        navigate('/login');
+        return false;
+      }
+      
+      const { data, error } = await supabase
+        .from('clinics')
+        .insert(newClinicData)
+        .select();
+      
+      if (error) {
+        console.error("Erro detalhado ao criar clínica:", error);
+        throw error;
+      }
+      
+      console.log("Clínica criada com sucesso:", data);
+      
+      if (data && data.length > 0) {
+        const newClinic: Clinic = {
+          id: data[0].id,
+          name: data[0].name,
+          slug: data[0].slug,
+          logo: data[0].logo,
+          address: data[0].address,
+          phone: data[0].phone,
+          email: data[0].email,
+          website: data[0].website,
+          about: data[0].description || '',
+          socialMedia: {
+            facebook: data[0].facebook_id || '',
+            instagram: data[0].instagram_id || '',
+          },
+          workingHours: data[0].working_hours as WorkingHours || defaultWorkingHours,
+          is_published: data[0].is_published
+        };
+        
+        setClinics([newClinic, ...clinics]);
+        
+        setSelectedClinicId(newClinic.id);
+        setClinic(newClinic);
+        setFormData(newClinic);
+        
+        toast.success("Clínica criada", {
+          description: "Sua nova clínica foi criada com sucesso."
+        });
+        
+        createClinicForm.reset();
+        setIsCreating(false);
+        
+        return true;
+      }
+      
+      setIsCreating(false);
+      return false;
     } catch (error: any) {
       console.error("Erro ao criar clínica:", error);
+      let errorMessage = error.message || "Ocorreu um erro ao criar a clínica.";
+      
+      if (error.code === '42501' || errorMessage.includes('row-level security')) {
+        errorMessage = "Erro de permissão: Você não tem permissão para criar uma clínica. Por favor, faça login novamente.";
+        
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      }
+      
       toast.error("Erro ao criar clínica", {
-        description: error.message || "Ocorreu um erro ao criar a clínica."
+        description: errorMessage
       });
-    } finally {
       setIsCreating(false);
+      return false;
     }
-    
-    return false;
   };
 
   const weekdays = [
@@ -538,7 +465,6 @@ const ClinicProfile: React.FC = () => {
                               {...field} 
                               placeholder="sua-clinica" 
                               onChange={e => {
-                                // Sanitizar slug durante a digitação
                                 const sanitizedSlug = e.target.value
                                   .toLowerCase()
                                   .replace(/[^a-z0-9-]/g, '-')
@@ -590,7 +516,7 @@ const ClinicProfile: React.FC = () => {
               variant={isEditing ? "outline" : "default"} 
               onClick={() => {
                 if (isEditing) {
-                  setFormData(clinic); // Resetar dados do formulário
+                  setFormData(clinic);
                 }
                 setIsEditing(!isEditing);
               }}
@@ -651,7 +577,6 @@ const ClinicProfile: React.FC = () => {
                               {...field} 
                               placeholder="sua-clinica" 
                               onChange={e => {
-                                // Sanitizar slug durante a digitação
                                 const sanitizedSlug = e.target.value
                                   .toLowerCase()
                                   .replace(/[^a-z0-9-]/g, '-')

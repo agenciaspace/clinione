@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -6,11 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/sonner';
+import EmailConfirmationMessage from '@/components/auth/EmailConfirmationMessage';
+import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -31,15 +35,55 @@ const Login = () => {
       toast("Login realizado", {
         description: "Bem-vindo(a) de volta!"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      toast("Erro de login", {
-        description: "Verifique suas credenciais e tente novamente"
-      });
+      
+      // Verificar se é um erro de email não confirmado
+      if (error.code === 'email_not_confirmed' || error.message?.includes('Email not confirmed')) {
+        setNeedsEmailConfirmation(true);
+      } else {
+        toast("Erro de login", {
+          description: "Verifique suas credenciais e tente novamente"
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleResendConfirmation = async () => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success("E-mail reenviado", {
+        description: "Verifique sua caixa de entrada para o link de confirmação."
+      });
+    } catch (error: any) {
+      console.error('Error resending confirmation:', error);
+      toast.error("Erro ao reenviar e-mail", {
+        description: error.message || "Ocorreu um erro ao reenviar o e-mail de confirmação."
+      });
+    }
+  };
+  
+  if (needsEmailConfirmation) {
+    return (
+      <div className="flex min-h-screen bg-healthblue-50 items-center justify-center p-6">
+        <EmailConfirmationMessage 
+          email={email}
+          onResendEmail={handleResendConfirmation}
+          onLogin={() => setNeedsEmailConfirmation(false)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-healthblue-50">
