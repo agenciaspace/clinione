@@ -9,6 +9,63 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          clinic_id: string | null
+          created_at: string | null
+          date: string
+          doctor_id: string | null
+          doctor_name: string | null
+          id: string
+          notes: string | null
+          patient_name: string
+          status: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          clinic_id?: string | null
+          created_at?: string | null
+          date: string
+          doctor_id?: string | null
+          doctor_name?: string | null
+          id?: string
+          notes?: string | null
+          patient_name: string
+          status?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          clinic_id?: string | null
+          created_at?: string | null
+          date?: string
+          doctor_id?: string | null
+          doctor_name?: string | null
+          id?: string
+          notes?: string | null
+          patient_name?: string
+          status?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinics: {
         Row: {
           address: string | null
@@ -83,6 +140,53 @@ export type Database = {
           zip?: string | null
         }
         Relationships: []
+      }
+      doctors: {
+        Row: {
+          bio: string | null
+          clinic_id: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          licensenumber: string | null
+          name: string
+          phone: string | null
+          speciality: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          clinic_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          licensenumber?: string | null
+          name: string
+          phone?: string | null
+          speciality?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          clinic_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          licensenumber?: string | null
+          name?: string
+          phone?: string | null
+          speciality?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

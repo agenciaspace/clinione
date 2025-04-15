@@ -41,13 +41,15 @@ export interface Clinic {
 
 export interface Doctor {
   id: string;
-  userId: string;
   name: string;
   speciality: string;
-  licenseNumber: string; // CRM
+  licenseNumber: string; 
   bio?: string;
-  photo?: string;
-  clinicId: string;
+  email?: string;
+  phone?: string;
+  clinic_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Patient {
@@ -64,13 +66,16 @@ export interface Patient {
 
 export interface Appointment {
   id: string;
-  patientId: string;
-  doctorId: string;
+  patient_name: string;
+  doctor_name?: string;
+  doctor_id?: string;
   date: string; // ISO date string
   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
   notes?: string;
   type: 'in-person' | 'online';
-  clinicId: string;
+  clinic_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Service {

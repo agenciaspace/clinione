@@ -38,7 +38,7 @@ const specialities = [
 ];
 
 const Doctors = () => {
-  const { user, userDetails } = useAuth();
+  const { user } = useAuth();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -83,13 +83,13 @@ const Doctors = () => {
     fetchClinic();
   }, [user]);
 
-  const fetchDoctors = async (clinicId: string) => {
+  const fetchDoctors = async (clinic_id: string) => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('doctors')
         .select('*')
-        .eq('clinic_id', clinicId);
+        .eq('clinic_id', clinic_id);
         
       if (error) {
         console.error('Error fetching doctors:', error);
@@ -98,7 +98,7 @@ const Doctors = () => {
       }
       
       if (data) {
-        setDoctors(data);
+        setDoctors(data as Doctor[]);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -244,7 +244,7 @@ const Doctors = () => {
         }
         
         if (data && data[0]) {
-          setDoctors([...doctors, data[0]]);
+          setDoctors([...doctors, data[0] as Doctor]);
           toast.success('Profissional adicionado com sucesso');
         }
       }

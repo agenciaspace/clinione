@@ -12,38 +12,50 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
-
-interface Appointment {
-  id: string;
-  patient_name: string;
-  doctor_name: string;
-  date: Date;
-  status: 'scheduled' | 'confirmed' | 'cancelled';
-  type: 'in-person' | 'online';
-}
+import { Appointment, Doctor } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [view, setView] = useState<'day' | 'week'>('day');
   const [selectedDoctor, setSelectedDoctor] = useState<string | undefined>(undefined);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [doctors, setDoctors] = useState<{id: string, name: string}[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     const fetchDoctors = async () => {
+      if (!user) return;
+      
       try {
-        const { data, error } = await supabase
-          .from('doctors')
-          .select('id, name');
+        // First get the clinic id of the current user
+        const { data: clinicData, error: clinicError } = await supabase
+          .from('clinics')
+          .select('id')
+          .eq('owner_id', user.id)
+          .single();
           
-        if (error) {
-          console.error('Error fetching doctors:', error);
+        if (clinicError) {
+          console.error('Error fetching clinic:', clinicError);
           return;
         }
         
-        if (data) {
-          setDoctors(data);
+        if (clinicData) {
+          // Then fetch doctors from that clinic
+          const { data, error } = await supabase
+            .from('doctors')
+            .select('*')
+            .eq('clinic_id', clinicData.id);
+            
+          if (error) {
+            console.error('Error fetching doctors:', error);
+            return;
+          }
+          
+          if (data) {
+            setDoctors(data as Doctor[]);
+          }
         }
       } catch (error) {
         console.error('Error:', error);
@@ -51,14 +63,32 @@ const Dashboard = () => {
     };
     
     fetchDoctors();
-  }, []);
+  }, [user]);
   
   useEffect(() => {
     const fetchAppointments = async () => {
-      if (!selectedDate) return;
+      if (!selectedDate || !user) return;
       
       setLoading(true);
       try {
+        // First get the clinic id of the current user
+        const { data: clinicData, error: clinicError } = await supabase
+          .from('clinics')
+          .select('id')
+          .eq('owner_id', user.id)
+          .single();
+          
+        if (clinicError) {
+          console.error('Error fetching clinic:', clinicError);
+          setLoading(false);
+          return;
+        }
+        
+        if (!clinicData) {
+          setLoading(false);
+          return;
+        }
+        
         // Format the date to match the database format
         const dateStart = new Date(selectedDate);
         dateStart.setHours(0, 0, 0, 0);
@@ -69,6 +99,7 @@ const Dashboard = () => {
         let query = supabase
           .from('appointments')
           .select('*')
+          .eq('clinic_id', clinicData.id)
           .gte('date', dateStart.toISOString())
           .lte('date', dateEnd.toISOString());
           
@@ -80,21 +111,12 @@ const Dashboard = () => {
         
         if (error) {
           console.error('Error fetching appointments:', error);
+          setLoading(false);
           return;
         }
         
         if (data) {
-          // Transform the data to match our Appointment interface
-          const formattedAppointments: Appointment[] = data.map((appt: any) => ({
-            id: appt.id,
-            patient_name: appt.patient_name || 'Patient',
-            doctor_name: appt.doctor_name || 'Doctor',
-            date: new Date(appt.date),
-            status: appt.status || 'scheduled',
-            type: appt.type || 'in-person'
-          }));
-          
-          setAppointments(formattedAppointments);
+          setAppointments(data as Appointment[]);
         }
       } catch (error) {
         console.error('Error:', error);
@@ -104,17 +126,18 @@ const Dashboard = () => {
     };
     
     fetchAppointments();
-  }, [selectedDate, selectedDoctor]);
+  }, [selectedDate, selectedDoctor, user]);
   
   // Filtrar consultas pelo dia selecionado e médico (se selecionado)
   const filteredAppointments = appointments.filter(appointment => {
+    const appointmentDate = new Date(appointment.date);
     const sameDate = selectedDate && 
-      appointment.date.getDate() === selectedDate.getDate() &&
-      appointment.date.getMonth() === selectedDate.getMonth() &&
-      appointment.date.getFullYear() === selectedDate.getFullYear();
+      appointmentDate.getDate() === selectedDate.getDate() &&
+      appointmentDate.getMonth() === selectedDate.getMonth() &&
+      appointmentDate.getFullYear() === selectedDate.getFullYear();
       
     if (selectedDoctor) {
-      return sameDate && appointment.doctor_name.includes(selectedDoctor);
+      return sameDate && appointment.doctor_id === selectedDoctor;
     }
     
     return sameDate;
@@ -122,7 +145,7 @@ const Dashboard = () => {
   
   // Ordenar por horário
   const sortedAppointments = [...filteredAppointments].sort((a, b) => 
-    a.date.getTime() - b.date.getTime()
+    new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
   const handleConfirmAppointment = async (id: string) => {
@@ -283,7 +306,7 @@ const Dashboard = () => {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-gray-900">
-                            {format(appointment.date, 'HH:mm')}
+                            {format(new Date(appointment.date), 'HH:mm')}
                           </p>
                           <Badge 
                             variant={appointment.status === 'confirmed' ? 'default' : 'outline'}
@@ -346,7 +369,7 @@ const Dashboard = () => {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-gray-900">
-                            {format(appointment.date, 'HH:mm')}
+                            {format(new Date(appointment.date), 'HH:mm')}
                           </p>
                           <Badge variant="outline">Agendado</Badge>
                         </div>
@@ -401,7 +424,7 @@ const Dashboard = () => {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-gray-900">
-                            {format(appointment.date, 'HH:mm')}
+                            {format(new Date(appointment.date), 'HH:mm')}
                           </p>
                           <Badge className="bg-healthgreen-600">Confirmado</Badge>
                         </div>
