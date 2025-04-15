@@ -40,7 +40,7 @@ const App = () => (
             <Route path="/dashboard/marketing" element={<Marketing />} />
             <Route path="/dashboard/clinic" element={<ClinicProfile />} />
             <Route path="/dashboard/settings" element={<Settings />} />
-            <Route path="/c/:slug" element={<PublicClinicPage />} />
+            <Route path="/:slug" element={<PublicClinicPage />} /> {/* Changed from /c/:slug to /:slug */}
             <Route path="/dashboard/public-page" element={<PublicClinicPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

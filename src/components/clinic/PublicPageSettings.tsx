@@ -24,14 +24,9 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
   const [slug, setSlug] = useState(initialSlug || '');
   const [isPublished, setIsPublished] = useState(initialIsPublished || false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [baseUrl, setBaseUrl] = useState('');
-
-  // Get the base URL for the application
-  useEffect(() => {
-    // Get the base URL, removing any trailing slashes
-    const url = window.location.origin;
-    setBaseUrl(url);
-  }, []);
+  
+  // Use the custom domain instead of the application base URL
+  const baseUrl = "https://clini.one";
 
   const handlePublishToggle = async () => {
     if (!slug) {
@@ -121,7 +116,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
     }
   };
 
-  const publicUrl = slug ? `${baseUrl}/c/${slug}` : '';
+  const publicUrl = slug ? `${baseUrl}/${slug}` : '';
 
   return (
     <Card className="w-full">
@@ -138,7 +133,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
             <div className="flex gap-2">
               <div className="flex-1">
                 <div className="flex items-center">
-                  <span className="text-gray-500 pr-1 whitespace-nowrap">{baseUrl}/c/</span>
+                  <span className="text-gray-500 pr-1 whitespace-nowrap">{baseUrl}/</span>
                   <Input
                     id="slug"
                     value={slug}
