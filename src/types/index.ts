@@ -43,7 +43,7 @@ export interface Doctor {
   id: string;
   name: string;
   speciality: string;
-  licenseNumber: string; 
+  licensenumber: string; // Changed from licenseNumber to licensenumber to match DB column
   bio?: string;
   email?: string;
   phone?: string;

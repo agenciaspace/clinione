@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +17,7 @@ interface DoctorFormData {
   id?: string;
   name: string;
   speciality: string;
-  licenseNumber: string;
+  licensenumber: string;
   bio: string;
   email: string;
   phone: string;
@@ -45,7 +44,7 @@ const Doctors = () => {
   const [formData, setFormData] = useState<DoctorFormData>({
     name: '',
     speciality: '',
-    licenseNumber: '',
+    licensenumber: '',
     bio: '',
     email: '',
     phone: ''
@@ -110,7 +109,7 @@ const Doctors = () => {
   const filteredDoctors = doctors.filter(doctor =>
     doctor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doctor.speciality?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.licenseNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+    doctor.licensenumber?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +136,7 @@ const Doctors = () => {
     setFormData({
       name: '',
       speciality: '',
-      licenseNumber: '',
+      licensenumber: '',
       bio: '',
       email: '',
       phone: ''
@@ -151,7 +150,7 @@ const Doctors = () => {
       id: doctor.id,
       name: doctor.name || '',
       speciality: doctor.speciality || '',
-      licenseNumber: doctor.licenseNumber || '',
+      licensenumber: doctor.licensenumber || '',
       bio: doctor.bio || '',
       email: doctor.email || '',
       phone: doctor.phone || ''
@@ -190,13 +189,12 @@ const Doctors = () => {
     
     try {
       if (isEditing && formData.id) {
-        // Atualiza um profissional existente
         const { error } = await supabase
           .from('doctors')
           .update({
             name: formData.name,
             speciality: formData.speciality,
-            licenseNumber: formData.licenseNumber,
+            licensenumber: formData.licensenumber,
             bio: formData.bio,
             email: formData.email,
             phone: formData.phone
@@ -215,7 +213,7 @@ const Doctors = () => {
             ...doctor,
             name: formData.name,
             speciality: formData.speciality,
-            licenseNumber: formData.licenseNumber,
+            licensenumber: formData.licensenumber,
             bio: formData.bio,
             email: formData.email,
             phone: formData.phone
@@ -223,13 +221,12 @@ const Doctors = () => {
         ));
         toast.success('Profissional atualizado com sucesso');
       } else {
-        // Adiciona um novo profissional
         const { data, error } = await supabase
           .from('doctors')
           .insert({
             name: formData.name,
             speciality: formData.speciality,
-            licenseNumber: formData.licenseNumber,
+            licensenumber: formData.licensenumber,
             bio: formData.bio,
             email: formData.email,
             phone: formData.phone,
@@ -310,7 +307,7 @@ const Doctors = () => {
                     <TableRow key={doctor.id}>
                       <TableCell className="font-medium">{doctor.name}</TableCell>
                       <TableCell>{doctor.speciality}</TableCell>
-                      <TableCell>{doctor.licenseNumber}</TableCell>
+                      <TableCell>{doctor.licensenumber}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
                           <Button 
@@ -415,13 +412,13 @@ const Doctors = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="licenseNumber">CRM</Label>
+                <Label htmlFor="licensenumber">CRM</Label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input 
-                    id="licenseNumber" 
-                    name="licenseNumber" 
-                    value={formData.licenseNumber} 
+                    id="licensenumber" 
+                    name="licensenumber" 
+                    value={formData.licensenumber} 
                     onChange={handleInputChange} 
                     className="pl-10" 
                     required

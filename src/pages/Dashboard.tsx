@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -128,7 +127,6 @@ const Dashboard = () => {
     fetchAppointments();
   }, [selectedDate, selectedDoctor, user]);
   
-  // Filtrar consultas pelo dia selecionado e médico (se selecionado)
   const filteredAppointments = appointments.filter(appointment => {
     const appointmentDate = new Date(appointment.date);
     const sameDate = selectedDate && 
@@ -143,7 +141,6 @@ const Dashboard = () => {
     return sameDate;
   });
   
-  // Ordenar por horário
   const sortedAppointments = [...filteredAppointments].sort((a, b) => 
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
@@ -206,7 +203,6 @@ const Dashboard = () => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Calendário e filtros */}
         <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>Calendário</CardTitle>
@@ -260,7 +256,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         
-        {/* Consultas do dia */}
         <Card className="lg:col-span-8">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -269,9 +264,9 @@ const Dashboard = () => {
               </CardTitle>
               <CardDescription>
                 {loading ? 'Carregando agendamentos...' : 
-                  (sortedAppointments.length === 0 
+                  (appointments.length === 0 
                   ? 'Nenhum agendamento para este dia' 
-                  : `${sortedAppointments.length} agendamento(s)`)}
+                  : `${appointments.length} agendamento(s)`)}
               </CardDescription>
             </div>
             <Button>Novo agendamento</Button>
@@ -289,7 +284,7 @@ const Dashboard = () => {
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
-                ) : sortedAppointments.length === 0 ? (
+                ) : appointments.length === 0 ? (
                   <div className="text-center py-8">
                     <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-semibold text-gray-900">Sem agendamentos</h3>
@@ -301,7 +296,7 @@ const Dashboard = () => {
                     </div>
                   </div>
                 ) : (
-                  sortedAppointments.map((appointment) => (
+                  appointments.map((appointment) => (
                     <div key={appointment.id} className="flex items-start p-4 border rounded-lg hover:bg-gray-50">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
