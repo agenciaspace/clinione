@@ -96,7 +96,7 @@ const PublicClinicPage: React.FC = () => {
           .eq('clinic_id', clinic.id);
           
         if (error) {
-          console.error("Error fetching doctors:", error);
+          console.error("Erro ao buscar médicos:", error);
           return;
         }
         
@@ -104,7 +104,7 @@ const PublicClinicPage: React.FC = () => {
           setDoctors(data);
         }
       } catch (error) {
-        console.error("Error fetching doctors:", error);
+        console.error("Erro ao buscar médicos:", error);
       }
     };
     
@@ -117,21 +117,21 @@ const PublicClinicPage: React.FC = () => {
       setError(null);
       
       try {
-        console.log("Fetching clinic. Preview mode:", isPreview, "Slug:", slug, "Selected ID:", selectedClinicId);
+        console.log("Buscando clínica. Modo de pré-visualização:", isPreview, "Slug:", slug, "ID selecionado:", selectedClinicId);
         
         let clinicQuery;
         
         if (isPreview) {
           // In preview mode, fetch by ID if selected, otherwise fetch first clinic
           if (selectedClinicId) {
-            console.log("Fetching clinic by ID for preview:", selectedClinicId);
+            console.log("Buscando clínica por ID para pré-visualização:", selectedClinicId);
             clinicQuery = await supabase
               .from('clinics')
               .select('*')
               .eq('id', selectedClinicId)
               .single();
           } else {
-            console.log("Fetching first clinic for preview");
+            console.log("Buscando primeira clínica para pré-visualização");
             clinicQuery = await supabase
               .from('clinics')
               .select('*')
@@ -139,8 +139,8 @@ const PublicClinicPage: React.FC = () => {
               .single();
           }
           
-          console.log("Query results:", clinicQuery.data);
-          console.log("Query error (if any):", clinicQuery.error);
+          console.log("Resultados da consulta:", clinicQuery.data);
+          console.log("Erro na consulta (se houver):", clinicQuery.error);
           
           if (clinicQuery.error && clinicQuery.error.code !== 'PGRST116') { // PGRST116 is "no rows found"
             throw clinicQuery.error;
@@ -148,11 +148,11 @@ const PublicClinicPage: React.FC = () => {
           
           if (!clinicQuery.data) {
             // If no data, just show an error message instead of creating a mock clinic
-            throw new Error("No clinic data found. Please create a clinic first.");
+            throw new Error("Nenhuma clínica encontrada. Por favor, crie uma clínica primeiro.");
           }
         } else if (slug) {
           // Public mode, fetch by slug
-          console.log("Fetching clinic by slug:", slug);
+          console.log("Buscando clínica por slug:", slug);
           clinicQuery = await supabase
             .from('clinics')
             .select('*')
@@ -161,19 +161,19 @@ const PublicClinicPage: React.FC = () => {
             .single();
             
           if (clinicQuery.error) {
-            console.error("Error fetching by slug:", clinicQuery.error);
-            throw new Error("Clinic page not found or not published");
+            console.error("Erro ao buscar por slug:", clinicQuery.error);
+            throw new Error("Página da clínica não encontrada ou não publicada");
           }
           
           if (!clinicQuery.data) {
-            throw new Error("Clinic page not found");
+            throw new Error("Página da clínica não encontrada");
           }
         } else {
-          throw new Error("No slug provided");
+          throw new Error("Nenhum slug fornecido");
         }
         
         const clinicData = clinicQuery.data;
-        console.log("Clinic found:", clinicData);
+        console.log("Clínica encontrada:", clinicData);
         
         // Ensure working_hours is properly parsed
         let workingHoursData = defaultWorkingHours;
@@ -200,10 +200,10 @@ const PublicClinicPage: React.FC = () => {
           is_published: clinicData.is_published
         });
       } catch (error: any) {
-        console.error("Error:", error);
+        console.error("Erro:", error);
         setError(isPreview 
-          ? "No clinics found. Please create a clinic first." 
-          : error.message || "Page not found or not published."
+          ? "Nenhuma clínica encontrada. Por favor, crie uma clínica primeiro." 
+          : error.message || "Página não encontrada ou não publicada."
         );
       } finally {
         setIsLoading(false);
@@ -218,7 +218,7 @@ const PublicClinicPage: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
     );
@@ -228,18 +228,18 @@ const PublicClinicPage: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Oops!</h1>
-          <p className="text-gray-600 mb-8">{error || "Clinic not found"}</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Ops!</h1>
+          <p className="text-gray-600 mb-8">{error || "Clínica não encontrada"}</p>
           {isPreview ? (
             <Button onClick={() => navigate('/dashboard/clinic')}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Go to Clinic Management
+              Ir para Gerenciamento da Clínica
             </Button>
           ) : (
             <Button asChild>
               <Link to="/">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Return to home page
+                Voltar à página inicial
               </Link>
             </Button>
           )}
@@ -248,19 +248,19 @@ const PublicClinicPage: React.FC = () => {
     );
   }
   
-  // Day names in English
+  // Day names in Portuguese
   const weekdayNames = {
-    monday: "Monday",
-    tuesday: "Tuesday",
-    wednesday: "Wednesday",
-    thursday: "Thursday",
-    friday: "Friday",
-    saturday: "Saturday",
-    sunday: "Sunday"
+    monday: "Segunda-feira",
+    tuesday: "Terça-feira",
+    wednesday: "Quarta-feira",
+    thursday: "Quinta-feira",
+    friday: "Sexta-feira",
+    saturday: "Sábado",
+    sunday: "Domingo"
   };
   
   const renderWorkingHours = () => {
-    if (!clinic.working_hours) return <p className="text-gray-500">Hours not available</p>;
+    if (!clinic.working_hours) return <p className="text-gray-500">Horários não disponíveis</p>;
     
     return (
       <div className="space-y-2">
@@ -273,7 +273,7 @@ const PublicClinicPage: React.FC = () => {
               <span className="font-medium">
                 {periods && periods.length > 0 
                   ? `${periods[0].start} - ${periods[0].end}`
-                  : "Closed"}
+                  : "Fechado"}
               </span>
             </div>
           );
@@ -286,7 +286,7 @@ const PublicClinicPage: React.FC = () => {
     if (!doctors || doctors.length === 0) {
       return (
         <div className="text-center p-4">
-          <p className="text-gray-500">No professionals information available.</p>
+          <p className="text-gray-500">Nenhuma informação de profissionais disponível.</p>
         </div>
       );
     }
@@ -323,9 +323,9 @@ const PublicClinicPage: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div>
                 <p className="mb-2 md:mb-0">
-                  Preview Mode {clinic.is_published 
-                    ? <span>This page is published at <a href={renderVisitPublicPage()} target="_blank" rel="noopener noreferrer" className="underline">{renderVisitPublicPage()}</a></span> 
-                    : "This page is not yet published."}
+                  Modo de Pré-visualização {clinic.is_published 
+                    ? <span>Esta página está publicada em <a href={renderVisitPublicPage()} target="_blank" rel="noopener noreferrer" className="underline">{renderVisitPublicPage()}</a></span> 
+                    : "Esta página ainda não está publicada."}
                 </p>
               </div>
               
@@ -347,7 +347,7 @@ const PublicClinicPage: React.FC = () => {
                 <Button variant="outline" className="bg-white text-blue-500" asChild>
                   <Link to="/dashboard/clinic">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Edit
+                    Voltar para Editar
                   </Link>
                 </Button>
               </div>
@@ -370,14 +370,14 @@ const PublicClinicPage: React.FC = () => {
               <h1 className="text-2xl font-bold text-gray-900">{clinic.name}</h1>
               <p className="text-gray-500 flex items-center">
                 <MapPin className="h-4 w-4 mr-1" />
-                {clinic.address ? clinic.address.split(',')[0] : "Address not available"}
+                {clinic.address ? clinic.address.split(',')[0] : "Endereço não disponível"}
               </p>
             </div>
           </div>
           <div className="mt-4 md:mt-0">
             <Button>
               <Calendar className="mr-2 h-4 w-4" />
-              Book Appointment
+              Agendar Consulta
             </Button>
           </div>
         </header>
@@ -385,14 +385,14 @@ const PublicClinicPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
           <div className="md:col-span-2 space-y-8">
             <section>
-              <h2 className="text-xl font-semibold mb-4">About the Clinic</h2>
+              <h2 className="text-xl font-semibold mb-4">Sobre a Clínica</h2>
               <p className="text-gray-700 leading-relaxed">
-                {clinic.description || "No clinic information available."}
+                {clinic.description || "Nenhuma informação sobre a clínica disponível."}
               </p>
             </section>
             
             <section>
-              <h2 className="text-xl font-semibold mb-4">Contact</h2>
+              <h2 className="text-xl font-semibold mb-4">Contato</h2>
               <div className="space-y-3">
                 {clinic.address && (
                   <p className="flex items-center text-gray-700">
@@ -427,7 +427,7 @@ const PublicClinicPage: React.FC = () => {
             <Separator />
             
             <section>
-              <h2 className="text-xl font-semibold mb-4">Our Team</h2>
+              <h2 className="text-xl font-semibold mb-4">Nossa Equipe</h2>
               {renderDoctors()}
             </section>
           </div>
@@ -436,14 +436,14 @@ const PublicClinicPage: React.FC = () => {
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <h2 className="text-lg font-semibold mb-4 flex items-center">
                 <Clock className="h-5 w-5 mr-2 text-blue-500" />
-                Working Hours
+                Horário de Funcionamento
               </h2>
               {renderWorkingHours()}
               
               <div className="mt-6">
                 <Button variant="outline" className="w-full">
                   <Calendar className="mr-2 h-4 w-4" />
-                  Book Appointment
+                  Agendar Consulta
                 </Button>
               </div>
             </div>
