@@ -12,7 +12,6 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from "@/integrations/supabase/client";
 import PublicPageSettings from '@/components/clinic/PublicPageSettings';
 
-// Mock da clínica
 const mockClinic = {
   id: '1',
   name: 'Clínica Saúde & Bem-estar',
@@ -39,20 +38,17 @@ const mockClinic = {
   is_published: false,
 };
 
-const ClinicProfile = () => {
+const ClinicProfile: React.FC = () => {
   const [clinic, setClinic] = useState(mockClinic);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(mockClinic);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch clinic data on component mount
   useEffect(() => {
     const fetchClinicData = async () => {
       setIsLoading(true);
       
       try {
-        // In a real app, we would get the user's clinic ID from auth context
-        // For now, we'll just fetch the first clinic or use mock data
         const { data, error } = await supabase
           .from('clinics')
           .select('*')
@@ -61,18 +57,18 @@ const ClinicProfile = () => {
           
         if (error) {
           console.error("Error fetching clinic:", error);
-          // Use mock data as fallback
           setClinic(mockClinic);
           setFormData(mockClinic);
         } else if (data) {
-          // Format data to match expected structure
           const formattedData = {
             ...data,
             about: data.description || '',
             socialMedia: {
               facebook: data.facebook_id || '',
               instagram: data.instagram_id || '',
-            }
+            },
+            workingHours: data.working_hours || mockClinic.workingHours,
+            is_published: data.is_published || false
           };
           
           setClinic(formattedData);
@@ -116,9 +112,7 @@ const ClinicProfile = () => {
   const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real app with Supabase, we would update the clinic data in the database
     try {
-      // Map the form data to the format expected by the database
       const updateData = {
         name: formData.name,
         slug: formData.slug,
@@ -132,7 +126,6 @@ const ClinicProfile = () => {
         working_hours: formData.workingHours,
       };
       
-      // Only try to update if we have a real clinic ID (not the mock one)
       if (formData.id !== mockClinic.id) {
         const { error } = await supabase
           .from('clinics')
@@ -226,7 +219,6 @@ const ClinicProfile = () => {
           <TabsTrigger value="preview">Visualizar Página</TabsTrigger>
         </TabsList>
         
-        {/* Aba de Informações Básicas */}
         <TabsContent value="info">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2">
@@ -334,7 +326,6 @@ const ClinicProfile = () => {
           </div>
         </TabsContent>
         
-        {/* Aba de Contato */}
         <TabsContent value="contact">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
@@ -455,7 +446,6 @@ const ClinicProfile = () => {
           </div>
         </TabsContent>
         
-        {/* Aba de Horários */}
         <TabsContent value="hours">
           <Card>
             <CardHeader>
@@ -512,7 +502,6 @@ const ClinicProfile = () => {
           </Card>
         </TabsContent>
         
-        {/* Nova Aba: Página Pública */}
         <TabsContent value="public">
           <div className="max-w-2xl mx-auto">
             <PublicPageSettings 
@@ -524,7 +513,6 @@ const ClinicProfile = () => {
           </div>
         </TabsContent>
         
-        {/* Aba de Visualização da Página */}
         <TabsContent value="preview">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -541,7 +529,6 @@ const ClinicProfile = () => {
             </CardHeader>
             <CardContent>
               <div className="border rounded-lg p-6 bg-white">
-                {/* Header da página pública */}
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center pb-6 border-b">
                   <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 bg-healthblue-100 rounded-full flex items-center justify-center text-healthblue-600 font-bold text-lg">
@@ -560,7 +547,6 @@ const ClinicProfile = () => {
                   </div>
                 </div>
                 
-                {/* Informações da clínica */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
                   <div className="md:col-span-2">
                     <h3 className="text-lg font-semibold mb-3">Sobre a Clínica</h3>

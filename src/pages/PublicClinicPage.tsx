@@ -157,7 +157,12 @@ const PublicClinicPage = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [clinicData, setClinicData] = useState<any>(null);
-  
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [selectedService, setSelectedService] = useState<string>("");
+  const [selectedDoctor, setSelectedDoctor] = useState<string>("");
+
   useEffect(() => {
     const fetchClinicData = async () => {
       setIsLoading(true);
