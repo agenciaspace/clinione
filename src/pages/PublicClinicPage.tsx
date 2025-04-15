@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,10 +14,24 @@ import {
   Instagram,
   Star,
   ChevronRight,
+  X,
+  User,
+  CalendarRange,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogFooter } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useForm } from 'react-hook-form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 // Dados mockados para exemplo
 const mockClinic = {
@@ -123,6 +137,13 @@ const mockReviews = [
   }
 ];
 
+// Opções de horário disponíveis para agendamento (mockado)
+const availableTimes = [
+  "08:00", "08:30", "09:00", "09:30", "10:00", 
+  "10:30", "11:00", "14:00", "14:30", "15:00", 
+  "15:30", "16:00", "16:30", "17:00", "17:30"
+];
+
 const weekdayLabels = {
   monday: 'Segunda-feira',
   tuesday: 'Terça-feira',
@@ -135,10 +156,64 @@ const weekdayLabels = {
 
 const PublicClinicPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { toast } = useToast();
+  
+  // States para agendamento
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<string>('');
+  const [selectedService, setSelectedService] = useState<string>('');
+  const [dateRange, setDateRange] = useState<any>(undefined);
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [rating, setRating] = useState<number>(5);
   
   // Num cenário real, buscaríamos os dados da clínica com base no slug
   // Por enquanto, usamos os dados mockados
   const clinic = mockClinic;
+
+  // Form para agendamento
+  const bookingForm = useForm({
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      notes: '',
+      date: '',
+      time: '',
+      doctor: '',
+      service: ''
+    }
+  });
+
+  // Form para avaliação
+  const reviewForm = useForm({
+    defaultValues: {
+      name: '',
+      rating: 5,
+      comment: '',
+    }
+  });
+
+  // Funções de submissão
+  const handleBookingSubmit = (data: any) => {
+    // Em um caso real, enviaríamos esses dados para o servidor
+    console.log('Agendamento:', data);
+    toast({
+      title: "Agendamento realizado!",
+      description: `Sua consulta foi agendada com sucesso para ${data.date} às ${data.time}.`,
+    });
+    setIsBookingOpen(false);
+  };
+
+  const handleReviewSubmit = (data: any) => {
+    // Em um caso real, enviaríamos a avaliação para o servidor
+    console.log('Avaliação:', {...data, rating});
+    toast({
+      title: "Avaliação enviada!",
+      description: "Obrigado por compartilhar sua experiência.",
+    });
+    setIsReviewDialogOpen(false);
+    reviewForm.reset();
+  };
   
   // Renderizar estrelas com base na avaliação
   const renderStars = (rating: number) => {
@@ -148,6 +223,26 @@ const PublicClinicPage = () => {
         className={`h-4 w-4 ${index < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
       />
     ));
+  };
+
+  // Componente de seleção de estrelas interativas
+  const RatingSelector = () => {
+    return (
+      <div className="flex items-center space-x-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => setRating(star)}
+            className="focus:outline-none"
+          >
+            <Star 
+              className={`h-6 w-6 ${star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+            />
+          </button>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -189,10 +284,224 @@ const PublicClinicPage = () => {
               </Button>
             </a>
             
-            <Button size="sm">
-              <Calendar className="h-4 w-4 mr-2" />
-              Agendar Consulta
-            </Button>
+            <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Agendar Consulta
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Agendar Consulta</DialogTitle>
+                </DialogHeader>
+
+                <Form {...bookingForm}>
+                  <form onSubmit={bookingForm.handleSubmit(handleBookingSubmit)} className="space-y-4">
+                    {/* Dados pessoais */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={bookingForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome completo</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Digite seu nome" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={bookingForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Telefone</FormLabel>
+                            <FormControl>
+                              <Input placeholder="(00) 00000-0000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={bookingForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>E-mail</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="seu@email.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Seleção de serviço e profissional */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={bookingForm.control}
+                        name="service"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Serviço</FormLabel>
+                            <Select 
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                setSelectedService(value);
+                              }}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione um serviço" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {mockServices.map((service) => (
+                                  <SelectItem key={service.id} value={service.id}>
+                                    {service.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={bookingForm.control}
+                        name="doctor"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Profissional</FormLabel>
+                            <Select 
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                setSelectedDoctor(value);
+                              }}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione um profissional" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {mockDoctors.map((doctor) => (
+                                  <SelectItem key={doctor.id} value={doctor.id}>
+                                    {doctor.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Data e hora */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={bookingForm.control}
+                        name="date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Data</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione uma data" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {[...Array(7)].map((_, i) => {
+                                  const date = new Date();
+                                  date.setDate(date.getDate() + i + 1);
+                                  const formattedDate = format(date, "EEEE, dd/MM", { locale: ptBR });
+                                  const valueDate = format(date, "yyyy-MM-dd");
+                                  return (
+                                    <SelectItem key={i} value={valueDate}>
+                                      {formattedDate}
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={bookingForm.control}
+                        name="time"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Horário</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              disabled={!bookingForm.getValues('date')}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={!bookingForm.getValues('date') ? "Selecione uma data primeiro" : "Selecione um horário"} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {availableTimes.map((time) => (
+                                  <SelectItem key={time} value={time}>
+                                    {time}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Observações */}
+                    <FormField
+                      control={bookingForm.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Observações</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Alguma informação adicional importante?" 
+                              className="resize-none" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button type="button" variant="outline">Cancelar</Button>
+                      </DialogClose>
+                      <Button type="submit">Confirmar Agendamento</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </header>
@@ -345,10 +654,14 @@ const PublicClinicPage = () => {
                   </CardContent>
                 </Card>
                 
-                <Button className="w-full">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Agendar Consulta
-                </Button>
+                <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Agendar Consulta
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
               </div>
             </div>
           </TabsContent>
@@ -378,9 +691,51 @@ const PublicClinicPage = () => {
                     <p className="text-healthblue-600 font-medium">{doctor.specialty}</p>
                     <p className="text-sm text-gray-500 mb-3">{doctor.crm}</p>
                     <p className="text-gray-700">{doctor.bio}</p>
-                    <Button variant="outline" className="w-full mt-4">
-                      Ver horários disponíveis
-                    </Button>
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full mt-4">
+                          <CalendarRange className="h-4 w-4 mr-2" />
+                          Ver horários disponíveis
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Horários de {doctor.name}</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="flex flex-col">
+                            <h4 className="font-medium mb-2">Próximos dias disponíveis:</h4>
+                            <div className="grid grid-cols-3 gap-2">
+                              {[...Array(6)].map((_, i) => {
+                                const date = new Date();
+                                date.setDate(date.getDate() + i + 1);
+                                return (
+                                  <Button
+                                    key={i}
+                                    variant="outline"
+                                    className="justify-start text-left"
+                                    onClick={() => setIsBookingOpen(true)}
+                                  >
+                                    <div className="text-left">
+                                      <div className="font-medium">{format(date, "dd/MM", { locale: ptBR })}</div>
+                                      <div className="text-xs text-gray-500">{format(date, "EEEE", { locale: ptBR })}</div>
+                                    </div>
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4">
+                            <Button className="w-full" onClick={() => setIsBookingOpen(true)}>
+                              <Calendar className="h-4 w-4 mr-2" />
+                              Agendar Consulta
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </CardContent>
                 </Card>
               ))}
@@ -410,7 +765,11 @@ const PublicClinicPage = () => {
                         </p>
                       </div>
                     </div>
-                    <Button variant="outline" className="w-full mt-4">
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-4"
+                      onClick={() => setIsBookingOpen(true)}
+                    >
                       Agendar
                     </Button>
                   </CardContent>
@@ -423,9 +782,66 @@ const PublicClinicPage = () => {
           <TabsContent value="reviews" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Avaliações de Pacientes</h2>
-              <Button variant="outline">
-                Deixar Avaliação
-              </Button>
+              <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    Deixar Avaliação
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Conte sua experiência</DialogTitle>
+                  </DialogHeader>
+                  
+                  <Form {...reviewForm}>
+                    <form onSubmit={reviewForm.handleSubmit(handleReviewSubmit)} className="space-y-4">
+                      <FormField
+                        control={reviewForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Seu nome" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormItem>
+                        <FormLabel>Avaliação</FormLabel>
+                        <RatingSelector />
+                      </FormItem>
+                      
+                      <FormField
+                        control={reviewForm.control}
+                        name="comment"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Seu comentário</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Conte sobre sua experiência..." 
+                                className="resize-none min-h-[100px]" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button type="button" variant="outline">Cancelar</Button>
+                        </DialogClose>
+                        <Button type="submit">Enviar Avaliação</Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
             </div>
             
             <div className="bg-white rounded-lg p-6 shadow-sm">
