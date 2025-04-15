@@ -10,6 +10,18 @@ export interface User {
   clinicId?: string;
 }
 
+export type WorkingHourPeriod = { start: string; end: string }[];
+
+export type WorkingHours = {
+  monday: WorkingHourPeriod;
+  tuesday: WorkingHourPeriod;
+  wednesday: WorkingHourPeriod;
+  thursday: WorkingHourPeriod;
+  friday: WorkingHourPeriod;
+  saturday: WorkingHourPeriod;
+  sunday: WorkingHourPeriod;
+};
+
 export interface Clinic {
   id: string;
   name: string;
@@ -23,9 +35,7 @@ export interface Clinic {
     instagram?: string;
     twitter?: string;
   };
-  workingHours?: {
-    [key: string]: { start: string; end: string }[];
-  };
+  workingHours?: WorkingHours;
   slug: string; // Para URL personalizada
 }
 

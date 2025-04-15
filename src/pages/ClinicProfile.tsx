@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,19 @@ import { Upload, Facebook, Instagram, Globe, Clock, MapPin, Phone, Mail } from '
 import { Separator } from '@/components/ui/separator';
 import { supabase } from "@/integrations/supabase/client";
 import PublicPageSettings from '@/components/clinic/PublicPageSettings';
+
+// Define the expected structure for working hours
+type WorkingHourPeriod = { start: string; end: string }[];
+
+type WorkingHours = {
+  monday: WorkingHourPeriod;
+  tuesday: WorkingHourPeriod;
+  wednesday: WorkingHourPeriod;
+  thursday: WorkingHourPeriod;
+  friday: WorkingHourPeriod;
+  saturday: WorkingHourPeriod;
+  sunday: WorkingHourPeriod;
+};
 
 const mockClinic = {
   id: '1',
@@ -34,7 +48,7 @@ const mockClinic = {
     friday: [{ start: '08:00', end: '18:00' }],
     saturday: [{ start: '08:00', end: '12:00' }],
     sunday: [],
-  },
+  } as WorkingHours,
   is_published: false,
 };
 
@@ -60,14 +74,45 @@ const ClinicProfile: React.FC = () => {
           setClinic(mockClinic);
           setFormData(mockClinic);
         } else if (data) {
+          // Parse and validate working hours from the database
+          let parsedWorkingHours: WorkingHours;
+          try {
+            // Check if working_hours is a valid object with the expected structure
+            if (data.working_hours && typeof data.working_hours === 'object') {
+              parsedWorkingHours = data.working_hours as WorkingHours;
+              
+              // Ensure all required days are present
+              const requiredDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+              for (const day of requiredDays) {
+                if (!parsedWorkingHours[day as keyof WorkingHours]) {
+                  parsedWorkingHours[day as keyof WorkingHours] = [];
+                }
+              }
+            } else {
+              // If not valid, use the default working hours
+              parsedWorkingHours = mockClinic.workingHours;
+            }
+          } catch (e) {
+            console.error("Error parsing working hours:", e);
+            parsedWorkingHours = mockClinic.workingHours;
+          }
+          
           const formattedData = {
             ...data,
+            id: data.id || mockClinic.id,
+            name: data.name || mockClinic.name,
+            slug: data.slug || mockClinic.slug,
+            logo: data.logo || mockClinic.logo,
+            address: data.address || mockClinic.address,
+            phone: data.phone || mockClinic.phone,
+            email: data.email || mockClinic.email,
+            website: data.website || mockClinic.website,
             about: data.description || '',
             socialMedia: {
               facebook: data.facebook_id || '',
               instagram: data.instagram_id || '',
             },
-            workingHours: data.working_hours || mockClinic.workingHours,
+            workingHours: parsedWorkingHours,
             is_published: data.is_published || false
           };
           
