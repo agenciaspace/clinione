@@ -40,8 +40,11 @@ const App = () => (
             <Route path="/dashboard/marketing" element={<Marketing />} />
             <Route path="/dashboard/clinic" element={<ClinicProfile />} />
             <Route path="/dashboard/settings" element={<Settings />} />
-            <Route path="/:slug" element={<PublicClinicPage />} /> {/* Changed from /c/:slug to /:slug */}
+            {/* Public clinic routes */}
+            <Route path="/:slug" element={<PublicClinicPage />} /> 
             <Route path="/dashboard/public-page" element={<PublicClinicPage />} />
+            {/* For compatibility with DNS redirect rules */}
+            <Route path="/c/:slug" element={<PublicClinicPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
