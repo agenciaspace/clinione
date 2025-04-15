@@ -29,15 +29,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            
-            {/* Public clinic pages */}
-            <Route path="/c/:slug" element={<PublicClinicPage />} />
-            
-            {/* Dashboard routes */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/patients" element={<Patients />} />
             <Route path="/dashboard/doctors" element={<Doctors />} />
@@ -46,9 +40,8 @@ const App = () => (
             <Route path="/dashboard/marketing" element={<Marketing />} />
             <Route path="/dashboard/clinic" element={<ClinicProfile />} />
             <Route path="/dashboard/settings" element={<Settings />} />
-            <Route path="/dashboard/public-page" element={<ClinicProfile />} />
-            
-            {/* 404 */}
+            <Route path="/c/:slug" element={<PublicClinicPage />} />
+            <Route path="/dashboard/public-page" element={<PublicClinicPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

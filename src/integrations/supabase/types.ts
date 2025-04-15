@@ -9,78 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      clinics: {
-        Row: {
-          address: string | null
-          city: string | null
-          created_at: string
-          description: string | null
-          email: string | null
-          facebook_id: string | null
-          id: string
-          instagram_id: string | null
-          is_published: boolean | null
-          last_published_at: string | null
-          logo: string | null
-          name: string
-          owner_id: string
-          phone: string | null
-          slug: string | null
-          specialties: string[] | null
-          state: string | null
-          updated_at: string
-          website: string | null
-          working_hours: Json | null
-          zip: string | null
-        }
-        Insert: {
-          address?: string | null
-          city?: string | null
-          created_at?: string
-          description?: string | null
-          email?: string | null
-          facebook_id?: string | null
-          id?: string
-          instagram_id?: string | null
-          is_published?: boolean | null
-          last_published_at?: string | null
-          logo?: string | null
-          name: string
-          owner_id: string
-          phone?: string | null
-          slug?: string | null
-          specialties?: string[] | null
-          state?: string | null
-          updated_at?: string
-          website?: string | null
-          working_hours?: Json | null
-          zip?: string | null
-        }
-        Update: {
-          address?: string | null
-          city?: string | null
-          created_at?: string
-          description?: string | null
-          email?: string | null
-          facebook_id?: string | null
-          id?: string
-          instagram_id?: string | null
-          is_published?: boolean | null
-          last_published_at?: string | null
-          logo?: string | null
-          name?: string
-          owner_id?: string
-          phone?: string | null
-          slug?: string | null
-          specialties?: string[] | null
-          state?: string | null
-          updated_at?: string
-          website?: string | null
-          working_hours?: Json | null
-          zip?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never

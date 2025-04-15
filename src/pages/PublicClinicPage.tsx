@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,8 +32,8 @@ import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
+// Dados mockados para exemplo
 const mockClinic = {
   id: '1',
   name: 'Clínica Saúde & Bem-estar',
@@ -136,6 +137,7 @@ const mockReviews = [
   }
 ];
 
+// Opções de horário disponíveis para agendamento (mockado)
 const availableTimes = [
   "08:00", "08:30", "09:00", "09:30", "10:00", 
   "10:30", "11:00", "14:00", "14:30", "15:00", 
@@ -155,69 +157,20 @@ const weekdayLabels = {
 const PublicClinicPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { toast } = useToast();
-  const [loading, setLoading] = useState<boolean>(true);
-  const [clinicData, setClinicData] = useState<any | null>(null);
   
+  // States para agendamento
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<string>('');
   const [selectedService, setSelectedService] = useState<string>('');
   const [dateRange, setDateRange] = useState<any>(undefined);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [rating, setRating] = useState<number>(5);
+  
+  // Num cenário real, buscaríamos os dados da clínica com base no slug
+  // Por enquanto, usamos os dados mockados
+  const clinic = mockClinic;
 
-  useEffect(() => {
-    const fetchClinicData = async () => {
-      if (!slug) return;
-
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('clinics')
-          .select('*')
-          .eq('slug', slug)
-          .eq('is_published', true)
-          .maybeSingle();
-
-        if (error) throw error;
-
-        if (!data) {
-          console.log('No published clinic found with slug:', slug);
-          setClinicData(mockClinic);
-        } else {
-          const transformedData = {
-            ...data,
-            id: data.id || '1',
-            name: data.name || mockClinic.name,
-            slug: data.slug || mockClinic.slug,
-            logo: data.logo || mockClinic.logo,
-            address: data.address || mockClinic.address,
-            cep: data.zip || mockClinic.cep,
-            phone: data.phone || mockClinic.phone,
-            whatsapp: data.phone || mockClinic.whatsapp,
-            email: data.email || mockClinic.email,
-            website: data.website || mockClinic.website,
-            about: data.description || mockClinic.about,
-            specialties: data.specialties || mockClinic.specialties,
-            socialMedia: {
-              facebook: data.facebook_id || mockClinic.socialMedia.facebook,
-              instagram: data.instagram_id || mockClinic.socialMedia.instagram,
-            },
-            workingHours: data.working_hours || mockClinic.workingHours,
-          };
-          
-          setClinicData(transformedData);
-        }
-      } catch (error) {
-        console.error('Error fetching clinic data:', error);
-        setClinicData(mockClinic);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchClinicData();
-  }, [slug]);
-
+  // Form para agendamento
   const bookingForm = useForm({
     defaultValues: {
       name: '',
@@ -231,6 +184,7 @@ const PublicClinicPage = () => {
     }
   });
 
+  // Form para avaliação
   const reviewForm = useForm({
     defaultValues: {
       name: '',
@@ -239,7 +193,9 @@ const PublicClinicPage = () => {
     }
   });
 
+  // Funções de submissão
   const handleBookingSubmit = (data: any) => {
+    // Em um caso real, enviaríamos esses dados para o servidor
     console.log('Agendamento:', data);
     toast({
       title: "Agendamento realizado!",
@@ -249,6 +205,7 @@ const PublicClinicPage = () => {
   };
 
   const handleReviewSubmit = (data: any) => {
+    // Em um caso real, enviaríamos a avaliação para o servidor
     console.log('Avaliação:', {...data, rating});
     toast({
       title: "Avaliação enviada!",
@@ -258,6 +215,7 @@ const PublicClinicPage = () => {
     reviewForm.reset();
   };
   
+  // Renderizar estrelas com base na avaliação
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }).map((_, index) => (
       <Star 
@@ -267,6 +225,7 @@ const PublicClinicPage = () => {
     ));
   };
 
+  // Componente de seleção de estrelas interativas
   const RatingSelector = () => {
     return (
       <div className="flex items-center space-x-1">
@@ -286,38 +245,9 @@ const PublicClinicPage = () => {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-t-healthblue-600 border-gray-200 rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando informações da clínica...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!clinicData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="bg-red-100 text-red-800 p-4 rounded-lg mb-4">
-            <X className="h-12 w-12 mx-auto mb-2" />
-            <h2 className="text-xl font-bold mb-2">Página não encontrada</h2>
-            <p>A página da clínica que você está procurando não existe ou não está disponível no momento.</p>
-          </div>
-          <Link to="/">
-            <Button>Voltar para a página inicial</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const clinic = clinicData;
-
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header com informações básicas */}
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
@@ -368,6 +298,7 @@ const PublicClinicPage = () => {
 
                 <Form {...bookingForm}>
                   <form onSubmit={bookingForm.handleSubmit(handleBookingSubmit)} className="space-y-4">
+                    {/* Dados pessoais */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={bookingForm.control}
@@ -411,6 +342,7 @@ const PublicClinicPage = () => {
                       )}
                     />
 
+                    {/* Seleção de serviço e profissional */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={bookingForm.control}
@@ -475,6 +407,7 @@ const PublicClinicPage = () => {
                       />
                     </div>
 
+                    {/* Data e hora */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={bookingForm.control}
@@ -540,6 +473,7 @@ const PublicClinicPage = () => {
                       />
                     </div>
 
+                    {/* Observações */}
                     <FormField
                       control={bookingForm.control}
                       name="notes"
@@ -572,6 +506,7 @@ const PublicClinicPage = () => {
         </div>
       </header>
       
+      {/* Conteúdo principal */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="about" className="space-y-8">
           <div className="bg-white rounded-lg shadow p-4 sticky top-0 z-10">
@@ -583,6 +518,7 @@ const PublicClinicPage = () => {
             </TabsList>
           </div>
           
+          {/* Aba Sobre */}
           <TabsContent value="about" className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2 space-y-6">
@@ -608,12 +544,13 @@ const PublicClinicPage = () => {
                   <CardContent className="p-6">
                     <h2 className="text-xl font-bold mb-4">Localização</h2>
                     <div className="aspect-video bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
+                      {/* Aqui seria incorporado o mapa */}
                       <div className="text-gray-500">Mapa da localização</div>
                     </div>
                     <div className="space-y-2">
                       <p className="flex items-start text-gray-700">
                         <MapPin className="h-5 w-5 mr-2 text-healthblue-500 shrink-0 mt-0.5" />
-                        <span>{clinic.address.split('-')[0]}</span>
+                        <span>{clinic.address}, {clinic.cep}</span>
                       </p>
                     </div>
                     <div className="mt-4">
@@ -729,6 +666,7 @@ const PublicClinicPage = () => {
             </div>
           </TabsContent>
           
+          {/* Aba Profissionais */}
           <TabsContent value="doctors" className="space-y-6">
             <h2 className="text-2xl font-bold">Nossa Equipe</h2>
             
@@ -804,6 +742,7 @@ const PublicClinicPage = () => {
             </div>
           </TabsContent>
           
+          {/* Aba Serviços */}
           <TabsContent value="services" className="space-y-6">
             <h2 className="text-2xl font-bold">Nossos Serviços</h2>
             
@@ -839,6 +778,7 @@ const PublicClinicPage = () => {
             </div>
           </TabsContent>
           
+          {/* Aba Avaliações */}
           <TabsContent value="reviews" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Avaliações de Pacientes</h2>
@@ -938,6 +878,7 @@ const PublicClinicPage = () => {
         </Tabs>
       </main>
       
+      {/* Footer */}
       <footer className="bg-white border-t mt-12">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
@@ -962,7 +903,7 @@ const PublicClinicPage = () => {
             </div>
           </div>
           <p className="text-xs text-center text-gray-400 mt-4">
-            Página gerada por clini.io
+            Página gerada por ClínicaDigitalHub
           </p>
         </div>
       </footer>
