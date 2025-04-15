@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/sonner';
 import { Upload, Facebook, Instagram, Globe, Clock, MapPin, Phone, Mail } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { supabase } from "@/integrations/supabase/client";
+import PublicPageSettings from '@/components/clinic/PublicPageSettings';
 
 // Mock da clínica
 const mockClinic = {
@@ -35,12 +36,57 @@ const mockClinic = {
     saturday: [{ start: '08:00', end: '12:00' }],
     sunday: [],
   },
+  is_published: false,
 };
 
 const ClinicProfile = () => {
   const [clinic, setClinic] = useState(mockClinic);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(mockClinic);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch clinic data on component mount
+  useEffect(() => {
+    const fetchClinicData = async () => {
+      setIsLoading(true);
+      
+      try {
+        // In a real app, we would get the user's clinic ID from auth context
+        // For now, we'll just fetch the first clinic or use mock data
+        const { data, error } = await supabase
+          .from('clinics')
+          .select('*')
+          .limit(1)
+          .single();
+          
+        if (error) {
+          console.error("Error fetching clinic:", error);
+          // Use mock data as fallback
+          setClinic(mockClinic);
+          setFormData(mockClinic);
+        } else if (data) {
+          // Format data to match expected structure
+          const formattedData = {
+            ...data,
+            about: data.description || '',
+            socialMedia: {
+              facebook: data.facebook_id || '',
+              instagram: data.instagram_id || '',
+            }
+          };
+          
+          setClinic(formattedData);
+          setFormData(formattedData);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchClinicData();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -67,12 +113,62 @@ const ClinicProfile = () => {
     });
   };
 
-  const handleSaveChanges = (e: React.FormEvent) => {
+  const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
-    setClinic(formData);
-    setIsEditing(false);
-    toast("Perfil atualizado", {
-      description: "As informações da clínica foram atualizadas com sucesso."
+    
+    // In a real app with Supabase, we would update the clinic data in the database
+    try {
+      // Map the form data to the format expected by the database
+      const updateData = {
+        name: formData.name,
+        slug: formData.slug,
+        description: formData.about,
+        address: formData.address,
+        phone: formData.phone,
+        email: formData.email,
+        website: formData.website,
+        facebook_id: formData.socialMedia?.facebook,
+        instagram_id: formData.socialMedia?.instagram,
+        working_hours: formData.workingHours,
+      };
+      
+      // Only try to update if we have a real clinic ID (not the mock one)
+      if (formData.id !== mockClinic.id) {
+        const { error } = await supabase
+          .from('clinics')
+          .update(updateData)
+          .eq('id', formData.id);
+        
+        if (error) {
+          throw error;
+        }
+      }
+      
+      setClinic(formData);
+      setIsEditing(false);
+      
+      toast("Perfil atualizado", {
+        description: "As informações da clínica foram atualizadas com sucesso."
+      });
+    } catch (error) {
+      console.error("Error updating clinic:", error);
+      toast.error("Erro ao atualizar", {
+        description: "Ocorreu um erro ao atualizar as informações da clínica."
+      });
+    }
+  };
+
+  const handlePublicPageUpdate = ({ slug, isPublished }: { slug: string, isPublished: boolean }) => {
+    setClinic({
+      ...clinic,
+      slug,
+      is_published: isPublished
+    });
+    
+    setFormData({
+      ...formData,
+      slug,
+      is_published: isPublished
     });
   };
 
@@ -85,6 +181,19 @@ const ClinicProfile = () => {
     { key: 'saturday', label: 'Sábado' },
     { key: 'sunday', label: 'Domingo' },
   ];
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-healthblue-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Carregando dados da clínica...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -113,6 +222,7 @@ const ClinicProfile = () => {
           <TabsTrigger value="info">Informações Básicas</TabsTrigger>
           <TabsTrigger value="contact">Contato</TabsTrigger>
           <TabsTrigger value="hours">Horários</TabsTrigger>
+          <TabsTrigger value="public">Página Pública</TabsTrigger>
           <TabsTrigger value="preview">Visualizar Página</TabsTrigger>
         </TabsList>
         
@@ -400,6 +510,18 @@ const ClinicProfile = () => {
               </form>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        {/* Nova Aba: Página Pública */}
+        <TabsContent value="public">
+          <div className="max-w-2xl mx-auto">
+            <PublicPageSettings 
+              clinicId={clinic.id}
+              initialSlug={clinic.slug}
+              initialIsPublished={clinic.is_published}
+              onUpdate={handlePublicPageUpdate}
+            />
+          </div>
         </TabsContent>
         
         {/* Aba de Visualização da Página */}
