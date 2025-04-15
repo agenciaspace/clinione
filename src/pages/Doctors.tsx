@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,44 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Plus, EditIcon, TrashIcon, UserCircle, Mail, Phone, Calendar } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Doctor } from '@/types';
 import { toast } from '@/components/ui/sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-// Dados mockados para exemplo
-const mockDoctors = [
-  {
-    id: '1',
-    userId: 'user1',
-    name: 'Dr. João Cardoso',
-    speciality: 'Cardiologia',
-    licenseNumber: 'CRM 12345',
-    bio: 'Especialista em cardiologia com 10 anos de experiência.',
-    photo: undefined,
-    clinicId: 'clinic1'
-  },
-  {
-    id: '2',
-    userId: 'user2',
-    name: 'Dra. Ana Beatriz',
-    speciality: 'Dermatologia',
-    licenseNumber: 'CRM 54321',
-    bio: 'Dermatologista com foco em tratamentos estéticos e clínicos.',
-    photo: undefined,
-    clinicId: 'clinic1'
-  },
-  {
-    id: '3',
-    userId: 'user3',
-    name: 'Dr. Carlos Eduardo',
-    speciality: 'Ortopedia',
-    licenseNumber: 'CRM 78901',
-    bio: 'Ortopedista especializado em cirurgias de joelho e ombro.',
-    photo: undefined,
-    clinicId: 'clinic1'
-  }
-];
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DoctorFormData {
   id?: string;
@@ -56,8 +24,22 @@ interface DoctorFormData {
   phone: string;
 }
 
+const specialities = [
+  'Cardiologia', 
+  'Dermatologia', 
+  'Ortopedia', 
+  'Pediatria', 
+  'Ginecologia', 
+  'Clínica Geral',
+  'Psiquiatria',
+  'Neurologia',
+  'Oftalmologia',
+  'Endocrinologia'
+];
+
 const Doctors = () => {
-  const [doctors, setDoctors] = useState<Doctor[]>(mockDoctors);
+  const { user, userDetails } = useAuth();
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<DoctorFormData>({
@@ -69,11 +51,66 @@ const Doctors = () => {
     phone: ''
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [clinicId, setClinicId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchClinic = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('clinics')
+          .select('id')
+          .eq('owner_id', user.id)
+          .single();
+          
+        if (error) {
+          console.error('Error fetching clinic:', error);
+          toast.error('Não foi possível carregar informações da clínica');
+          return;
+        }
+        
+        if (data) {
+          setClinicId(data.id);
+          fetchDoctors(data.id);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+    
+    fetchClinic();
+  }, [user]);
+
+  const fetchDoctors = async (clinicId: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('clinic_id', clinicId);
+        
+      if (error) {
+        console.error('Error fetching doctors:', error);
+        toast.error('Não foi possível carregar os profissionais');
+        return;
+      }
+      
+      if (data) {
+        setDoctors(data);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredDoctors = doctors.filter(doctor =>
-    doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.speciality.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.licenseNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    doctor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doctor.speciality?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doctor.licenseNumber?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,53 +149,111 @@ const Doctors = () => {
     setIsEditing(true);
     setFormData({
       id: doctor.id,
-      name: doctor.name,
-      speciality: doctor.speciality,
-      licenseNumber: doctor.licenseNumber,
+      name: doctor.name || '',
+      speciality: doctor.speciality || '',
+      licenseNumber: doctor.licenseNumber || '',
       bio: doctor.bio || '',
-      email: '', // Normalmente viria do usuário associado
-      phone: ''  // Normalmente viria do usuário associado
+      email: doctor.email || '',
+      phone: doctor.phone || ''
     });
     setIsDialogOpen(true);
   };
 
-  const handleDeleteDoctor = (id: string) => {
-    setDoctors(doctors.filter(doctor => doctor.id !== id));
-    toast("Profissional removido com sucesso");
+  const handleDeleteDoctor = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('doctors')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        console.error('Error deleting doctor:', error);
+        toast.error('Não foi possível excluir o profissional');
+        return;
+      }
+      
+      setDoctors(doctors.filter(doctor => doctor.id !== id));
+      toast.success('Profissional removido com sucesso');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Ocorreu um erro ao excluir o profissional');
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isEditing && formData.id) {
-      // Atualiza um profissional existente
-      setDoctors(doctors.map(doctor => 
-        doctor.id === formData.id ? 
-        {
-          ...doctor,
-          name: formData.name,
-          speciality: formData.speciality,
-          licenseNumber: formData.licenseNumber,
-          bio: formData.bio
-        } : doctor
-      ));
-      toast("Profissional atualizado com sucesso");
-    } else {
-      // Adiciona um novo profissional
-      const newDoctor: Doctor = {
-        id: `${Date.now()}`,
-        userId: `user${Date.now()}`,
-        name: formData.name,
-        speciality: formData.speciality,
-        licenseNumber: formData.licenseNumber,
-        bio: formData.bio,
-        clinicId: 'clinic1'
-      };
-      setDoctors([...doctors, newDoctor]);
-      toast("Profissional adicionado com sucesso");
+    if (!clinicId) {
+      toast.error('Nenhuma clínica encontrada');
+      return;
     }
     
-    setIsDialogOpen(false);
+    try {
+      if (isEditing && formData.id) {
+        // Atualiza um profissional existente
+        const { error } = await supabase
+          .from('doctors')
+          .update({
+            name: formData.name,
+            speciality: formData.speciality,
+            licenseNumber: formData.licenseNumber,
+            bio: formData.bio,
+            email: formData.email,
+            phone: formData.phone
+          })
+          .eq('id', formData.id);
+          
+        if (error) {
+          console.error('Error updating doctor:', error);
+          toast.error('Não foi possível atualizar o profissional');
+          return;
+        }
+        
+        setDoctors(doctors.map(doctor => 
+          doctor.id === formData.id ? 
+          {
+            ...doctor,
+            name: formData.name,
+            speciality: formData.speciality,
+            licenseNumber: formData.licenseNumber,
+            bio: formData.bio,
+            email: formData.email,
+            phone: formData.phone
+          } : doctor
+        ));
+        toast.success('Profissional atualizado com sucesso');
+      } else {
+        // Adiciona um novo profissional
+        const { data, error } = await supabase
+          .from('doctors')
+          .insert({
+            name: formData.name,
+            speciality: formData.speciality,
+            licenseNumber: formData.licenseNumber,
+            bio: formData.bio,
+            email: formData.email,
+            phone: formData.phone,
+            clinic_id: clinicId
+          })
+          .select();
+          
+        if (error) {
+          console.error('Error adding doctor:', error);
+          toast.error('Não foi possível adicionar o profissional');
+          return;
+        }
+        
+        if (data && data[0]) {
+          setDoctors([...doctors, data[0]]);
+          toast.success('Profissional adicionado com sucesso');
+        }
+      }
+      
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Ocorreu um erro ao salvar o profissional');
+    }
   };
 
   return (
@@ -202,7 +297,15 @@ const Doctors = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDoctors.length > 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      <div className="flex justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredDoctors.length > 0 ? (
                   filteredDoctors.map((doctor) => (
                     <TableRow key={doctor.id}>
                       <TableCell className="font-medium">{doctor.name}</TableCell>
@@ -273,12 +376,9 @@ const Doctors = () => {
                       <SelectValue placeholder="Selecione a especialidade" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Cardiologia">Cardiologia</SelectItem>
-                      <SelectItem value="Dermatologia">Dermatologia</SelectItem>
-                      <SelectItem value="Ortopedia">Ortopedia</SelectItem>
-                      <SelectItem value="Pediatria">Pediatria</SelectItem>
-                      <SelectItem value="Ginecologia">Ginecologia</SelectItem>
-                      <SelectItem value="Clínica Geral">Clínica Geral</SelectItem>
+                      {specialities.map(speciality => (
+                        <SelectItem key={speciality} value={speciality}>{speciality}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

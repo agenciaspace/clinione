@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ const PublicClinicPage: React.FC = () => {
   const [isPreview, setIsPreview] = useState(false);
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
   const [availableClinics, setAvailableClinics] = useState<{ id: string; name: string }[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
   
   // Check if in preview mode
   useEffect(() => {
@@ -81,6 +83,33 @@ const PublicClinicPage: React.FC = () => {
       fetchAvailableClinics();
     }
   }, [isPreview, selectedClinicId]);
+  
+  // Fetch doctors for the clinic
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      if (!clinic?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('doctors')
+          .select('id, name, speciality, bio')
+          .eq('clinic_id', clinic.id);
+          
+        if (error) {
+          console.error("Error fetching doctors:", error);
+          return;
+        }
+        
+        if (data) {
+          setDoctors(data);
+        }
+      } catch (error) {
+        console.error("Error fetching doctors:", error);
+      }
+    };
+    
+    fetchDoctors();
+  }, [clinic?.id]);
   
   useEffect(() => {
     const fetchClinicData = async () => {
@@ -219,7 +248,7 @@ const PublicClinicPage: React.FC = () => {
     );
   }
   
-  // Day names in Portuguese
+  // Day names in English
   const weekdayNames = {
     monday: "Monday",
     tuesday: "Tuesday",
@@ -253,53 +282,26 @@ const PublicClinicPage: React.FC = () => {
     );
   };
   
-  // Dummy doctors for demonstration
-  const dummyDoctors = [
-    { id: 1, name: "Dr. John Smith", specialty: "Cardiologist", initials: "JS" },
-    { id: 2, name: "Dr. Anna Miller", specialty: "Dermatologist", initials: "AM" },
-    { id: 3, name: "Dr. Richard Brown", specialty: "Orthopedist", initials: "RB" },
-    { id: 4, name: "Dr. Maria Garcia", specialty: "Pediatrician", initials: "MG" }
-  ];
-  
-  // Dummy reviews for demonstration
-  const dummyReviews = [
-    { id: 1, rating: 5, comment: "Excellent service", author: "Mary S." },
-    { id: 2, rating: 4, comment: "Very good", author: "John P." },
-    { id: 3, rating: 5, comment: "Attentive doctors", author: "Carlos F." }
-  ];
-  
-  const renderStars = (rating: number) => {
-    return "★".repeat(rating) + "☆".repeat(5 - rating);
-  };
-  
   const renderDoctors = () => {
+    if (!doctors || doctors.length === 0) {
+      return (
+        <div className="text-center p-4">
+          <p className="text-gray-500">No professionals information available.</p>
+        </div>
+      );
+    }
+    
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {dummyDoctors.map((doctor) => (
+        {doctors.map((doctor) => (
           <div key={doctor.id} className="flex items-center p-4 border rounded-lg">
             <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-medium">
-              {doctor.initials}
+              {doctor.name.charAt(0) + (doctor.name.split(' ')[1]?.charAt(0) || '')}
             </div>
             <div className="ml-3">
               <p className="font-medium">{doctor.name}</p>
-              <p className="text-sm text-gray-500">{doctor.specialty}</p>
+              <p className="text-sm text-gray-500">{doctor.speciality}</p>
             </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-  
-  const renderReviews = () => {
-    return (
-      <div className="space-y-4">
-        {dummyReviews.map((review) => (
-          <div key={review.id}>
-            <div className="flex items-center">
-              <span className="text-yellow-400">{renderStars(review.rating)}</span>
-              <span className="ml-2 font-medium">{review.comment}</span>
-            </div>
-            <p className="text-gray-600 text-sm">{review.author}</p>
           </div>
         ))}
       </div>
@@ -444,11 +446,6 @@ const PublicClinicPage: React.FC = () => {
                   Book Appointment
                 </Button>
               </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-lg font-semibold mb-4">Reviews</h2>
-              {renderReviews()}
             </div>
           </div>
         </div>
