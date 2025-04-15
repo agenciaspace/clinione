@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,7 @@ import {
   CreditCard,
   Trash2
 } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 
 const Settings = () => {
   const { user } = useAuth();
