@@ -1,4 +1,5 @@
-# Welcome to your Lovable project
+
+# clini.io
 
 ## Project info
 

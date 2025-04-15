@@ -49,7 +49,7 @@ export const Sidebar: React.FC = () => {
     <aside className="hidden md:flex md:w-64 flex-col bg-white border-r border-gray-200 shadow-sm">
       <div className="px-6 py-6">
         <h2 className="text-2xl font-bold text-healthblue-600">
-          ClínicaDigital
+          clini.io
         </h2>
       </div>
 
