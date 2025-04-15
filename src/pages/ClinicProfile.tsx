@@ -1,543 +1,432 @@
 
-import React, { useState } from 'react';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from '@/components/ui/sonner';
-import { Upload, Facebook, Instagram, Globe, Clock, MapPin, Phone, Mail } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Building2, MapPin, Phone, Mail, Globe, Save, Facebook, Instagram } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import PublicPageSettings from '@/components/PublicPageSettings';
 
-// Mock da clínica
-const mockClinic = {
-  id: '1',
-  name: 'Clínica Saúde & Bem-estar',
-  slug: 'clinica-saude-bem-estar',
-  logo: '', // Seria a URL da imagem
-  address: 'Av. Paulista, 1000 - Bela Vista, São Paulo - SP, 01310-100',
-  phone: '(11) 3000-5000',
-  email: 'contato@clinicasaude.com',
-  website: 'www.clinicasaude.com',
-  about: 'Somos uma clínica multiprofissional dedicada à saúde e bem-estar. Oferecemos atendimento em diversas especialidades com profissionais altamente qualificados.',
-  socialMedia: {
-    facebook: 'clinicasaude',
-    instagram: 'clinica_saude',
-  },
-  workingHours: {
-    monday: [{ start: '08:00', end: '18:00' }],
-    tuesday: [{ start: '08:00', end: '18:00' }],
-    wednesday: [{ start: '08:00', end: '18:00' }],
-    thursday: [{ start: '08:00', end: '18:00' }],
-    friday: [{ start: '08:00', end: '18:00' }],
-    saturday: [{ start: '08:00', end: '12:00' }],
-    sunday: [],
-  },
+// Prefixos para os IDs de Serviço Social
+const socialMediaPrefixes = {
+  instagram: 'instagram.com/',
+  facebook: 'facebook.com/',
+  twitter: 'twitter.com/'
 };
 
 const ClinicProfile = () => {
-  const [clinic, setClinic] = useState(mockClinic);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(mockClinic);
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const location = useLocation();
+  const isPublicPageFocus = location.pathname === '/dashboard/public-page';
+  const [activeTab, setActiveTab] = useState<string>(isPublicPageFocus ? 'publicPage' : 'profile');
+  
+  // Estado para os dados da clínica
+  const [clinicData, setClinicData] = useState<any>({
+    name: '',
+    description: '',
+    address: '',
+    city: '',
+    state: '',
+    zip: '',
+    phone: '',
+    email: '',
+    website: '',
+    socialMedia: {
+      facebook: '',
+      instagram: '',
+    },
+    slug: '',
+    is_published: false,
+    last_published_at: null
+  });
 
+  // Carregar dados da clínica
+  useEffect(() => {
+    const fetchClinicData = async () => {
+      if (!user?.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('clinics')
+          .select('*')
+          .eq('owner_id', user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+
+        if (data) {
+          // Transformar dados do banco para o formato do estado
+          setClinicData({
+            ...data,
+            socialMedia: {
+              facebook: data.facebook_id || '',
+              instagram: data.instagram_id || '',
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados da clínica:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os dados da clínica.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchClinicData();
+  }, [user, toast]);
+
+  // Atualizar estado com mudanças nos inputs
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    
+    // Atualizar campos aninhados de socialMedia
+    if (name.startsWith('socialMedia.')) {
+      const socialKey = name.split('.')[1];
+      setClinicData(prevState => ({
+        ...prevState,
+        socialMedia: {
+          ...prevState.socialMedia,
+          [socialKey]: value
+        }
+      }));
+    } else {
+      setClinicData(prevState => ({
+        ...prevState,
+        [name]: value
+      }));
+    }
   };
 
-  const handleSocialMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      socialMedia: { ...formData.socialMedia, [name]: value }
-    });
-  };
+  // Salvar dados da clínica
+  const handleSave = async () => {
+    if (!user?.id) return;
 
-  const handleWorkingHoursChange = (day: string, period: 'start' | 'end', value: string) => {
-    setFormData({
-      ...formData,
-      workingHours: {
-        ...formData.workingHours,
-        [day]: formData.workingHours[day as keyof typeof formData.workingHours].map((_, i) => 
-          i === 0 ? { ...formData.workingHours[day as keyof typeof formData.workingHours][0], [period]: value } : _
-        )
+    try {
+      // Preparar dados para salvar
+      const clinicToSave = {
+        name: clinicData.name,
+        description: clinicData.description,
+        address: clinicData.address,
+        city: clinicData.city,
+        state: clinicData.state,
+        zip: clinicData.zip,
+        phone: clinicData.phone,
+        email: clinicData.email,
+        website: clinicData.website,
+        facebook_id: clinicData.socialMedia.facebook,
+        instagram_id: clinicData.socialMedia.instagram,
+        owner_id: user.id,
+        updated_at: new Date().toISOString()
+      };
+
+      // Verificar se é uma inserção ou atualização
+      if (clinicData.id) {
+        const { error } = await supabase
+          .from('clinics')
+          .update(clinicToSave)
+          .eq('id', clinicData.id);
+
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('clinics')
+          .insert({
+            ...clinicToSave,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        
+        // Atualizar o ID após criação
+        if (data) {
+          setClinicData(prevState => ({
+            ...prevState,
+            id: data.id
+          }));
+        }
       }
-    });
+
+      toast({
+        title: "Sucesso",
+        description: "Dados da clínica salvos com sucesso.",
+      });
+    } catch (error: any) {
+      console.error('Erro ao salvar dados da clínica:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Ocorreu um erro ao salvar os dados.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleSaveChanges = (e: React.FormEvent) => {
-    e.preventDefault();
-    setClinic(formData);
-    setIsEditing(false);
-    toast("Perfil atualizado", {
-      description: "As informações da clínica foram atualizadas com sucesso."
-    });
+  // Função para atualizar o estado quando as configurações da página pública são alteradas
+  const handlePublicPageUpdate = (updatedData: any) => {
+    setClinicData(prevState => ({
+      ...prevState,
+      ...updatedData
+    }));
   };
 
-  const weekdays = [
-    { key: 'monday', label: 'Segunda-feira' },
-    { key: 'tuesday', label: 'Terça-feira' },
-    { key: 'wednesday', label: 'Quarta-feira' },
-    { key: 'thursday', label: 'Quinta-feira' },
-    { key: 'friday', label: 'Sexta-feira' },
-    { key: 'saturday', label: 'Sábado' },
-    { key: 'sunday', label: 'Domingo' },
-  ];
+  // Limpar prefixo de URL ao exibir campos de redes sociais
+  const cleanSocialUrl = (url: string, platform: string) => {
+    const prefix = socialMediaPrefixes[platform as keyof typeof socialMediaPrefixes];
+    if (url?.startsWith(prefix)) {
+      return url.substring(prefix.length);
+    }
+    return url;
+  };
 
   return (
     <DashboardLayout>
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Perfil da Clínica</h1>
-          <p className="text-gray-500">Gerencie as informações da sua clínica</p>
-        </div>
-        <div>
-          <Button 
-            variant={isEditing ? "outline" : "default"} 
-            onClick={() => {
-              if (isEditing) {
-                setFormData(clinic); // Reset form data
-              }
-              setIsEditing(!isEditing);
-            }}
-          >
-            {isEditing ? 'Cancelar' : 'Editar Perfil'}
-          </Button>
-        </div>
-      </div>
-      
-      <Tabs defaultValue="info" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="info">Informações Básicas</TabsTrigger>
-          <TabsTrigger value="contact">Contato</TabsTrigger>
-          <TabsTrigger value="hours">Horários</TabsTrigger>
-          <TabsTrigger value="preview">Visualizar Página</TabsTrigger>
-        </TabsList>
-        
-        {/* Aba de Informações Básicas */}
-        <TabsContent value="info">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>Dados da Clínica</CardTitle>
-                <CardDescription>
-                  Informações básicas sobre sua clínica
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSaveChanges} className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nome da Clínica</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="slug">URL Personalizada</Label>
-                      <div className="flex items-center">
-                        <span className="text-gray-500 pr-1">clinica.app/</span>
-                        <Input
-                          id="slug"
-                          name="slug"
-                          value={formData.slug}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          className="flex-1"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="about">Sobre a Clínica</Label>
-                      <Textarea
-                        id="about"
-                        name="about"
-                        value={formData.about}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        rows={4}
-                      />
-                    </div>
-                  </div>
-                  
-                  {isEditing && (
-                    <Button type="submit" className="mt-6">
-                      Salvar Alterações
-                    </Button>
-                  )}
-                </form>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Logo</CardTitle>
-                <CardDescription>
-                  Logo da sua clínica
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center justify-center">
-                  {clinic.logo ? (
-                    <div className="relative w-40 h-40">
-                      <img
-                        src={clinic.logo}
-                        alt={`Logo da ${clinic.name}`}
-                        className="w-full h-full object-contain"
-                      />
-                      {isEditing && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="absolute bottom-0 right-0"
-                        >
-                          Alterar
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="w-40 h-40 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-gray-400">
-                      <Upload className="h-10 w-10 mb-2" />
-                      <p className="text-sm">Logo da Clínica</p>
-                      {isEditing && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-4"
-                        >
-                          Fazer Upload
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">
+              {isPublicPageFocus ? 'Página Pública' : 'Perfil da Clínica'}
+            </h1>
+            <p className="text-gray-500">
+              {isPublicPageFocus 
+                ? 'Configure sua página pública para atrair novos pacientes'
+                : 'Gerenciar informações da sua clínica'}
+            </p>
           </div>
-        </TabsContent>
-        
-        {/* Aba de Contato */}
-        <TabsContent value="contact">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        </div>
+
+        <Tabs 
+          value={activeTab} 
+          onValueChange={setActiveTab} 
+          className="space-y-6"
+        >
+          <div className="bg-white p-1 rounded-lg shadow-sm border">
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="profile">Perfil da Clínica</TabsTrigger>
+              <TabsTrigger value="publicPage">Página Pública</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="profile" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Informações de Contato</CardTitle>
+                <CardTitle className="flex items-center">
+                  <Building2 className="mr-2 h-5 w-5" />
+                  Informações Básicas
+                </CardTitle>
                 <CardDescription>
-                  Como os pacientes podem entrar em contato com sua clínica
+                  Dados principais da sua clínica
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSaveChanges} className="space-y-4">
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="address">Endereço</Label>
-                    <Textarea
-                      id="address"
-                      name="address"
-                      value={formData.address}
+                    <Label htmlFor="name">Nome da Clínica</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      placeholder="Nome da sua clínica"
+                      value={clinicData.name}
                       onChange={handleInputChange}
-                      disabled={!isEditing}
                     />
                   </div>
                   
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea
+                      id="description"
+                      name="description"
+                      placeholder="Descreva sua clínica (especialidades, diferenciais, etc.)"
+                      value={clinicData.description}
+                      onChange={handleInputChange}
+                      rows={4}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <MapPin className="mr-2 h-5 w-5" />
+                  Endereço
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Endereço</Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      placeholder="Rua, número, complemento"
+                      value={clinicData.address}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">Cidade</Label>
+                      <Input
+                        id="city"
+                        name="city"
+                        placeholder="Cidade"
+                        value={clinicData.city}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="state">Estado</Label>
+                      <Input
+                        id="state"
+                        name="state"
+                        placeholder="Estado"
+                        value={clinicData.state}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="zip">CEP</Label>
+                      <Input
+                        id="zip"
+                        name="zip"
+                        placeholder="CEP"
+                        value={clinicData.zip}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Phone className="mr-2 h-5 w-5" />
+                  Contato
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="phone">Telefone</Label>
                     <Input
                       id="phone"
                       name="phone"
-                      value={formData.phone}
+                      placeholder="(00) 0000-0000"
+                      value={clinicData.phone}
                       onChange={handleInputChange}
-                      disabled={!isEditing}
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       name="email"
-                      value={formData.email}
+                      type="email"
+                      placeholder="contato@suaclinica.com"
+                      value={clinicData.email}
                       onChange={handleInputChange}
-                      disabled={!isEditing}
                     />
                   </div>
-                  
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Globe className="mr-2 h-5 w-5" />
+                  Presença Online
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="website">Website</Label>
                     <Input
                       id="website"
                       name="website"
-                      value={formData.website}
+                      placeholder="www.suaclinica.com"
+                      value={clinicData.website}
                       onChange={handleInputChange}
-                      disabled={!isEditing}
                     />
                   </div>
-                  
-                  {isEditing && (
-                    <Button type="submit" className="mt-6">
-                      Salvar Alterações
-                    </Button>
-                  )}
-                </form>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Redes Sociais</CardTitle>
-                <CardDescription>
-                  Conecte sua clínica às redes sociais
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSaveChanges} className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Facebook className="h-5 w-5 text-blue-600" />
-                      <Label htmlFor="facebook">Facebook</Label>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-gray-500 pr-1">facebook.com/</span>
-                      <Input
-                        id="facebook"
-                        name="facebook"
-                        value={formData.socialMedia?.facebook || ''}
-                        onChange={handleSocialMediaChange}
-                        disabled={!isEditing}
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Instagram className="h-5 w-5 text-pink-600" />
-                      <Label htmlFor="instagram">Instagram</Label>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-gray-500 pr-1">instagram.com/</span>
-                      <Input
-                        id="instagram"
-                        name="instagram"
-                        value={formData.socialMedia?.instagram || ''}
-                        onChange={handleSocialMediaChange}
-                        disabled={!isEditing}
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
-                  
-                  {isEditing && (
-                    <Button type="submit" className="mt-6">
-                      Salvar Alterações
-                    </Button>
-                  )}
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        {/* Aba de Horários */}
-        <TabsContent value="hours">
-          <Card>
-            <CardHeader>
-              <CardTitle>Horários de Funcionamento</CardTitle>
-              <CardDescription>
-                Defina os horários de atendimento da clínica
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSaveChanges} className="space-y-4">
-                {weekdays.map((day) => (
-                  <div key={day.key} className="grid grid-cols-1 sm:grid-cols-5 items-center gap-4">
-                    <div className="sm:col-span-1 font-medium">{day.label}</div>
-                    
-                    {formData.workingHours[day.key as keyof typeof formData.workingHours]?.length > 0 ? (
-                      <React.Fragment>
-                        <div className="sm:col-span-2">
-                          <Label htmlFor={`${day.key}-start`} className="sr-only">Hora de Início</Label>
-                          <Input
-                            id={`${day.key}-start`}
-                            type="time"
-                            value={formData.workingHours[day.key as keyof typeof formData.workingHours][0]?.start || ''}
-                            onChange={(e) => handleWorkingHoursChange(day.key, 'start', e.target.value)}
-                            disabled={!isEditing}
-                          />
-                        </div>
-                        <div className="text-center">até</div>
-                        <div className="sm:col-span-2">
-                          <Label htmlFor={`${day.key}-end`} className="sr-only">Hora de Término</Label>
-                          <Input
-                            id={`${day.key}-end`}
-                            type="time"
-                            value={formData.workingHours[day.key as keyof typeof formData.workingHours][0]?.end || ''}
-                            onChange={(e) => handleWorkingHoursChange(day.key, 'end', e.target.value)}
-                            disabled={!isEditing}
-                          />
-                        </div>
-                      </React.Fragment>
-                    ) : (
-                      <div className="sm:col-span-4 text-gray-500 italic">
-                        Fechado
-                      </div>
-                    )}
-                  </div>
-                ))}
-                
-                {isEditing && (
-                  <Button type="submit" className="mt-6">
-                    Salvar Alterações
-                  </Button>
-                )}
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {/* Aba de Visualização da Página */}
-        <TabsContent value="preview">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Visualização da Página Pública</CardTitle>
-                <CardDescription>
-                  Assim que sua página ficará para os visitantes
-                </CardDescription>
-              </div>
-              <Button variant="outline">
-                <Globe className="mr-2 h-4 w-4" />
-                Visitar Página
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="border rounded-lg p-6 bg-white">
-                {/* Header da página pública */}
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center pb-6 border-b">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-healthblue-100 rounded-full flex items-center justify-center text-healthblue-600 font-bold text-lg">
-                      {clinic.name.charAt(0)}
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900">{clinic.name}</h2>
-                      <p className="text-gray-500 flex items-center">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {clinic.address.split(',')[0]}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 md:mt-0">
-                    <Button>Agendar Consulta</Button>
-                  </div>
-                </div>
-                
-                {/* Informações da clínica */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                  <div className="md:col-span-2">
-                    <h3 className="text-lg font-semibold mb-3">Sobre a Clínica</h3>
-                    <p className="text-gray-600">{clinic.about}</p>
-                    
-                    <div className="mt-6">
-                      <h3 className="text-lg font-semibold mb-3">Contato</h3>
-                      <div className="space-y-2">
-                        <p className="flex items-center text-gray-600">
-                          <Phone className="h-4 w-4 mr-2 text-healthblue-500" />
-                          {clinic.phone}
-                        </p>
-                        <p className="flex items-center text-gray-600">
-                          <Mail className="h-4 w-4 mr-2 text-healthblue-500" />
-                          {clinic.email}
-                        </p>
-                        <p className="flex items-center text-gray-600">
-                          <Globe className="h-4 w-4 mr-2 text-healthblue-500" />
-                          {clinic.website}
-                        </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="instagram" className="flex items-center">
+                        <Instagram className="h-4 w-4 mr-2" />
+                        Instagram
+                      </Label>
+                      <div className="flex">
+                        <span className="bg-gray-100 flex items-center px-3 rounded-l border border-r-0 text-sm text-gray-500">
+                          instagram.com/
+                        </span>
+                        <Input
+                          id="instagram"
+                          name="socialMedia.instagram"
+                          placeholder="suaclinica"
+                          value={cleanSocialUrl(clinicData.socialMedia?.instagram || '', 'instagram')}
+                          onChange={handleInputChange}
+                          className="rounded-l-none"
+                        />
                       </div>
                     </div>
                     
-                    <Separator className="my-6" />
-                    
-                    <h3 className="text-lg font-semibold mb-3">Nossa Equipe</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="flex items-center p-4 border rounded-lg">
-                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-medium">
-                          JC
-                        </div>
-                        <div className="ml-3">
-                          <p className="font-medium">Dr. João Cardoso</p>
-                          <p className="text-sm text-gray-500">Cardiologista</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center p-4 border rounded-lg">
-                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-medium">
-                          AB
-                        </div>
-                        <div className="ml-3">
-                          <p className="font-medium">Dra. Ana Beatriz</p>
-                          <p className="text-sm text-gray-500">Dermatologista</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="border rounded-lg p-4">
-                      <h3 className="text-lg font-semibold mb-3 flex items-center">
-                        <Clock className="h-5 w-5 mr-2 text-healthblue-500" />
-                        Horários
-                      </h3>
-                      
-                      <div className="space-y-2">
-                        {weekdays.map((day) => (
-                          <div key={day.key} className="flex justify-between">
-                            <span className="text-gray-600">{day.label}</span>
-                            <span className="font-medium">
-                              {clinic.workingHours[day.key as keyof typeof clinic.workingHours]?.length > 0 
-                                ? `${clinic.workingHours[day.key as keyof typeof clinic.workingHours][0].start} - ${clinic.workingHours[day.key as keyof typeof clinic.workingHours][0].end}`
-                                : 'Fechado'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <div className="mt-4 flex justify-center">
-                        <Button variant="outline" size="sm">Agendar Consulta</Button>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-6 border rounded-lg p-4">
-                      <h3 className="text-lg font-semibold mb-3">Avaliações</h3>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex items-center">
-                            <span className="text-yellow-400">★★★★★</span>
-                            <span className="ml-2 font-medium">Excelente atendimento</span>
-                          </div>
-                          <p className="text-gray-600 text-sm">Maria S.</p>
-                        </div>
-                        <div>
-                          <div className="flex items-center">
-                            <span className="text-yellow-400">★★★★☆</span>
-                            <span className="ml-2 font-medium">Muito bom</span>
-                          </div>
-                          <p className="text-gray-600 text-sm">João P.</p>
-                        </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="facebook" className="flex items-center">
+                        <Facebook className="h-4 w-4 mr-2" />
+                        Facebook
+                      </Label>
+                      <div className="flex">
+                        <span className="bg-gray-100 flex items-center px-3 rounded-l border border-r-0 text-sm text-gray-500">
+                          facebook.com/
+                        </span>
+                        <Input
+                          id="facebook"
+                          name="socialMedia.facebook"
+                          placeholder="suaclinica"
+                          value={cleanSocialUrl(clinicData.socialMedia?.facebook || '', 'facebook')}
+                          onChange={handleInputChange}
+                          className="rounded-l-none"
+                        />
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              </CardContent>
+              <CardFooter className="flex justify-end pt-2">
+                <Button onClick={handleSave}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar Alterações
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="publicPage" className="space-y-6">
+            <PublicPageSettings clinicData={clinicData} onUpdate={handlePublicPageUpdate} />
+          </TabsContent>
+        </Tabs>
+      </div>
     </DashboardLayout>
   );
 };
