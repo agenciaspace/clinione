@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { MapPin, Phone, Mail, Globe, Clock, Calendar, ArrowLeft } from 'lucide-react';
@@ -36,6 +36,7 @@ type ClinicData = {
 
 const PublicClinicPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
   const [clinic, setClinic] = useState<ClinicData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,9 +44,10 @@ const PublicClinicPage: React.FC = () => {
   
   // Verifica se está em modo de preview na dashboard
   useEffect(() => {
-    const isPreviewMode = window.location.pathname.includes('/dashboard/public-page');
+    const isPreviewMode = location.pathname.includes('/dashboard/public-page');
     setIsPreview(isPreviewMode);
-  }, []);
+    console.log("Modo preview:", isPreviewMode);
+  }, [location.pathname]);
   
   useEffect(() => {
     const fetchClinicData = async () => {
@@ -53,18 +55,55 @@ const PublicClinicPage: React.FC = () => {
       setError(null);
       
       try {
-        console.log("Buscando clínica com slug:", slug);
+        console.log("Buscando clínica. Modo preview:", isPreview, "Slug:", slug);
         
         let clinicQuery;
         
         if (isPreview) {
           // No modo preview, busca a primeira clínica do usuário logado
+          console.log("Buscando primeira clínica para preview");
           clinicQuery = await supabase
             .from('clinics')
             .select('*')
             .limit(1);
+            
+          console.log("Dados da consulta:", clinicQuery.data);
+          console.log("Erro da consulta (se houver):", clinicQuery.error);
+          
+          if (clinicQuery.error) throw clinicQuery.error;
+          
+          if (!clinicQuery.data || clinicQuery.data.length === 0) {
+            console.log("Nenhuma clínica encontrada, usando mock data");
+            // Mock data para preview quando não há clínicas
+            setClinic({
+              id: "preview-mock-id",
+              name: "Clínica Modelo",
+              logo: null,
+              description: "Esta é uma visualização de exemplo de como sua página pública pode ficar. Adicione informações da sua clínica para personalizar esta página.",
+              address: "Av. Exemplo, 123, São Paulo - SP",
+              phone: "(11) 1234-5678",
+              email: "contato@clinica.exemplo",
+              website: "https://clinica.exemplo",
+              facebook_id: null,
+              instagram_id: null,
+              working_hours: {
+                monday: [{ start: "08:00", end: "18:00" }],
+                tuesday: [{ start: "08:00", end: "18:00" }],
+                wednesday: [{ start: "08:00", end: "18:00" }],
+                thursday: [{ start: "08:00", end: "18:00" }],
+                friday: [{ start: "08:00", end: "18:00" }],
+                saturday: [{ start: "08:00", end: "13:00" }],
+                sunday: []
+              },
+              slug: "clinica-modelo",
+              is_published: false
+            } as ClinicData);
+            setIsLoading(false);
+            return;
+          }
         } else if (slug) {
           // Modo público, busca pela slug específica
+          console.log("Buscando clínica pelo slug:", slug);
           clinicQuery = await supabase
             .from('clinics')
             .select('*')

@@ -24,9 +24,41 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
   const [slug, setSlug] = useState(initialSlug || '');
   const [isPublished, setIsPublished] = useState(initialIsPublished || false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [clinicExists, setClinicExists] = useState(true);
   
   // Use the custom domain instead of the application base URL
   const baseUrl = "https://clini.one";
+
+  // Verifica se a clínica existe e é válida
+  useEffect(() => {
+    const checkClinic = async () => {
+      if (!clinicId) {
+        console.error("ID da clínica não fornecido");
+        setClinicExists(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('clinics')
+          .select('id')
+          .eq('id', clinicId)
+          .single();
+        
+        if (error || !data) {
+          console.error("Clínica não encontrada:", error);
+          setClinicExists(false);
+        } else {
+          setClinicExists(true);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar clínica:", error);
+        setClinicExists(false);
+      }
+    };
+
+    checkClinic();
+  }, [clinicId]);
 
   const handlePublishToggle = async () => {
     if (!slug) {
@@ -36,14 +68,15 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
       return;
     }
 
+    if (!clinicExists) {
+      toast.error("Clínica não encontrada", {
+        description: "Não foi possível encontrar a clínica para atualizar."
+      });
+      return;
+    }
+
     setIsUpdating(true);
     try {
-      // Verifica se clinicId é um UUID válido
-      if (!clinicId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clinicId)) {
-        console.error("ID da clínica inválido:", clinicId);
-        throw new Error("ID da clínica inválido");
-      }
-
       console.log("Atualizando status de publicação para a clínica:", clinicId);
       
       const { error } = await supabase
@@ -99,15 +132,32 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
       return;
     }
 
+    if (!clinicExists) {
+      toast.error("Clínica não encontrada", {
+        description: "Não foi possível encontrar a clínica para atualizar."
+      });
+      return;
+    }
+
     setIsUpdating(true);
     try {
-      // Verifica se clinicId é um UUID válido
-      if (!clinicId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clinicId)) {
-        console.error("ID da clínica inválido:", clinicId);
-        throw new Error("ID da clínica inválido");
-      }
-      
       console.log("Atualizando slug para a clínica:", clinicId);
+      
+      // Verifica se o slug já existe
+      const { data: existingSlug, error: slugCheckError } = await supabase
+        .from('clinics')
+        .select('id')
+        .eq('slug', slug)
+        .neq('id', clinicId);
+
+      if (slugCheckError) {
+        console.error('Erro ao verificar slug existente:', slugCheckError);
+        throw new Error("Erro ao verificar disponibilidade da URL");
+      }
+
+      if (existingSlug && existingSlug.length > 0) {
+        throw new Error("Esta URL já está em uso por outra clínica");
+      }
       
       const { error } = await supabase
         .from('clinics')
@@ -115,7 +165,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
         .eq('id', clinicId);
 
       if (error) {
-        console.error('Erro detalhado:', error);
+        console.error('Erro detalhado ao atualizar slug:', error);
         throw error;
       }
 
@@ -124,10 +174,10 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
       toast.success("URL atualizada", {
         description: "A URL personalizada da sua clínica foi atualizada com sucesso."
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao atualizar slug:', error);
       toast.error("Erro ao atualizar URL", {
-        description: "Não foi possível atualizar a URL personalizada. Ela pode já estar em uso."
+        description: error.message || "Não foi possível atualizar a URL personalizada."
       });
     } finally {
       setIsUpdating(false);
@@ -136,6 +186,27 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
 
   // Formato: clini.one/c/slug
   const publicUrl = slug ? `${baseUrl}/c/${slug}` : '';
+
+  if (!clinicExists) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Página Pública</CardTitle>
+          <CardDescription>
+            Configure e publique a página pública da sua clínica
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="p-4 text-center">
+            <p className="text-red-500 mb-2">Clínica não encontrada</p>
+            <p className="text-gray-500">
+              É necessário criar ou selecionar uma clínica antes de configurar a página pública.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full">
