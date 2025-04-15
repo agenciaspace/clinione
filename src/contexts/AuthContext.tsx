@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { User, UserRole } from '../types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
@@ -26,64 +27,121 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simula verificação de autenticação ao iniciar
+  // Verificar autenticação quando o componente monta e monitorar alterações
   useEffect(() => {
-    const checkAuth = () => {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    // Primeiro definir o listener de mudanças de estado de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session && session.user) {
+          setUser({
+            id: session.user.id,
+            name: session.user.user_metadata?.name || 'Usuário',
+            email: session.user.email || '',
+            role: session.user.user_metadata?.role || 'user',
+            clinicId: session.user.user_metadata?.clinicId
+          });
+        } else {
+          setUser(null);
+        }
+        setIsLoading(false);
+      }
+    );
+
+    // Em seguida, verificar se já existe uma sessão
+    const checkCurrentSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session && session.user) {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata?.name || 'Usuário',
+          email: session.user.email || '',
+          role: session.user.user_metadata?.role || 'user',
+          clinicId: session.user.user_metadata?.clinicId
+        });
       }
       setIsLoading(false);
     };
 
-    checkAuth();
+    checkCurrentSession();
+
+    // Cancelar a inscrição quando o componente for desmontado
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Simulação de login (em um aplicativo real, seria uma chamada à API)
+  // Login com Supabase
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulação de delay de chamada API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulando usuário para demonstração
-      const mockUser: User = {
-        id: '1',
-        name: 'Admin Demo',
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        role: 'admin',
-        clinicId: '1'
-      };
+        password,
+      });
       
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      setUser(mockUser);
+      if (error) {
+        throw error;
+      }
+      
+      if (data.user) {
+        setUser({
+          id: data.user.id,
+          name: data.user.user_metadata?.name || 'Usuário',
+          email: data.user.email || '',
+          role: data.user.user_metadata?.role || 'user',
+          clinicId: data.user.user_metadata?.clinicId
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao fazer login:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+  // Logout com Supabase
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
   };
 
+  // Registro com Supabase
   const register = async (name: string, email: string, password: string, role: UserRole) => {
     setIsLoading(true);
     try {
-      // Simulação de delay de chamada API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulando usuário registrado para demonstração
-      const mockUser: User = {
-        id: '1',
-        name,
+      const { data, error } = await supabase.auth.signUp({
         email,
-        role,
-        clinicId: role === 'admin' ? '1' : undefined,
-      };
+        password,
+        options: {
+          data: {
+            name,
+            role,
+          },
+        },
+      });
       
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      setUser(mockUser);
+      if (error) {
+        throw error;
+      }
+      
+      if (data.user) {
+        setUser({
+          id: data.user.id,
+          name: data.user.user_metadata?.name || name,
+          email: data.user.email || '',
+          role: data.user.user_metadata?.role || role,
+          clinicId: data.user.user_metadata?.clinicId
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao registrar:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }

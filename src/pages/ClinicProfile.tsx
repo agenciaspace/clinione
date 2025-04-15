@@ -19,6 +19,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WorkingHours } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Define a estrutura esperada para o horário de funcionamento
 type WorkingHourPeriod = { start: string; end: string }[];
@@ -72,6 +73,7 @@ const ClinicProfile: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth(); // Usar o contexto de autenticação
 
   // Configuração do formulário para criar novas clínicas
   const createClinicForm = useForm<CreateClinicFormValues>({
@@ -286,77 +288,152 @@ const ClinicProfile: React.FC = () => {
     try {
       setIsCreating(true);
       
-      // Obter o ID do usuário atual
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Status do usuário atual:", user);
       
-      if (!user) {
-        toast.error("Erro de autenticação", {
-          description: "Você precisa estar logado para criar uma clínica."
-        });
-        setIsCreating(false);
-        return false;
-      }
-      
-      // Formatar os dados para o Supabase
-      const newClinicData = {
-        name: values.name,
-        description: values.description || '',
-        slug: values.slug || undefined,
-        working_hours: defaultWorkingHours,
-        owner_id: user.id // Adicionar o campo owner_id
-      };
-      
-      console.log("Criando nova clínica:", newClinicData);
-      
-      const { data, error } = await supabase
-        .from('clinics')
-        .insert(newClinicData)
-        .select();
-      
-      if (error) {
-        console.error("Erro ao criar clínica:", error);
-        throw error;
-      }
-      
-      console.log("Clínica criada:", data);
-      
-      // Formatar a nova clínica
-      if (data && data.length > 0) {
-        const newClinic: Clinic = {
-          id: data[0].id,
-          name: data[0].name,
-          slug: data[0].slug,
-          logo: data[0].logo,
-          address: data[0].address,
-          phone: data[0].phone,
-          email: data[0].email,
-          website: data[0].website,
-          about: data[0].description || '',
-          socialMedia: {
-            facebook: data[0].facebook_id || '',
-            instagram: data[0].instagram_id || '',
-          },
-          workingHours: data[0].working_hours as WorkingHours || defaultWorkingHours,
-          is_published: data[0].is_published
+      // Verificar se temos acesso ao usuário através do contexto de autenticação
+      if (!user || !user.id) {
+        // Se não tiver o usuário do contexto, tentar obter do Supabase
+        const { data: authData } = await supabase.auth.getUser();
+        
+        if (!authData || !authData.user) {
+          toast.error("Erro de autenticação", {
+            description: "Você precisa estar logado para criar uma clínica."
+          });
+          setIsCreating(false);
+          return false;
+        }
+        
+        // Usar o ID do usuário autenticado do Supabase
+        const userId = authData.user.id;
+        console.log("ID do usuário obtido do Supabase:", userId);
+        
+        // Formatar os dados para o Supabase
+        const newClinicData = {
+          name: values.name,
+          description: values.description || '',
+          slug: values.slug || undefined,
+          working_hours: defaultWorkingHours,
+          owner_id: userId
         };
         
-        // Adicionar à lista de clínicas
-        setClinics([newClinic, ...clinics]);
+        console.log("Criando nova clínica:", newClinicData);
         
-        // Selecionar a nova clínica
-        setSelectedClinicId(newClinic.id);
-        setClinic(newClinic);
-        setFormData(newClinic);
+        const { data, error } = await supabase
+          .from('clinics')
+          .insert(newClinicData)
+          .select();
         
-        toast.success("Clínica criada", {
-          description: "Sua nova clínica foi criada com sucesso."
-        });
+        if (error) {
+          console.error("Erro ao criar clínica:", error);
+          throw error;
+        }
         
-        // Resetar formulário e fechar diálogo
-        createClinicForm.reset();
-        setIsCreating(false);
+        console.log("Clínica criada:", data);
         
-        return true;
+        // Formatar a nova clínica
+        if (data && data.length > 0) {
+          const newClinic: Clinic = {
+            id: data[0].id,
+            name: data[0].name,
+            slug: data[0].slug,
+            logo: data[0].logo,
+            address: data[0].address,
+            phone: data[0].phone,
+            email: data[0].email,
+            website: data[0].website,
+            about: data[0].description || '',
+            socialMedia: {
+              facebook: data[0].facebook_id || '',
+              instagram: data[0].instagram_id || '',
+            },
+            workingHours: data[0].working_hours as WorkingHours || defaultWorkingHours,
+            is_published: data[0].is_published
+          };
+          
+          // Adicionar à lista de clínicas
+          setClinics([newClinic, ...clinics]);
+          
+          // Selecionar a nova clínica
+          setSelectedClinicId(newClinic.id);
+          setClinic(newClinic);
+          setFormData(newClinic);
+          
+          toast.success("Clínica criada", {
+            description: "Sua nova clínica foi criada com sucesso."
+          });
+          
+          // Resetar formulário e fechar diálogo
+          createClinicForm.reset();
+          setIsCreating(false);
+          
+          return true;
+        }
+      } else {
+        // Usar o ID do usuário do contexto de autenticação
+        const userId = user.id;
+        console.log("ID do usuário obtido do contexto:", userId);
+        
+        // Formatar os dados para o Supabase
+        const newClinicData = {
+          name: values.name,
+          description: values.description || '',
+          slug: values.slug || undefined,
+          working_hours: defaultWorkingHours,
+          owner_id: userId
+        };
+        
+        console.log("Criando nova clínica:", newClinicData);
+        
+        const { data, error } = await supabase
+          .from('clinics')
+          .insert(newClinicData)
+          .select();
+        
+        if (error) {
+          console.error("Erro ao criar clínica:", error);
+          throw error;
+        }
+        
+        console.log("Clínica criada:", data);
+        
+        // Formatar a nova clínica
+        if (data && data.length > 0) {
+          const newClinic: Clinic = {
+            id: data[0].id,
+            name: data[0].name,
+            slug: data[0].slug,
+            logo: data[0].logo,
+            address: data[0].address,
+            phone: data[0].phone,
+            email: data[0].email,
+            website: data[0].website,
+            about: data[0].description || '',
+            socialMedia: {
+              facebook: data[0].facebook_id || '',
+              instagram: data[0].instagram_id || '',
+            },
+            workingHours: data[0].working_hours as WorkingHours || defaultWorkingHours,
+            is_published: data[0].is_published
+          };
+          
+          // Adicionar à lista de clínicas
+          setClinics([newClinic, ...clinics]);
+          
+          // Selecionar a nova clínica
+          setSelectedClinicId(newClinic.id);
+          setClinic(newClinic);
+          setFormData(newClinic);
+          
+          toast.success("Clínica criada", {
+            description: "Sua nova clínica foi criada com sucesso."
+          });
+          
+          // Resetar formulário e fechar diálogo
+          createClinicForm.reset();
+          setIsCreating(false);
+          
+          return true;
+        }
       }
     } catch (error: any) {
       console.error("Erro ao criar clínica:", error);
