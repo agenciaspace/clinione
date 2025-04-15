@@ -111,7 +111,7 @@ const Dashboard = () => {
                   <SelectValue placeholder="Todos os profissionais" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os profissionais</SelectItem>
+                  <SelectItem value="all">Todos os profissionais</SelectItem>
                   <SelectItem value="Dr. João Cardoso">Dr. João Cardoso</SelectItem>
                   <SelectItem value="Dra. Ana Beatriz">Dra. Ana Beatriz</SelectItem>
                 </SelectContent>
