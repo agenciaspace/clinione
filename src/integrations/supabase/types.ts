@@ -29,6 +29,7 @@ export type Database = {
           specialties: string[] | null
           state: string | null
           updated_at: string
+          url_format: string | null
           website: string | null
           working_hours: Json | null
           zip: string | null
@@ -52,6 +53,7 @@ export type Database = {
           specialties?: string[] | null
           state?: string | null
           updated_at?: string
+          url_format?: string | null
           website?: string | null
           working_hours?: Json | null
           zip?: string | null
@@ -75,6 +77,7 @@ export type Database = {
           specialties?: string[] | null
           state?: string | null
           updated_at?: string
+          url_format?: string | null
           website?: string | null
           working_hours?: Json | null
           zip?: string | null

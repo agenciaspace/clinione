@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -276,6 +275,13 @@ const PublicClinicPage = () => {
         ))}
       </div>
     );
+  };
+
+  const renderVisitPublicPage = () => {
+    if (clinic && clinic.slug) {
+      return `https://clini.one/c/${clinic.slug}`;
+    }
+    return "";
   };
 
   if (isLoading) {

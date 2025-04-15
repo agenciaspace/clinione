@@ -116,7 +116,8 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
     }
   };
 
-  const publicUrl = slug ? `${baseUrl}/${slug}` : '';
+  // Novo formato: clini.one/c/slug
+  const publicUrl = slug ? `${baseUrl}/c/${slug}` : '';
 
   return (
     <Card className="w-full">
@@ -133,7 +134,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
             <div className="flex gap-2">
               <div className="flex-1">
                 <div className="flex items-center">
-                  <span className="text-gray-500 pr-1 whitespace-nowrap">{baseUrl}/</span>
+                  <span className="text-gray-500 pr-1 whitespace-nowrap">{baseUrl}/c/</span>
                   <Input
                     id="slug"
                     value={slug}

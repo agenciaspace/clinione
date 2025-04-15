@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
@@ -41,10 +41,10 @@ const App = () => (
             <Route path="/dashboard/clinic" element={<ClinicProfile />} />
             <Route path="/dashboard/settings" element={<Settings />} />
             {/* Public clinic routes */}
-            <Route path="/:slug" element={<PublicClinicPage />} /> 
-            <Route path="/dashboard/public-page" element={<PublicClinicPage />} />
-            {/* For compatibility with DNS redirect rules */}
             <Route path="/c/:slug" element={<PublicClinicPage />} />
+            <Route path="/dashboard/public-page" element={<PublicClinicPage />} />
+            {/* Redirect from old format to new format */}
+            <Route path="/:slug" element={<Navigate to="/c/:slug" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
