@@ -613,7 +613,7 @@ const PublicClinicPage = () => {
                     <div className="space-y-2">
                       <p className="flex items-start text-gray-700">
                         <MapPin className="h-5 w-5 mr-2 text-healthblue-500 shrink-0 mt-0.5" />
-                        <span>{clinic.address}, {clinic.cep}</span>
+                        <span>{clinic.address.split('-')[0]}</span>
                       </p>
                     </div>
                     <div className="mt-4">
