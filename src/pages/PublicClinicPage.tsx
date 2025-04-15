@@ -532,7 +532,7 @@ const PublicClinicPage = () => {
                     <div className="mt-6">
                       <h3 className="font-semibold text-lg mb-3">Nossas Especialidades</h3>
                       <div className="flex flex-wrap gap-2">
-                        {clinic.specialties.map(specialty => (
+                        {clinic.specialties && clinic.specialties.map(specialty => (
                           <Badge key={specialty} variant="secondary">{specialty}</Badge>
                         ))}
                       </div>
@@ -610,7 +610,7 @@ const PublicClinicPage = () => {
                               <div key={day} className="flex justify-between">
                                 <span>{weekdayLabels[day as keyof typeof weekdayLabels]}:</span>
                                 <span>
-                                  {periods.length > 0 
+                                  {Array.isArray(periods) && periods.length > 0 
                                     ? `${periods[0].start} - ${periods[0].end}` 
                                     : 'Fechado'}
                                 </span>
@@ -851,12 +851,12 @@ const PublicClinicPage = () => {
                   <div className="flex">
                     {renderStars(5)}
                   </div>
-                  <p className="text-sm text-gray-500">{mockReviews.length} avaliações</p>
+                  <p className="text-sm text-gray-500">{mockReviews ? mockReviews.length : 0} avaliações</p>
                 </div>
               </div>
               
               <div className="space-y-4">
-                {mockReviews.map(review => (
+                {mockReviews && mockReviews.map(review => (
                   <div key={review.id} className="border-b pb-4 last:border-b-0 last:pb-0">
                     <div className="flex justify-between items-start">
                       <div>
