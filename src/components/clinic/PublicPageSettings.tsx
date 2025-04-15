@@ -38,6 +38,13 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
 
     setIsUpdating(true);
     try {
+      // Verifica se clinicId é um UUID válido
+      if (!clinicId) {
+        throw new Error("ID da clínica inválido");
+      }
+
+      console.log("Atualizando status de publicação para a clínica:", clinicId);
+      
       const { error } = await supabase
         .from('clinics')
         .update({ 
@@ -47,6 +54,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
         .eq('id', clinicId);
 
       if (error) {
+        console.error('Erro detalhado:', error);
         throw error;
       }
 
@@ -92,12 +100,20 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
 
     setIsUpdating(true);
     try {
+      // Verifica se clinicId é um UUID válido
+      if (!clinicId) {
+        throw new Error("ID da clínica inválido");
+      }
+      
+      console.log("Atualizando slug para a clínica:", clinicId);
+      
       const { error } = await supabase
         .from('clinics')
         .update({ slug })
         .eq('id', clinicId);
 
       if (error) {
+        console.error('Erro detalhado:', error);
         throw error;
       }
 

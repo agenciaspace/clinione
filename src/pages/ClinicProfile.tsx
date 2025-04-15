@@ -63,23 +63,29 @@ const ClinicProfile: React.FC = () => {
       setIsLoading(true);
       
       try {
+        // Primeiro, tentamos buscar clinicas do usuário atual
         const { data, error } = await supabase
           .from('clinics')
           .select('*')
-          .limit(1)
-          .single();
+          .limit(1);
+          
+        console.log("Dados da consulta:", data);
+        console.log("Erro da consulta (se houver):", error);
           
         if (error) {
           console.error("Error fetching clinic:", error);
           setClinic(mockClinic);
           setFormData(mockClinic);
-        } else if (data) {
+        } else if (data && data.length > 0) {
+          const clinicData = data[0];
+          console.log("Clínica encontrada:", clinicData);
+          
           // Parse and validate working hours from the database
           let parsedWorkingHours: WorkingHours;
           try {
             // Check if working_hours is a valid object with the expected structure
-            if (data.working_hours && typeof data.working_hours === 'object') {
-              parsedWorkingHours = data.working_hours as WorkingHours;
+            if (clinicData.working_hours && typeof clinicData.working_hours === 'object') {
+              parsedWorkingHours = clinicData.working_hours as WorkingHours;
               
               // Ensure all required days are present
               const requiredDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -98,29 +104,36 @@ const ClinicProfile: React.FC = () => {
           }
           
           const formattedData = {
-            ...data,
-            id: data.id || mockClinic.id,
-            name: data.name || mockClinic.name,
-            slug: data.slug || mockClinic.slug,
-            logo: data.logo || mockClinic.logo,
-            address: data.address || mockClinic.address,
-            phone: data.phone || mockClinic.phone,
-            email: data.email || mockClinic.email,
-            website: data.website || mockClinic.website,
-            about: data.description || '',
+            ...clinicData,
+            id: clinicData.id || mockClinic.id,
+            name: clinicData.name || mockClinic.name,
+            slug: clinicData.slug || mockClinic.slug,
+            logo: clinicData.logo || mockClinic.logo,
+            address: clinicData.address || mockClinic.address,
+            phone: clinicData.phone || mockClinic.phone,
+            email: clinicData.email || mockClinic.email,
+            website: clinicData.website || mockClinic.website,
+            about: clinicData.description || '',
             socialMedia: {
-              facebook: data.facebook_id || '',
-              instagram: data.instagram_id || '',
+              facebook: clinicData.facebook_id || '',
+              instagram: clinicData.instagram_id || '',
             },
             workingHours: parsedWorkingHours,
-            is_published: data.is_published || false
+            is_published: clinicData.is_published || false
           };
           
+          console.log("Dados formatados:", formattedData);
           setClinic(formattedData);
           setFormData(formattedData);
+        } else {
+          console.log("Nenhuma clínica encontrada, usando mock data");
+          setClinic(mockClinic);
+          setFormData(mockClinic);
         }
       } catch (error) {
         console.error("Error:", error);
+        setClinic(mockClinic);
+        setFormData(mockClinic);
       } finally {
         setIsLoading(false);
       }
@@ -171,13 +184,20 @@ const ClinicProfile: React.FC = () => {
         working_hours: formData.workingHours,
       };
       
-      if (formData.id !== mockClinic.id) {
-        const { error } = await supabase
+      console.log("Atualizando clínica com ID:", formData.id);
+      console.log("Dados para atualização:", updateData);
+      
+      if (formData.id) {
+        const { error, data } = await supabase
           .from('clinics')
           .update(updateData)
-          .eq('id', formData.id);
+          .eq('id', formData.id)
+          .select();
+        
+        console.log("Resultado da atualização:", data);
         
         if (error) {
+          console.error("Erro detalhado:", error);
           throw error;
         }
       }
@@ -567,7 +587,15 @@ const ClinicProfile: React.FC = () => {
                   Assim que sua página ficará para os visitantes
                 </CardDescription>
               </div>
-              <Button variant="outline">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  if (clinic.slug) {
+                    window.open(`https://clini.one/c/${clinic.slug}`, '_blank');
+                  }
+                }}
+                disabled={!clinic.slug}
+              >
                 <Globe className="mr-2 h-4 w-4" />
                 Visitar Página
               </Button>
