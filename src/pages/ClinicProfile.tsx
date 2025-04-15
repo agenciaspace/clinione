@@ -20,7 +20,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WorkingHours } from '@/types';
 
-// Define the expected structure for working hours
+// Define a estrutura esperada para o horário de funcionamento
 type WorkingHourPeriod = { start: string; end: string }[];
 
 type Clinic = {
@@ -32,7 +32,7 @@ type Clinic = {
   phone: string | null;
   email: string | null;
   website: string | null;
-  about: string; // maps to description in DB
+  about: string; // mapeado para description no banco de dados
   socialMedia: {
     facebook: string | null;
     instagram: string | null;
@@ -41,7 +41,7 @@ type Clinic = {
   is_published: boolean | null;
 };
 
-// Default working hours template
+// Modelo de horários padrão
 const defaultWorkingHours: WorkingHours = {
   monday: [{ start: '08:00', end: '18:00' }],
   tuesday: [{ start: '08:00', end: '18:00' }],
@@ -52,11 +52,11 @@ const defaultWorkingHours: WorkingHours = {
   sunday: [],
 };
 
-// Create clinic form schema
+// Esquema de validação para criação de clínica
 const createClinicSchema = z.object({
-  name: z.string().min(3, "Clinic name must have at least 3 characters"),
-  slug: z.string().min(3, "Slug must have at least 3 characters")
-    .regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers and hyphens are allowed")
+  name: z.string().min(3, "O nome da clínica deve ter pelo menos 3 caracteres"),
+  slug: z.string().min(3, "A URL deve ter pelo menos 3 caracteres")
+    .regex(/^[a-z0-9-]+$/, "Apenas letras minúsculas, números e hífens são permitidos")
     .optional(),
   description: z.string().optional(),
 });
@@ -73,7 +73,7 @@ const ClinicProfile: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
 
-  // Set up the form for creating new clinics
+  // Configuração do formulário para criar novas clínicas
   const createClinicForm = useForm<CreateClinicFormValues>({
     resolver: zodResolver(createClinicSchema),
     defaultValues: {
@@ -83,7 +83,7 @@ const ClinicProfile: React.FC = () => {
     },
   });
 
-  // Fetch all clinics for the current user
+  // Buscar todas as clínicas do usuário atual
   useEffect(() => {
     const fetchClinics = async () => {
       setIsLoading(true);
@@ -95,16 +95,25 @@ const ClinicProfile: React.FC = () => {
           .order('created_at', { ascending: false });
           
         if (error) {
-          console.error("Error fetching clinics:", error);
+          console.error("Erro ao buscar clínicas:", error);
           setClinics([]);
         } else if (data && data.length > 0) {
-          console.log("Clinics found:", data);
+          console.log("Clínicas encontradas:", data);
           
-          const formattedClinics: Clinic[] = data.map(clinicData => {
-            // Ensure working_hours is parsed correctly or use default
-            const workingHoursData = clinicData.working_hours ? 
-              (typeof clinicData.working_hours === 'object' ? clinicData.working_hours as WorkingHours : defaultWorkingHours) :
-              defaultWorkingHours;
+          const formattedClinics = data.map(clinicData => {
+            // Garantir que working_hours seja analisado corretamente ou usar o padrão
+            let workingHoursData: WorkingHours;
+            
+            if (clinicData.working_hours) {
+              if (typeof clinicData.working_hours === 'object') {
+                workingHoursData = clinicData.working_hours as WorkingHours;
+              } else {
+                console.warn("Formato de working_hours inválido, usando padrão");
+                workingHoursData = defaultWorkingHours;
+              }
+            } else {
+              workingHoursData = defaultWorkingHours;
+            }
               
             return {
               id: clinicData.id,
@@ -127,18 +136,18 @@ const ClinicProfile: React.FC = () => {
           
           setClinics(formattedClinics);
           
-          // Select the first clinic by default
+          // Selecionar a primeira clínica por padrão
           if (formattedClinics.length > 0 && !selectedClinicId) {
             setSelectedClinicId(formattedClinics[0].id);
             setClinic(formattedClinics[0]);
             setFormData(formattedClinics[0]);
           }
         } else {
-          console.log("No clinics found");
+          console.log("Nenhuma clínica encontrada");
           setClinics([]);
         }
       } catch (error) {
-        console.error("Error:", error);
+        console.error("Erro:", error);
         setClinics([]);
       } finally {
         setIsLoading(false);
@@ -148,7 +157,7 @@ const ClinicProfile: React.FC = () => {
     fetchClinics();
   }, []);
 
-  // Update selected clinic when it changes
+  // Atualizar clínica selecionada quando mudar
   useEffect(() => {
     if (selectedClinicId && clinics.length > 0) {
       const selectedClinic = clinics.find(c => c.id === selectedClinicId);
@@ -194,8 +203,8 @@ const ClinicProfile: React.FC = () => {
     e.preventDefault();
     
     if (!formData || !selectedClinicId) {
-      toast.error("No clinic selected", {
-        description: "Please select a clinic to update."
+      toast.error("Nenhuma clínica selecionada", {
+        description: "Por favor, selecione uma clínica para atualizar."
       });
       return;
     }
@@ -213,8 +222,8 @@ const ClinicProfile: React.FC = () => {
         working_hours: formData.workingHours,
       };
       
-      console.log("Updating clinic with ID:", selectedClinicId);
-      console.log("Update data:", updateData);
+      console.log("Atualizando clínica com ID:", selectedClinicId);
+      console.log("Dados de atualização:", updateData);
       
       const { error, data } = await supabase
         .from('clinics')
@@ -222,14 +231,14 @@ const ClinicProfile: React.FC = () => {
         .eq('id', selectedClinicId)
         .select();
       
-      console.log("Update result:", data);
+      console.log("Resultado da atualização:", data);
       
       if (error) {
-        console.error("Detailed error:", error);
+        console.error("Erro detalhado:", error);
         throw error;
       }
       
-      // Update the clinic in the list
+      // Atualizar a clínica na lista
       setClinics(prev => 
         prev.map(c => c.id === selectedClinicId ? { ...c, ...formData } : c)
       );
@@ -237,13 +246,13 @@ const ClinicProfile: React.FC = () => {
       setClinic(formData);
       setIsEditing(false);
       
-      toast("Profile updated", {
-        description: "Clinic information has been successfully updated."
+      toast("Perfil atualizado", {
+        description: "As informações da clínica foram atualizadas com sucesso."
       });
     } catch (error) {
-      console.error("Error updating clinic:", error);
-      toast.error("Error updating", {
-        description: "An error occurred while updating the clinic information."
+      console.error("Erro ao atualizar clínica:", error);
+      toast.error("Erro ao atualizar", {
+        description: "Ocorreu um erro ao atualizar as informações da clínica."
       });
     }
   };
@@ -267,7 +276,7 @@ const ClinicProfile: React.FC = () => {
       });
     }
     
-    // Update the clinic in the list
+    // Atualizar a clínica na lista
     setClinics(prev => 
       prev.map(c => c.id === selectedClinicId ? updatedClinic : c)
     );
@@ -277,27 +286,27 @@ const ClinicProfile: React.FC = () => {
     try {
       setIsCreating(true);
       
-      // Get the current user's ID
+      // Obter o ID do usuário atual
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        toast.error("Authentication error", {
-          description: "You must be logged in to create a clinic."
+        toast.error("Erro de autenticação", {
+          description: "Você precisa estar logado para criar uma clínica."
         });
         setIsCreating(false);
         return false;
       }
       
-      // Format the data for Supabase
+      // Formatar os dados para o Supabase
       const newClinicData = {
         name: values.name,
         description: values.description || '',
         slug: values.slug || undefined,
         working_hours: defaultWorkingHours,
-        owner_id: user.id // Add the owner_id field
+        owner_id: user.id // Adicionar o campo owner_id
       };
       
-      console.log("Creating new clinic:", newClinicData);
+      console.log("Criando nova clínica:", newClinicData);
       
       const { data, error } = await supabase
         .from('clinics')
@@ -305,13 +314,13 @@ const ClinicProfile: React.FC = () => {
         .select();
       
       if (error) {
-        console.error("Error creating clinic:", error);
+        console.error("Erro ao criar clínica:", error);
         throw error;
       }
       
-      console.log("Clinic created:", data);
+      console.log("Clínica criada:", data);
       
-      // Format the new clinic
+      // Formatar a nova clínica
       if (data && data.length > 0) {
         const newClinic: Clinic = {
           id: data[0].id,
@@ -331,28 +340,28 @@ const ClinicProfile: React.FC = () => {
           is_published: data[0].is_published
         };
         
-        // Add to clinics list
+        // Adicionar à lista de clínicas
         setClinics([newClinic, ...clinics]);
         
-        // Select the new clinic
+        // Selecionar a nova clínica
         setSelectedClinicId(newClinic.id);
         setClinic(newClinic);
         setFormData(newClinic);
         
-        toast.success("Clinic created", {
-          description: "Your new clinic has been successfully created."
+        toast.success("Clínica criada", {
+          description: "Sua nova clínica foi criada com sucesso."
         });
         
-        // Reset form and close dialog
+        // Resetar formulário e fechar diálogo
         createClinicForm.reset();
         setIsCreating(false);
         
         return true;
       }
     } catch (error: any) {
-      console.error("Error creating clinic:", error);
-      toast.error("Error creating clinic", {
-        description: error.message || "An error occurred while creating the clinic."
+      console.error("Erro ao criar clínica:", error);
+      toast.error("Erro ao criar clínica", {
+        description: error.message || "Ocorreu um erro ao criar a clínica."
       });
     } finally {
       setIsCreating(false);
@@ -362,13 +371,13 @@ const ClinicProfile: React.FC = () => {
   };
 
   const weekdays = [
-    { key: 'monday', label: 'Monday' },
-    { key: 'tuesday', label: 'Tuesday' },
-    { key: 'wednesday', label: 'Wednesday' },
-    { key: 'thursday', label: 'Thursday' },
-    { key: 'friday', label: 'Friday' },
-    { key: 'saturday', label: 'Saturday' },
-    { key: 'sunday', label: 'Sunday' },
+    { key: 'monday', label: 'Segunda-feira' },
+    { key: 'tuesday', label: 'Terça-feira' },
+    { key: 'wednesday', label: 'Quarta-feira' },
+    { key: 'thursday', label: 'Quinta-feira' },
+    { key: 'friday', label: 'Sexta-feira' },
+    { key: 'saturday', label: 'Sábado' },
+    { key: 'sunday', label: 'Domingo' },
   ];
 
   if (isLoading) {
@@ -377,7 +386,7 @@ const ClinicProfile: React.FC = () => {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-healthblue-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading clinic data...</p>
+            <p className="mt-4 text-gray-600">Carregando dados da clínica...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -388,13 +397,13 @@ const ClinicProfile: React.FC = () => {
     <DashboardLayout>
       <div className="mb-6 flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clinic Profile</h1>
-          <p className="text-gray-500">Manage your clinic information</p>
+          <h1 className="text-2xl font-bold text-gray-900">Perfil da Clínica</h1>
+          <p className="text-gray-500">Gerencie as informações da sua clínica</p>
         </div>
         <div className="flex gap-2">
           {clinics.length > 0 && (
             <div className="flex items-center mr-2">
-              <Label htmlFor="clinic-select" className="mr-2">Clinic:</Label>
+              <Label htmlFor="clinic-select" className="mr-2">Clínica:</Label>
               <select 
                 id="clinic-select"
                 className="border rounded-md px-3 py-2 text-sm"
@@ -412,14 +421,14 @@ const ClinicProfile: React.FC = () => {
             <DialogTrigger asChild>
               <Button variant="outline" className="flex items-center">
                 <PlusCircle className="h-4 w-4 mr-2" />
-                Add New Clinic
+                Adicionar Nova Clínica
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Clinic</DialogTitle>
+                <DialogTitle>Criar Nova Clínica</DialogTitle>
                 <DialogDescription>
-                  Enter the details for your new clinic.
+                  Digite os detalhes para sua nova clínica.
                 </DialogDescription>
               </DialogHeader>
               
@@ -430,9 +439,9 @@ const ClinicProfile: React.FC = () => {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Clinic Name</FormLabel>
+                        <FormLabel>Nome da Clínica</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Enter clinic name" />
+                          <Input {...field} placeholder="Digite o nome da clínica" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -444,15 +453,15 @@ const ClinicProfile: React.FC = () => {
                     name="slug"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Custom URL</FormLabel>
+                        <FormLabel>URL Personalizada</FormLabel>
                         <FormControl>
                           <div className="flex items-center">
                             <span className="text-gray-500 pr-1">clini.one/c/</span>
                             <Input 
                               {...field} 
-                              placeholder="your-clinic-name" 
+                              placeholder="sua-clinica" 
                               onChange={e => {
-                                // Sanitize slug while typing
+                                // Sanitizar slug durante a digitação
                                 const sanitizedSlug = e.target.value
                                   .toLowerCase()
                                   .replace(/[^a-z0-9-]/g, '-')
@@ -464,7 +473,7 @@ const ClinicProfile: React.FC = () => {
                           </div>
                         </FormControl>
                         <FormDescription>
-                          This will be the public URL for your clinic page.
+                          Esta será a URL pública para a página da sua clínica.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -476,11 +485,11 @@ const ClinicProfile: React.FC = () => {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel>Descrição</FormLabel>
                         <FormControl>
                           <Textarea 
                             {...field} 
-                            placeholder="Description of your clinic"
+                            placeholder="Descrição da sua clínica"
                             rows={3}
                           />
                         </FormControl>
@@ -491,7 +500,7 @@ const ClinicProfile: React.FC = () => {
                   
                   <DialogFooter>
                     <Button type="submit" disabled={isCreating}>
-                      {isCreating ? "Creating..." : "Create Clinic"}
+                      {isCreating ? "Criando..." : "Criar Clínica"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -504,12 +513,12 @@ const ClinicProfile: React.FC = () => {
               variant={isEditing ? "outline" : "default"} 
               onClick={() => {
                 if (isEditing) {
-                  setFormData(clinic); // Reset form data
+                  setFormData(clinic); // Resetar dados do formulário
                 }
                 setIsEditing(!isEditing);
               }}
             >
-              {isEditing ? 'Cancel' : 'Edit Profile'}
+              {isEditing ? 'Cancelar' : 'Editar Perfil'}
             </Button>
           )}
         </div>
@@ -517,22 +526,22 @@ const ClinicProfile: React.FC = () => {
       
       {clinics.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 bg-white p-8 rounded-lg border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4">No Clinics Yet</h2>
+          <h2 className="text-xl font-semibold mb-4">Nenhuma Clínica Ainda</h2>
           <p className="text-gray-600 text-center mb-4">
-            You haven't created any clinics yet. Start by adding your first clinic.
+            Você ainda não criou nenhuma clínica. Comece adicionando sua primeira clínica.
           </p>
           <Dialog>
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="h-4 w-4 mr-2" />
-                Add Your First Clinic
+                Adicionar Sua Primeira Clínica
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Clinic</DialogTitle>
+                <DialogTitle>Criar Nova Clínica</DialogTitle>
                 <DialogDescription>
-                  Enter the details for your new clinic.
+                  Digite os detalhes para sua nova clínica.
                 </DialogDescription>
               </DialogHeader>
               
@@ -543,9 +552,9 @@ const ClinicProfile: React.FC = () => {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Clinic Name</FormLabel>
+                        <FormLabel>Nome da Clínica</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Enter clinic name" />
+                          <Input {...field} placeholder="Digite o nome da clínica" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -557,15 +566,15 @@ const ClinicProfile: React.FC = () => {
                     name="slug"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Custom URL</FormLabel>
+                        <FormLabel>URL Personalizada</FormLabel>
                         <FormControl>
                           <div className="flex items-center">
                             <span className="text-gray-500 pr-1">clini.one/c/</span>
                             <Input 
                               {...field} 
-                              placeholder="your-clinic-name" 
+                              placeholder="sua-clinica" 
                               onChange={e => {
-                                // Sanitize slug while typing
+                                // Sanitizar slug durante a digitação
                                 const sanitizedSlug = e.target.value
                                   .toLowerCase()
                                   .replace(/[^a-z0-9-]/g, '-')
@@ -577,7 +586,7 @@ const ClinicProfile: React.FC = () => {
                           </div>
                         </FormControl>
                         <FormDescription>
-                          This will be the public URL for your clinic page.
+                          Esta será a URL pública para a página da sua clínica.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -589,11 +598,11 @@ const ClinicProfile: React.FC = () => {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel>Descrição</FormLabel>
                         <FormControl>
                           <Textarea 
                             {...field} 
-                            placeholder="Description of your clinic"
+                            placeholder="Descrição da sua clínica"
                             rows={3}
                           />
                         </FormControl>
@@ -604,7 +613,7 @@ const ClinicProfile: React.FC = () => {
                   
                   <DialogFooter>
                     <Button type="submit" disabled={isCreating}>
-                      {isCreating ? "Creating..." : "Create Clinic"}
+                      {isCreating ? "Criando..." : "Criar Clínica"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -615,27 +624,27 @@ const ClinicProfile: React.FC = () => {
       ) : clinic ? (
         <Tabs defaultValue="info" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="info">Basic Information</TabsTrigger>
-            <TabsTrigger value="contact">Contact</TabsTrigger>
-            <TabsTrigger value="hours">Hours</TabsTrigger>
-            <TabsTrigger value="public">Public Page</TabsTrigger>
-            <TabsTrigger value="preview">Preview Page</TabsTrigger>
+            <TabsTrigger value="info">Informações Básicas</TabsTrigger>
+            <TabsTrigger value="contact">Contato</TabsTrigger>
+            <TabsTrigger value="hours">Horários</TabsTrigger>
+            <TabsTrigger value="public">Página Pública</TabsTrigger>
+            <TabsTrigger value="preview">Pré-visualização</TabsTrigger>
           </TabsList>
           
           <TabsContent value="info">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Card className="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle>Clinic Details</CardTitle>
+                  <CardTitle>Detalhes da Clínica</CardTitle>
                   <CardDescription>
-                    Basic information about your clinic
+                    Informações básicas sobre sua clínica
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSaveChanges} className="space-y-4">
                     <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Clinic Name</Label>
+                        <Label htmlFor="name">Nome da Clínica</Label>
                         <Input
                           id="name"
                           name="name"
@@ -646,7 +655,7 @@ const ClinicProfile: React.FC = () => {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="about">About the Clinic</Label>
+                        <Label htmlFor="about">Sobre a Clínica</Label>
                         <Textarea
                           id="about"
                           name="about"
@@ -660,7 +669,7 @@ const ClinicProfile: React.FC = () => {
                     
                     {isEditing && (
                       <Button type="submit" className="mt-6">
-                        Save Changes
+                        Salvar Alterações
                       </Button>
                     )}
                   </form>
@@ -671,7 +680,7 @@ const ClinicProfile: React.FC = () => {
                 <CardHeader>
                   <CardTitle>Logo</CardTitle>
                   <CardDescription>
-                    Your clinic logo
+                    Logo da sua clínica
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -680,7 +689,7 @@ const ClinicProfile: React.FC = () => {
                       <div className="relative w-40 h-40">
                         <img
                           src={clinic.logo}
-                          alt={`Logo for ${clinic.name}`}
+                          alt={`Logo para ${clinic.name}`}
                           className="w-full h-full object-contain"
                         />
                         {isEditing && (
@@ -689,21 +698,21 @@ const ClinicProfile: React.FC = () => {
                             size="sm"
                             className="absolute bottom-0 right-0"
                           >
-                            Change
+                            Alterar
                           </Button>
                         )}
                       </div>
                     ) : (
                       <div className="w-40 h-40 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-gray-400">
                         <Upload className="h-10 w-10 mb-2" />
-                        <p className="text-sm">Clinic Logo</p>
+                        <p className="text-sm">Logo da Clínica</p>
                         {isEditing && (
                           <Button
                             variant="outline"
                             size="sm"
                             className="mt-4"
                           >
-                            Upload
+                            Enviar
                           </Button>
                         )}
                       </div>
@@ -718,15 +727,15 @@ const ClinicProfile: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Contact Information</CardTitle>
+                  <CardTitle>Informações de Contato</CardTitle>
                   <CardDescription>
-                    How patients can contact your clinic
+                    Como os pacientes podem entrar em contato com sua clínica
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSaveChanges} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="address">Address</Label>
+                      <Label htmlFor="address">Endereço</Label>
                       <Textarea
                         id="address"
                         name="address"
@@ -737,7 +746,7 @@ const ClinicProfile: React.FC = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
+                      <Label htmlFor="phone">Telefone</Label>
                       <Input
                         id="phone"
                         name="phone"
@@ -748,7 +757,7 @@ const ClinicProfile: React.FC = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">E-mail</Label>
                       <Input
                         id="email"
                         name="email"
@@ -759,7 +768,7 @@ const ClinicProfile: React.FC = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="website">Website</Label>
+                      <Label htmlFor="website">Site</Label>
                       <Input
                         id="website"
                         name="website"
@@ -771,7 +780,7 @@ const ClinicProfile: React.FC = () => {
                     
                     {isEditing && (
                       <Button type="submit" className="mt-6">
-                        Save Changes
+                        Salvar Alterações
                       </Button>
                     )}
                   </form>
@@ -780,9 +789,9 @@ const ClinicProfile: React.FC = () => {
               
               <Card>
                 <CardHeader>
-                  <CardTitle>Social Media</CardTitle>
+                  <CardTitle>Redes Sociais</CardTitle>
                   <CardDescription>
-                    Connect your clinic to social media
+                    Conecte sua clínica às redes sociais
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -825,7 +834,7 @@ const ClinicProfile: React.FC = () => {
                     
                     {isEditing && (
                       <Button type="submit" className="mt-6">
-                        Save Changes
+                        Salvar Alterações
                       </Button>
                     )}
                   </form>
@@ -837,9 +846,9 @@ const ClinicProfile: React.FC = () => {
           <TabsContent value="hours">
             <Card>
               <CardHeader>
-                <CardTitle>Working Hours</CardTitle>
+                <CardTitle>Horário de Funcionamento</CardTitle>
                 <CardDescription>
-                  Set your clinic's operating hours
+                  Defina os horários de funcionamento da sua clínica
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -851,7 +860,7 @@ const ClinicProfile: React.FC = () => {
                       {formData?.workingHours[day.key as keyof typeof formData.workingHours]?.length > 0 ? (
                         <>
                           <div className="sm:col-span-2">
-                            <Label htmlFor={`${day.key}-start`} className="sr-only">Start Time</Label>
+                            <Label htmlFor={`${day.key}-start`} className="sr-only">Hora Inicial</Label>
                             <Input
                               id={`${day.key}-start`}
                               type="time"
@@ -860,9 +869,9 @@ const ClinicProfile: React.FC = () => {
                               disabled={!isEditing}
                             />
                           </div>
-                          <div className="text-center">to</div>
+                          <div className="text-center">até</div>
                           <div className="sm:col-span-2">
-                            <Label htmlFor={`${day.key}-end`} className="sr-only">End Time</Label>
+                            <Label htmlFor={`${day.key}-end`} className="sr-only">Hora Final</Label>
                             <Input
                               id={`${day.key}-end`}
                               type="time"
@@ -874,7 +883,7 @@ const ClinicProfile: React.FC = () => {
                         </>
                       ) : (
                         <div className="sm:col-span-4 text-gray-500 italic">
-                          Closed
+                          Fechado
                         </div>
                       )}
                     </div>
@@ -882,7 +891,7 @@ const ClinicProfile: React.FC = () => {
                   
                   {isEditing && (
                     <Button type="submit" className="mt-6">
-                      Save Changes
+                      Salvar Alterações
                     </Button>
                   )}
                 </form>
@@ -905,9 +914,9 @@ const ClinicProfile: React.FC = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Public Page Preview</CardTitle>
+                  <CardTitle>Pré-visualização da Página Pública</CardTitle>
                   <CardDescription>
-                    How your page will look to visitors
+                    Como sua página aparecerá para os visitantes
                   </CardDescription>
                 </div>
                 <Button 
@@ -917,7 +926,7 @@ const ClinicProfile: React.FC = () => {
                   }}
                 >
                   <Globe className="mr-2 h-4 w-4" />
-                  View Preview
+                  Ver Prévia
                 </Button>
               </CardHeader>
               <CardContent>
@@ -931,22 +940,22 @@ const ClinicProfile: React.FC = () => {
                         <h2 className="text-xl font-bold text-gray-900">{clinic.name}</h2>
                         <p className="text-gray-500 flex items-center">
                           <MapPin className="h-4 w-4 mr-1" />
-                          {clinic.address ? clinic.address.split(',')[0] : "No address provided"}
+                          {clinic.address ? clinic.address.split(',')[0] : "Sem endereço informado"}
                         </p>
                       </div>
                     </div>
                     <div className="mt-4 md:mt-0">
-                      <Button>Book Appointment</Button>
+                      <Button>Agendar Consulta</Button>
                     </div>
                   </div>
                   
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2">
-                      <h3 className="text-lg font-semibold mb-2">About the Clinic</h3>
-                      <p className="text-gray-600">{clinic.about || "No description provided"}</p>
+                      <h3 className="text-lg font-semibold mb-2">Sobre a Clínica</h3>
+                      <p className="text-gray-600">{clinic.about || "Sem descrição informada"}</p>
                       
                       <div className="mt-4">
-                        <h3 className="text-lg font-semibold mb-2">Contact</h3>
+                        <h3 className="text-lg font-semibold mb-2">Contato</h3>
                         <div className="space-y-2">
                           {clinic.phone && (
                             <p className="flex items-center text-gray-600">
@@ -974,7 +983,7 @@ const ClinicProfile: React.FC = () => {
                       <div className="border rounded-lg p-4">
                         <h3 className="text-lg font-semibold mb-3 flex items-center">
                           <Clock className="h-5 w-5 mr-2 text-healthblue-500" />
-                          Hours
+                          Horários
                         </h3>
                         
                         <div className="space-y-2">
@@ -984,7 +993,7 @@ const ClinicProfile: React.FC = () => {
                               <span className="font-medium">
                                 {clinic.workingHours[day.key as keyof typeof clinic.workingHours]?.length > 0 
                                   ? `${clinic.workingHours[day.key as keyof typeof clinic.workingHours][0].start} - ${clinic.workingHours[day.key as keyof typeof clinic.workingHours][0].end}`
-                                  : 'Closed'}
+                                  : 'Fechado'}
                               </span>
                             </div>
                           ))}
@@ -999,7 +1008,7 @@ const ClinicProfile: React.FC = () => {
         </Tabs>
       ) : (
         <div className="bg-white rounded-lg p-8 border border-gray-200 text-center">
-          <p className="text-gray-500">Please select a clinic to view its details</p>
+          <p className="text-gray-500">Por favor, selecione uma clínica para ver seus detalhes</p>
         </div>
       )}
     </DashboardLayout>

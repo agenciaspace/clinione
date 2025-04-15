@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +31,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
   useEffect(() => {
     const checkClinic = async () => {
       if (!clinicId) {
-        console.error("Clinic ID not provided");
+        console.error("ID da clínica não fornecido");
         setClinicExists(false);
         return;
       }
@@ -43,14 +44,14 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
           .single();
         
         if (error) {
-          console.error("Clinic not found:", error);
+          console.error("Clínica não encontrada:", error);
           setClinicExists(false);
         } else {
-          console.log("Clinic found:", data);
+          console.log("Clínica encontrada:", data);
           setClinicExists(true);
         }
       } catch (error) {
-        console.error("Error checking clinic:", error);
+        console.error("Erro ao verificar clínica:", error);
         setClinicExists(false);
       }
     };
@@ -60,22 +61,22 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
 
   const handlePublishToggle = async () => {
     if (!slug) {
-      toast.error("Custom URL required", {
-        description: "Please set a custom URL before publishing."
+      toast.error("URL personalizada necessária", {
+        description: "Por favor, defina uma URL personalizada antes de publicar."
       });
       return;
     }
 
     if (!clinicExists) {
-      toast.error("Clinic not found", {
-        description: "Could not find the clinic to update."
+      toast.error("Clínica não encontrada", {
+        description: "Não foi possível encontrar a clínica para atualizar."
       });
       return;
     }
 
     setIsUpdating(true);
     try {
-      console.log("Updating publication status for clinic:", clinicId);
+      console.log("Atualizando status de publicação para clínica:", clinicId);
       
       const { error } = await supabase
         .from('clinics')
@@ -86,7 +87,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
         .eq('id', clinicId);
 
       if (error) {
-        console.error('Detailed error:', error);
+        console.error('Erro detalhado:', error);
         throw error;
       }
 
@@ -94,17 +95,17 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
       onUpdate({ slug, isPublished: !isPublished });
       
       toast.success(
-        isPublished ? "Page unpublished" : "Page published", 
+        isPublished ? "Página despublicada" : "Página publicada", 
         {
           description: isPublished 
-            ? "Your page is no longer publicly available." 
-            : "Your page is now publicly available."
+            ? "Sua página não está mais publicamente disponível." 
+            : "Sua página agora está publicamente disponível."
         }
       );
     } catch (error) {
-      console.error('Error updating publication status:', error);
-      toast.error("Error publishing", {
-        description: "Could not update publication status. Please try again."
+      console.error('Erro ao atualizar status de publicação:', error);
+      toast.error("Erro ao publicar", {
+        description: "Não foi possível atualizar o status de publicação. Por favor, tente novamente."
       });
     } finally {
       setIsUpdating(false);
@@ -123,22 +124,22 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
 
   const handleSlugSave = async () => {
     if (!slug) {
-      toast.error("Invalid URL", {
-        description: "Please set a valid custom URL."
+      toast.error("URL inválida", {
+        description: "Por favor, defina uma URL personalizada válida."
       });
       return;
     }
 
     if (!clinicExists) {
-      toast.error("Clinic not found", {
-        description: "Could not find the clinic to update."
+      toast.error("Clínica não encontrada", {
+        description: "Não foi possível encontrar a clínica para atualizar."
       });
       return;
     }
 
     setIsUpdating(true);
     try {
-      console.log("Updating slug for clinic:", clinicId);
+      console.log("Atualizando slug para clínica:", clinicId);
       
       const { data: existingSlug, error: slugCheckError } = await supabase
         .from('clinics')
@@ -147,12 +148,12 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
         .neq('id', clinicId);
 
       if (slugCheckError) {
-        console.error('Error checking existing slug:', slugCheckError);
-        throw new Error("Error checking URL availability");
+        console.error('Erro ao verificar slug existente:', slugCheckError);
+        throw new Error("Erro ao verificar disponibilidade da URL");
       }
 
       if (existingSlug && existingSlug.length > 0) {
-        throw new Error("This URL is already in use by another clinic");
+        throw new Error("Esta URL já está em uso por outra clínica");
       }
       
       const { error } = await supabase
@@ -161,19 +162,19 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
         .eq('id', clinicId);
 
       if (error) {
-        console.error('Detailed error when updating slug:', error);
+        console.error('Erro detalhado ao atualizar slug:', error);
         throw error;
       }
 
       onUpdate({ slug, isPublished });
       
-      toast.success("URL updated", {
-        description: "Your clinic's custom URL has been successfully updated."
+      toast.success("URL atualizada", {
+        description: "A URL personalizada da sua clínica foi atualizada com sucesso."
       });
     } catch (error: any) {
-      console.error('Error updating slug:', error);
-      toast.error("Error updating URL", {
-        description: error.message || "Could not update the custom URL."
+      console.error('Erro ao atualizar slug:', error);
+      toast.error("Erro ao atualizar URL", {
+        description: error.message || "Não foi possível atualizar a URL personalizada."
       });
     } finally {
       setIsUpdating(false);
@@ -186,16 +187,16 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
     return (
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Public Page</CardTitle>
+          <CardTitle>Página Pública</CardTitle>
           <CardDescription>
-            Configure and publish your clinic's public page
+            Configure e publique a página pública da sua clínica
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="p-4 text-center">
-            <p className="text-red-500 mb-2">Clinic not found</p>
+            <p className="text-red-500 mb-2">Clínica não encontrada</p>
             <p className="text-gray-500">
-              You need to create or select a clinic before configuring the public page.
+              Você precisa criar ou selecionar uma clínica antes de configurar a página pública.
             </p>
           </div>
         </CardContent>
@@ -206,15 +207,15 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Public Page</CardTitle>
+        <CardTitle>Página Pública</CardTitle>
         <CardDescription>
-          Configure and publish your clinic's public page
+          Configure e publique a página pública da sua clínica
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="slug">Custom URL</Label>
+            <Label htmlFor="slug">URL Personalizada</Label>
             <div className="flex gap-2">
               <div className="flex-1">
                 <div className="flex items-center">
@@ -223,7 +224,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
                     id="slug"
                     value={slug}
                     onChange={handleSlugChange}
-                    placeholder="your-clinic-name"
+                    placeholder="nome-da-sua-clinica"
                     className="flex-1"
                   />
                 </div>
@@ -233,7 +234,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
                 onClick={handleSlugSave} 
                 disabled={isUpdating || slug === initialSlug || !slug}
               >
-                Save URL
+                Salvar URL
               </Button>
             </div>
           </div>
@@ -257,12 +258,12 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
                   size="sm"
                   onClick={() => {
                     navigator.clipboard.writeText(publicUrl);
-                    toast.success("URL copied", {
-                      description: "The URL has been copied to the clipboard."
+                    toast.success("URL copiada", {
+                      description: "A URL foi copiada para a área de transferência."
                     });
                   }}
                 >
-                  Copy
+                  Copiar
                 </Button>
               </div>
             </div>
@@ -270,11 +271,11 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
 
           <div className="flex justify-between items-center pt-4 border-t">
             <div>
-              <h4 className="font-medium">Page status</h4>
+              <h4 className="font-medium">Status da página</h4>
               <p className="text-sm text-gray-500">
                 {isPublished 
-                  ? "Your page is published and available to the public." 
-                  : "Your page is not published and can only be seen by you."}
+                  ? "Sua página está publicada e disponível ao público." 
+                  : "Sua página não está publicada e só pode ser vista por você."}
               </p>
             </div>
             <Button 
@@ -283,7 +284,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
               variant={isPublished ? "destructive" : "default"}
             >
               <Globe className="h-4 w-4 mr-2" />
-              {isPublished ? "Unpublish" : "Publish"}
+              {isPublished ? "Despublicar" : "Publicar"}
             </Button>
           </div>
 
@@ -295,7 +296,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
                 onClick={() => window.open(publicUrl, '_blank')}
               >
                 <Globe className="h-4 w-4 mr-2" />
-                Visit Public Page
+                Visitar Página Pública
               </Button>
             </div>
           )}
