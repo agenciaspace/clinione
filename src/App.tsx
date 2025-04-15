@@ -41,6 +41,7 @@ const App = () => (
             <Route path="/dashboard/clinic" element={<ClinicProfile />} />
             <Route path="/dashboard/settings" element={<Settings />} />
             <Route path="/c/:slug" element={<PublicClinicPage />} />
+            <Route path="/dashboard/public-page" element={<PublicClinicPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
