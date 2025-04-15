@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -31,8 +30,7 @@ const Register = () => {
     
     if (password !== confirmPassword) {
       toast("Erro de validação", {
-        description: "As senhas não coincidem",
-        variant: "destructive"
+        description: "As senhas não coincidem"
       });
       return;
     }
@@ -47,8 +45,7 @@ const Register = () => {
     } catch (error) {
       console.error('Registration error:', error);
       toast("Erro no registro", {
-        description: "Não foi possível criar sua conta. Tente novamente.",
-        variant: "destructive"
+        description: "Não foi possível criar sua conta. Tente novamente."
       });
     } finally {
       setIsSubmitting(false);

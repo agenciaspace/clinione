@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -35,8 +34,7 @@ const Login = () => {
     } catch (error) {
       console.error('Login error:', error);
       toast("Erro de login", {
-        description: "Verifique suas credenciais e tente novamente",
-        variant: "destructive"
+        description: "Verifique suas credenciais e tente novamente"
       });
     } finally {
       setIsSubmitting(false);

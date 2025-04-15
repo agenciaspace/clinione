@@ -16,6 +16,9 @@ import {
   BarChart4,
   MessageSquare,
   LineChart,
+  Clock,
+  Facebook,
+  Instagram,
 } from 'lucide-react';
 
 const LandingPage = () => {
