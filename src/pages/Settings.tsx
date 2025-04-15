@@ -23,9 +23,14 @@ import {
   CheckCircle,
   Shield,
   CreditCard,
-  Trash2
+  Trash2,
+  MessageSquare,
+  Server
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from '@/integrations/supabase/client';
 
 const Settings = () => {
   const { user } = useAuth();
@@ -45,6 +50,27 @@ const Settings = () => {
     confirm: ''
   });
 
+  // SMTP Configuration state
+  const [smtpConfig, setSmtpConfig] = useState({
+    host: '',
+    port: '587',
+    username: '',
+    password: '',
+    fromEmail: '',
+    fromName: '',
+    secure: false
+  });
+
+  // WhatsApp Configuration state
+  const [whatsappConfig, setWhatsAppConfig] = useState({
+    phoneNumber: '',
+    isVerified: false,
+    apiKey: ''
+  });
+
+  const [verificationCode, setVerificationCode] = useState('');
+  const [showVerificationInput, setShowVerificationInput] = useState(false);
+
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setProfileData(prev => ({
@@ -56,6 +82,22 @@ const Settings = () => {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPassword(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSmtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setSmtpConfig(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setWhatsAppConfig(prev => ({
       ...prev,
       [name]: value
     }));
@@ -92,6 +134,68 @@ const Settings = () => {
     }, 1000);
   };
 
+  const handleSaveSmtpConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // Simulação de salvamento da configuração SMTP
+    setTimeout(() => {
+      setLoading(false);
+      toast("Configurações SMTP salvas com sucesso");
+    }, 1000);
+  };
+
+  const handleTestSmtp = () => {
+    toast("Enviando email de teste...");
+    
+    // Simulação de teste de email
+    setTimeout(() => {
+      toast("Email de teste enviado com sucesso!", {
+        description: "Verifique sua caixa de entrada."
+      });
+    }, 2000);
+  };
+
+  const handleConnectWhatsApp = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!whatsappConfig.phoneNumber) {
+      toast("Número de telefone é obrigatório", {
+        description: "Por favor, insira seu número de WhatsApp com DDD."
+      });
+      return;
+    }
+    
+    // Simulação de envio de código de verificação
+    toast("Enviando código de verificação...");
+    setTimeout(() => {
+      setShowVerificationInput(true);
+      toast("Código de verificação enviado!", {
+        description: "Verifique as mensagens no seu WhatsApp."
+      });
+    }, 1500);
+  };
+
+  const handleVerifyWhatsApp = () => {
+    if (!verificationCode) {
+      toast("Código de verificação é obrigatório", {
+        description: "Por favor, insira o código que enviamos para seu WhatsApp."
+      });
+      return;
+    }
+    
+    setLoading(true);
+    
+    // Simulação de verificação
+    setTimeout(() => {
+      setLoading(false);
+      setWhatsAppConfig(prev => ({ ...prev, isVerified: true }));
+      toast("WhatsApp conectado com sucesso!", {
+        description: "Seu número foi verificado e está pronto para uso."
+      });
+    }, 1500);
+  };
+
   return (
     <DashboardLayout>
       <div className="mb-6">
@@ -100,7 +204,7 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 md:grid-cols-4 lg:max-w-[600px]">
+        <TabsList className="grid w-full grid-cols-1 md:grid-cols-6 lg:max-w-[800px]">
           <TabsTrigger value="profile" className="flex items-center">
             <User className="h-4 w-4 mr-2" /> Perfil
           </TabsTrigger>
@@ -112,6 +216,12 @@ const Settings = () => {
           </TabsTrigger>
           <TabsTrigger value="appearance" className="flex items-center">
             <PaintBucket className="h-4 w-4 mr-2" /> Aparência
+          </TabsTrigger>
+          <TabsTrigger value="smtp" className="flex items-center">
+            <Mail className="h-4 w-4 mr-2" /> Email
+          </TabsTrigger>
+          <TabsTrigger value="whatsapp" className="flex items-center">
+            <MessageSquare className="h-4 w-4 mr-2" /> WhatsApp
           </TabsTrigger>
         </TabsList>
 
@@ -598,6 +708,341 @@ const Settings = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Tab de Configurações SMTP */}
+        <TabsContent value="smtp" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Email (SMTP)</CardTitle>
+              <CardDescription>Configure os detalhes do servidor SMTP para envio de emails</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSaveSmtpConfig} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="host">Servidor SMTP</Label>
+                    <Input
+                      id="host"
+                      name="host"
+                      placeholder="smtp.gmail.com"
+                      value={smtpConfig.host}
+                      onChange={handleSmtpChange}
+                    />
+                    <p className="text-xs text-gray-500">
+                      Ex: smtp.gmail.com, smtp.outlook.com
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="port">Porta</Label>
+                    <Select 
+                      value={smtpConfig.port} 
+                      onValueChange={(value) => setSmtpConfig({...smtpConfig, port: value})}
+                    >
+                      <SelectTrigger id="port">
+                        <SelectValue placeholder="Selecione a porta" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="25">25 (SMTP)</SelectItem>
+                        <SelectItem value="465">465 (SMTP com SSL)</SelectItem>
+                        <SelectItem value="587">587 (SMTP com TLS)</SelectItem>
+                        <SelectItem value="2525">2525 (SMTP alternativo)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Usuário</Label>
+                    <Input
+                      id="username"
+                      name="username"
+                      placeholder="seu.email@exemplo.com"
+                      value={smtpConfig.username}
+                      onChange={handleSmtpChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Senha</Label>
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={smtpConfig.password}
+                      onChange={handleSmtpChange}
+                    />
+                    <p className="text-xs text-gray-500">
+                      Para Gmail, use uma senha de aplicativo
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fromEmail">Email de envio</Label>
+                    <Input
+                      id="fromEmail"
+                      name="fromEmail"
+                      placeholder="noreply@suaclinica.com"
+                      value={smtpConfig.fromEmail}
+                      onChange={handleSmtpChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fromName">Nome de exibição</Label>
+                    <Input
+                      id="fromName"
+                      name="fromName"
+                      placeholder="Clínica XYZ"
+                      value={smtpConfig.fromName}
+                      onChange={handleSmtpChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    id="secure" 
+                    checked={smtpConfig.secure} 
+                    onCheckedChange={(checked) => setSmtpConfig({...smtpConfig, secure: checked})}
+                  />
+                  <Label htmlFor="secure">Usar conexão segura (SSL/TLS)</Label>
+                </div>
+
+                <div className="flex justify-between pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={handleTestSmtp}
+                  >
+                    <Server className="mr-2 h-4 w-4" /> Testar conexão
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? 'Salvando...' : 'Salvar configurações'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Templates de email</CardTitle>
+              <CardDescription>Configure as mensagens para diferentes tipos de comunicação</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label>Tipos de templates</Label>
+                  <Select defaultValue="appointment_confirmation">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="appointment_confirmation">Confirmação de agendamento</SelectItem>
+                      <SelectItem value="appointment_reminder">Lembrete de consulta</SelectItem>
+                      <SelectItem value="password_reset">Redefinição de senha</SelectItem>
+                      <SelectItem value="welcome">Boas-vindas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="subject">Assunto do email</Label>
+                  <Input
+                    id="subject"
+                    placeholder="Confirmação da sua consulta na Clínica XYZ"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="template">Conteúdo do email</Label>
+                  <Textarea
+                    id="template"
+                    placeholder="Olá {nome_paciente}, sua consulta está confirmada para {data} às {hora} com Dr(a). {nome_médico}."
+                    className="min-h-[200px]"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Você pode usar as seguintes variáveis: {'{nome_paciente}'}, {'{data}'}, {'{hora}'}, {'{nome_médico}'}, {'{especialidade}'}
+                  </p>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <Button>Salvar template</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab de WhatsApp */}
+        <TabsContent value="whatsapp" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Conectar WhatsApp</CardTitle>
+              <CardDescription>Conecte seu número de WhatsApp para enviar notificações aos pacientes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleConnectWhatsApp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber">Número do WhatsApp</Label>
+                  <div className="flex space-x-2">
+                    <Input
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      placeholder="+5511999999999"
+                      value={whatsappConfig.phoneNumber}
+                      onChange={handleWhatsAppChange}
+                      disabled={whatsappConfig.isVerified}
+                      className="flex-1"
+                    />
+                    {!whatsappConfig.isVerified ? (
+                      <Button type="submit" disabled={loading || showVerificationInput}>
+                        {loading ? 'Enviando...' : 'Conectar'}
+                      </Button>
+                    ) : (
+                      <Button variant="outline" type="button" onClick={() => setWhatsAppConfig({...whatsappConfig, isVerified: false})}>
+                        Alterar
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Digite seu número com código do país e DDD. Ex: +5511999999999
+                  </p>
+                </div>
+
+                {showVerificationInput && !whatsappConfig.isVerified && (
+                  <div className="space-y-2 border p-4 rounded-md bg-gray-50">
+                    <Label htmlFor="verificationCode">Código de verificação</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        id="verificationCode"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        placeholder="Digite o código recebido"
+                        className="flex-1"
+                        maxLength={6}
+                      />
+                      <Button 
+                        type="button" 
+                        onClick={handleVerifyWhatsApp} 
+                        disabled={loading}
+                      >
+                        {loading ? 'Verificando...' : 'Verificar'}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Enviamos um código de 6 dígitos para o seu WhatsApp
+                    </p>
+                  </div>
+                )}
+
+                {whatsappConfig.isVerified && (
+                  <div className="flex items-center space-x-2 p-3 bg-green-50 rounded-md">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="text-green-700">WhatsApp conectado com sucesso!</span>
+                  </div>
+                )}
+
+                {whatsappConfig.isVerified && (
+                  <div className="space-y-4 mt-4 pt-4 border-t">
+                    <h3 className="font-medium">Configurações de mensagens</h3>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="apiKey">Chave da API (opcional)</Label>
+                      <Input
+                        id="apiKey"
+                        name="apiKey"
+                        value={whatsappConfig.apiKey}
+                        onChange={handleWhatsAppChange}
+                        placeholder="Chave para integração com WhatsApp Business API"
+                      />
+                      <p className="text-xs text-gray-500">
+                        Necessário apenas para envio em massa ou integrações avançadas
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-medium">Enviar notificações para:</h4>
+                      
+                      <div className="grid gap-2">
+                        <div className="flex items-center space-x-2">
+                          <Switch id="notif_appointments" />
+                          <Label htmlFor="notif_appointments">Confirmações de agendamento</Label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Switch id="notif_reminders" defaultChecked />
+                          <Label htmlFor="notif_reminders">Lembretes de consulta</Label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Switch id="notif_cancellations" />
+                          <Label htmlFor="notif_cancellations">Cancelamentos</Label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Switch id="notif_campaigns" defaultChecked />
+                          <Label htmlFor="notif_campaigns">Campanhas de marketing</Label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex justify-end">
+                      <Button type="button">
+                        Salvar preferências
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+
+          {whatsappConfig.isVerified && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Modelos de mensagens</CardTitle>
+                <CardDescription>Configure os textos para cada tipo de comunicação</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Tipo de mensagem</Label>
+                    <Select defaultValue="appointment_confirmation">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um modelo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="appointment_confirmation">Confirmação de agendamento</SelectItem>
+                        <SelectItem value="appointment_reminder">Lembrete de consulta</SelectItem>
+                        <SelectItem value="rescheduling">Reagendamento</SelectItem>
+                        <SelectItem value="cancellation">Cancelamento</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <Label htmlFor="whatsapp_template">Modelo de mensagem</Label>
+                    <Textarea
+                      id="whatsapp_template"
+                      placeholder="Olá {nome_paciente}, sua consulta está confirmada para {data} às {hora} com Dr(a). {nome_médico}."
+                      className="min-h-[150px]"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Você pode usar as seguintes variáveis: {'{nome_paciente}'}, {'{data}'}, {'{hora}'}, {'{nome_médico}'}, {'{especialidade}'}
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Button>Salvar modelo</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </DashboardLayout>
