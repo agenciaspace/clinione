@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -890,4 +891,56 @@ const PublicClinicPage = () => {
               <div className="space-y-4">
                 {mockReviews && mockReviews.map(review => (
                   <div key={review.id} className="border-b pb-4 last:border-b-0 last:pb-0">
-                    <div className
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">{review.author}</p>
+                        <div className="flex mt-1">
+                          {renderStars(review.rating)}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {new Date(review.date).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <p className="mt-2 text-gray-700">{review.comment}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
+      
+      <footer className="bg-white border-t mt-12">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <p className="text-sm text-gray-500">
+                &copy; {new Date().getFullYear()} {clinic.name}. Todos os direitos reservados.
+              </p>
+            </div>
+            <div className="flex space-x-4">
+              <a 
+                href="#" 
+                className="text-sm text-gray-500 hover:text-healthblue-600"
+              >
+                Política de Privacidade
+              </a>
+              <a 
+                href="#" 
+                className="text-sm text-gray-500 hover:text-healthblue-600"
+              >
+                Termos de Uso
+              </a>
+            </div>
+          </div>
+          <p className="text-xs text-center text-gray-400 mt-4">
+            Página gerada por ClínicaDigitalHub
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default PublicClinicPage;
