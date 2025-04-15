@@ -173,7 +173,6 @@ const ClinicProfile: React.FC = () => {
     try {
       const updateData = {
         name: formData.name,
-        slug: formData.slug,
         description: formData.about,
         address: formData.address,
         phone: formData.phone,
@@ -305,21 +304,6 @@ const ClinicProfile: React.FC = () => {
                         onChange={handleInputChange}
                         disabled={!isEditing}
                       />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="slug">URL Personalizada</Label>
-                      <div className="flex items-center">
-                        <span className="text-gray-500 pr-1">clinica.app/</span>
-                        <Input
-                          id="slug"
-                          name="slug"
-                          value={formData.slug}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          className="flex-1"
-                        />
-                      </div>
                     </div>
                     
                     <div className="space-y-2">
@@ -526,7 +510,7 @@ const ClinicProfile: React.FC = () => {
                     <div className="sm:col-span-1 font-medium">{day.label}</div>
                     
                     {formData.workingHours[day.key as keyof typeof formData.workingHours]?.length > 0 ? (
-                      <React.Fragment>
+                      <>
                         <div className="sm:col-span-2">
                           <Label htmlFor={`${day.key}-start`} className="sr-only">Hora de Início</Label>
                           <Input
@@ -548,7 +532,7 @@ const ClinicProfile: React.FC = () => {
                             disabled={!isEditing}
                           />
                         </div>
-                      </React.Fragment>
+                      </>
                     ) : (
                       <div className="sm:col-span-4 text-gray-500 italic">
                         Fechado

@@ -39,7 +39,8 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
     setIsUpdating(true);
     try {
       // Verifica se clinicId é um UUID válido
-      if (!clinicId) {
+      if (!clinicId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clinicId)) {
+        console.error("ID da clínica inválido:", clinicId);
         throw new Error("ID da clínica inválido");
       }
 
@@ -101,7 +102,8 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
     setIsUpdating(true);
     try {
       // Verifica se clinicId é um UUID válido
-      if (!clinicId) {
+      if (!clinicId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clinicId)) {
+        console.error("ID da clínica inválido:", clinicId);
         throw new Error("ID da clínica inválido");
       }
       
@@ -132,7 +134,7 @@ const PublicPageSettings: React.FC<PublicPageSettingsProps> = ({
     }
   };
 
-  // Novo formato: clini.one/c/slug
+  // Formato: clini.one/c/slug
   const publicUrl = slug ? `${baseUrl}/c/${slug}` : '';
 
   return (
