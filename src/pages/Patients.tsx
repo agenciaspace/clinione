@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { 
   DropdownMenu,
@@ -32,78 +31,137 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/sonner';
+import { useClinic } from '@/contexts/ClinicContext';
+import { supabase } from '@/integrations/supabase/client';
 
-// Dados mockados para exemplo
-const mockPatients = [
-  {
-    id: '1',
-    name: 'Maria Silva',
-    email: 'maria.silva@exemplo.com',
-    phone: '(11) 99999-8888',
-    birthDate: '1985-05-20',
-    lastVisit: '2023-12-15',
-    status: 'active'
-  },
-  {
-    id: '2',
-    name: 'João Santos',
-    email: 'joao.santos@exemplo.com',
-    phone: '(11) 98765-4321',
-    birthDate: '1990-03-15',
-    lastVisit: '2024-02-10',
-    status: 'active'
-  },
-  {
-    id: '3',
-    name: 'Ana Oliveira',
-    email: 'ana.oliveira@exemplo.com',
-    phone: '(11) 91234-5678',
-    birthDate: '1978-11-08',
-    lastVisit: '2024-01-07',
-    status: 'inactive'
-  },
-  {
-    id: '4',
-    name: 'Carlos Pereira',
-    email: 'carlos.pereira@exemplo.com',
-    phone: '(11) 92345-6789',
-    birthDate: '1972-07-22',
-    lastVisit: '2023-11-30',
-    status: 'active'
-  },
-  {
-    id: '5',
-    name: 'Fernanda Costa',
-    email: 'fernanda.costa@exemplo.com',
-    phone: '(11) 93456-7890',
-    birthDate: '1995-09-14',
-    lastVisit: '2024-03-05',
-    status: 'active'
-  }
-];
+interface Patient {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  birthDate: string;
+  lastVisit?: string;
+  status: 'active' | 'inactive';
+}
+
+interface PatientFormData {
+  name: string;
+  email: string;
+  phone: string;
+  birthDate: string;
+}
 
 const Patients = () => {
+  const { activeClinic } = useClinic();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [patientForm, setPatientForm] = useState<PatientFormData>({
+    name: '',
+    email: '',
+    phone: '',
+    birthDate: new Date().toISOString().split('T')[0]
+  });
   
+  useEffect(() => {
+    if (activeClinic) {
+      fetchPatients();
+    } else {
+      setPatients([]);
+    }
+  }, [activeClinic]);
+
+  const fetchPatients = async () => {
+    if (!activeClinic) return;
+    
+    setIsLoading(true);
+    try {
+      // Simulando uma chamada de API
+      // Em um ambiente real, esta seria uma chamada para o Supabase ou outra API
+      setTimeout(() => {
+        // Array vazia para simular que ainda não há dados
+        setPatients([]);
+        setIsLoading(false);
+      }, 500);
+    } catch (error) {
+      console.error("Erro ao carregar pacientes:", error);
+      toast.error("Erro ao carregar pacientes");
+      setIsLoading(false);
+    }
+  };
+
   // Filtrar pacientes com base na pesquisa
-  const filteredPatients = mockPatients.filter(patient => 
+  const filteredPatients = patients.filter(patient => 
     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.phone.includes(searchTerm)
   );
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPatientForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
   
-  const handleAddPatient = (e: React.FormEvent) => {
+  const handleAddPatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica para adicionar um paciente (simulação)
-    setIsAddPatientOpen(false);
     
-    toast("Paciente adicionado", {
-      description: "O novo paciente foi cadastrado com sucesso."
-    });
+    if (!activeClinic) {
+      toast.error("Selecione uma clínica para adicionar um paciente");
+      return;
+    }
+
+    try {
+      // Simulando uma inserção de dados
+      // Em um ambiente real, esta seria uma inserção no Supabase ou outra API
+      
+      const newPatient: Patient = {
+        id: crypto.randomUUID(),
+        name: patientForm.name,
+        email: patientForm.email,
+        phone: patientForm.phone,
+        birthDate: patientForm.birthDate,
+        status: 'active'
+      };
+      
+      // Adicionando o novo paciente ao array local
+      setPatients([...patients, newPatient]);
+      
+      // Reset do formulário
+      setPatientForm({
+        name: '',
+        email: '',
+        phone: '',
+        birthDate: new Date().toISOString().split('T')[0]
+      });
+      
+      setIsAddPatientOpen(false);
+      
+      toast("Paciente adicionado", {
+        description: "O novo paciente foi cadastrado com sucesso."
+      });
+    } catch (error) {
+      console.error("Erro ao adicionar paciente:", error);
+      toast.error("Erro ao adicionar paciente");
+    }
+  };
+
+  const handleDeletePatient = async (id: string) => {
+    try {
+      // Simulando uma deleção
+      // Em um ambiente real, esta seria uma deleção no Supabase ou outra API
+      setPatients(patients.filter(patient => patient.id !== id));
+      
+      toast.success("Paciente removido com sucesso");
+    } catch (error) {
+      console.error("Erro ao remover paciente:", error);
+      toast.error("Erro ao remover paciente");
+    }
   };
 
   return (
@@ -152,19 +210,48 @@ const Patients = () => {
                       <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                           <Label htmlFor="name">Nome completo</Label>
-                          <Input id="name" placeholder="Nome do paciente" required />
+                          <Input 
+                            id="name" 
+                            name="name" 
+                            value={patientForm.name}
+                            onChange={handleInputChange}
+                            placeholder="Nome do paciente" 
+                            required 
+                          />
                         </div>
                         <div className="grid gap-2">
                           <Label htmlFor="email">Email</Label>
-                          <Input id="email" type="email" placeholder="email@exemplo.com" required />
+                          <Input 
+                            id="email" 
+                            name="email"
+                            value={patientForm.email}
+                            onChange={handleInputChange}
+                            type="email" 
+                            placeholder="email@exemplo.com" 
+                            required 
+                          />
                         </div>
                         <div className="grid gap-2">
                           <Label htmlFor="phone">Telefone</Label>
-                          <Input id="phone" placeholder="(00) 00000-0000" required />
+                          <Input 
+                            id="phone" 
+                            name="phone"
+                            value={patientForm.phone}
+                            onChange={handleInputChange}
+                            placeholder="(00) 00000-0000" 
+                            required 
+                          />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="birthdate">Data de nascimento</Label>
-                          <Input id="birthdate" type="date" required />
+                          <Label htmlFor="birthDate">Data de nascimento</Label>
+                          <Input 
+                            id="birthDate" 
+                            name="birthDate"
+                            value={patientForm.birthDate}
+                            onChange={handleInputChange}
+                            type="date" 
+                            required 
+                          />
                         </div>
                       </div>
                       <DialogFooter>
@@ -193,10 +280,18 @@ const Patients = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPatients.length === 0 ? (
+                    {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-6 text-gray-500">
-                          Nenhum paciente encontrado
+                        <TableCell colSpan={6} className="h-24 text-center">
+                          <div className="flex justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredPatients.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center py-6 text-gray-500">
+                          Nenhum paciente encontrado. Adicione seu primeiro paciente usando o botão acima.
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -237,7 +332,10 @@ const Patients = () => {
                                   <Edit className="mr-2 h-4 w-4" />
                                   <span>Editar</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer text-red-600">
+                                <DropdownMenuItem 
+                                  className="cursor-pointer text-red-600"
+                                  onClick={() => handleDeletePatient(patient.id)}
+                                >
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   <span>Excluir</span>
                                 </DropdownMenuItem>
@@ -266,53 +364,71 @@ const Patients = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPatients
-                      .filter(patient => patient.status === 'active')
-                      .map((patient) => (
-                        // Conteúdo similar ao anterior, apenas filtrado
-                        <TableRow key={patient.id}>
-                          <TableCell>
-                            <div className="font-medium">{patient.name}</div>
-                            <div className="text-sm text-gray-500 md:hidden">{patient.email}</div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">{patient.email}</TableCell>
-                          <TableCell>{patient.phone}</TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {format(new Date(patient.birthDate), 'dd/MM/yyyy')}
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            <Badge className="bg-healthgreen-600">Ativo</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                  <span className="sr-only">Abrir menu</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem className="cursor-pointer">
-                                  <Calendar className="mr-2 h-4 w-4" />
-                                  <span>Agendar consulta</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer">
-                                  <FileText className="mr-2 h-4 w-4" />
-                                  <span>Ver prontuário</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer">
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  <span>Editar</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer text-red-600">
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  <span>Excluir</span>
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
+                          <div className="flex justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredPatients.filter(p => p.status === 'active').length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center py-6 text-gray-500">
+                          Nenhum paciente ativo encontrado
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredPatients
+                        .filter(patient => patient.status === 'active')
+                        .map((patient) => (
+                          <TableRow key={patient.id}>
+                            <TableCell>
+                              <div className="font-medium">{patient.name}</div>
+                              <div className="text-sm text-gray-500 md:hidden">{patient.email}</div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">{patient.email}</TableCell>
+                            <TableCell>{patient.phone}</TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {format(new Date(patient.birthDate), 'dd/MM/yyyy')}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <Badge className="bg-healthgreen-600">Ativo</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="h-4 w-4" />
+                                    <span className="sr-only">Abrir menu</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem className="cursor-pointer">
+                                    <Calendar className="mr-2 h-4 w-4" />
+                                    <span>Agendar consulta</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="cursor-pointer">
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    <span>Ver prontuário</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="cursor-pointer">
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    <span>Editar</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer text-red-600"
+                                    onClick={() => handleDeletePatient(patient.id)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Excluir</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -332,53 +448,71 @@ const Patients = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPatients
-                      .filter(patient => patient.status === 'inactive')
-                      .map((patient) => (
-                        // Conteúdo similar ao anterior, apenas filtrado
-                        <TableRow key={patient.id}>
-                          <TableCell>
-                            <div className="font-medium">{patient.name}</div>
-                            <div className="text-sm text-gray-500 md:hidden">{patient.email}</div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">{patient.email}</TableCell>
-                          <TableCell>{patient.phone}</TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {format(new Date(patient.birthDate), 'dd/MM/yyyy')}
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            <Badge variant="outline">Inativo</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                  <span className="sr-only">Abrir menu</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem className="cursor-pointer">
-                                  <Calendar className="mr-2 h-4 w-4" />
-                                  <span>Agendar consulta</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer">
-                                  <FileText className="mr-2 h-4 w-4" />
-                                  <span>Ver prontuário</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer">
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  <span>Editar</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer text-red-600">
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  <span>Excluir</span>
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
+                          <div className="flex justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredPatients.filter(p => p.status === 'inactive').length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center py-6 text-gray-500">
+                          Nenhum paciente inativo encontrado
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredPatients
+                        .filter(patient => patient.status === 'inactive')
+                        .map((patient) => (
+                          <TableRow key={patient.id}>
+                            <TableCell>
+                              <div className="font-medium">{patient.name}</div>
+                              <div className="text-sm text-gray-500 md:hidden">{patient.email}</div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">{patient.email}</TableCell>
+                            <TableCell>{patient.phone}</TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {format(new Date(patient.birthDate), 'dd/MM/yyyy')}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <Badge variant="outline">Inativo</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="h-4 w-4" />
+                                    <span className="sr-only">Abrir menu</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem className="cursor-pointer">
+                                    <Calendar className="mr-2 h-4 w-4" />
+                                    <span>Agendar consulta</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="cursor-pointer">
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    <span>Ver prontuário</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="cursor-pointer">
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    <span>Editar</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer text-red-600"
+                                    onClick={() => handleDeletePatient(patient.id)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Excluir</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    )}
                   </TableBody>
                 </Table>
               </div>

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,8 +40,8 @@ interface DateRangePickerProps {
 
 const DateRangePickerDemo = ({ className }: DateRangePickerProps) => {
   const [date, setDate] = React.useState({
-    from: new Date(2025, 3, 1),
-    to: new Date(2025, 3, 15),
+    from: new Date(),
+    to: new Date(new Date().setDate(new Date().getDate() + 15)),
   });
 
   return (
@@ -51,60 +51,82 @@ const DateRangePickerDemo = ({ className }: DateRangePickerProps) => {
   )
 }
 
+interface ReportData {
+  date: string;
+  total?: number;
+  value?: number;
+}
+
+interface DoctorPerformance {
+  name: string;
+  appointments: number;
+  revenue: number;
+}
+
+interface AppointmentType {
+  name: string;
+  value: number;
+}
+
 const Reports = () => {
   const { activeClinic } = useClinic();
   const [selectedDoctor, setSelectedDoctor] = useState<string | undefined>(undefined);
   const [selectedReport, setSelectedReport] = useState('appointments');
+  const [isLoading, setIsLoading] = useState(false);
+  const [appointmentsData, setAppointmentsData] = useState<ReportData[]>([]);
+  const [revenueData, setRevenueData] = useState<ReportData[]>([]);
+  const [doctorPerformanceData, setDoctorPerformanceData] = useState<DoctorPerformance[]>([]);
+  const [appointmentsByTypeData, setAppointmentsByTypeData] = useState<AppointmentType[]>([]);
 
-  // Dados mockados - em um ambiente real, esses dados seriam filtrados pela clínica ativa
-  const appointmentsData = [
-    { date: '01/04', total: 12 },
-    { date: '02/04', total: 15 },
-    { date: '03/04', total: 10 },
-    { date: '04/04', total: 18 },
-    { date: '05/04', total: 14 },
-    { date: '06/04', total: 7 },
-    { date: '07/04', total: 20 },
-    { date: '08/04', total: 16 },
-    { date: '09/04', total: 13 },
-    { date: '10/04', total: 17 },
-    { date: '11/04', total: 19 },
-    { date: '12/04', total: 8 },
-    { date: '13/04', total: 5 },
-    { date: '14/04', total: 11 },
-    { date: '15/04', total: 14 },
-  ];
+  useEffect(() => {
+    if (activeClinic) {
+      fetchReportData();
+    } else {
+      // Reset data when no clinic is selected
+      resetReportData();
+    }
+  }, [activeClinic, selectedReport, selectedDoctor]);
+  
+  const resetReportData = () => {
+    setAppointmentsData([]);
+    setRevenueData([]);
+    setDoctorPerformanceData([]);
+    setAppointmentsByTypeData([]);
+  };
 
-  const revenueData = [
-    { date: '01/04', value: 1200 },
-    { date: '02/04', value: 1500 },
-    { date: '03/04', value: 1000 },
-    { date: '04/04', value: 1800 },
-    { date: '05/04', value: 1400 },
-    { date: '06/04', value: 700 },
-    { date: '07/04', value: 2000 },
-    { date: '08/04', value: 1600 },
-    { date: '09/04', value: 1300 },
-    { date: '10/04', value: 1700 },
-    { date: '11/04', value: 1900 },
-    { date: '12/04', value: 800 },
-    { date: '13/04', value: 500 },
-    { date: '14/04', value: 1100 },
-    { date: '15/04', value: 1400 },
-  ];
+  const fetchReportData = async () => {
+    if (!activeClinic) return;
+    
+    setIsLoading(true);
+    
+    try {
+      // Simulando chamadas de API com timeouts
+      // Em um ambiente real, estas seriam chamadas reais para o Supabase ou outra API
+      setTimeout(() => {
+        setAppointmentsData([]);
+        setRevenueData([]);
+        setDoctorPerformanceData([]);
+        setAppointmentsByTypeData([
+          { name: 'Consultas', value: 0 },
+          { name: 'Retornos', value: 0 },
+          { name: 'Exames', value: 0 },
+        ]);
+        
+        setIsLoading(false);
+      }, 500);
+    } catch (error) {
+      console.error("Erro ao buscar dados de relatórios:", error);
+      setIsLoading(false);
+    }
+  };
 
-  const doctorPerformanceData = [
-    { name: 'Dr. João Cardoso', appointments: 45, revenue: 9000 },
-    { name: 'Dra. Ana Beatriz', appointments: 38, revenue: 7600 },
-    { name: 'Dr. Carlos Eduardo', appointments: 30, revenue: 6000 },
-  ];
+  // Função para exportar relatórios
+  const handleExportReport = () => {
+    // Aqui seria implementada a lógica de exportação de relatórios
+    alert("Funcionalidade de exportação será implementada em breve!");
+  };
 
-  const appointmentsByTypeData = [
-    { name: 'Consultas', value: 65 },
-    { name: 'Retornos', value: 25 },
-    { name: 'Exames', value: 10 },
-  ];
-
+  // Cores para o gráfico de pizza
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   return (
@@ -139,9 +161,7 @@ const Reports = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os profissionais</SelectItem>
-                  <SelectItem value="Dr. João Cardoso">Dr. João Cardoso</SelectItem>
-                  <SelectItem value="Dra. Ana Beatriz">Dra. Ana Beatriz</SelectItem>
-                  <SelectItem value="Dr. Carlos Eduardo">Dr. Carlos Eduardo</SelectItem>
+                  {/* Aqui seriam carregados os médicos da clínica ativa */}
                 </SelectContent>
               </Select>
             </div>
@@ -176,7 +196,7 @@ const Reports = () => {
               </div>
             </div>
 
-            <Button className="w-full" disabled={!activeClinic}>
+            <Button className="w-full" disabled={!activeClinic} onClick={handleExportReport}>
               <Download className="h-4 w-4 mr-2" />
               Exportar relatório
             </Button>
@@ -194,7 +214,7 @@ const Reports = () => {
                     <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-4">
                       <Calendar className="h-6 w-6" />
                     </div>
-                    <h3 className="text-xl font-semibold">174</h3>
+                    <h3 className="text-xl font-semibold">{isLoading ? "..." : "0"}</h3>
                     <p className="text-sm text-gray-500">Consultas agendadas</p>
                   </CardContent>
                 </Card>
@@ -203,7 +223,7 @@ const Reports = () => {
                     <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 mb-4">
                       <DollarSign className="h-6 w-6" />
                     </div>
-                    <h3 className="text-xl font-semibold">R$ 22.450</h3>
+                    <h3 className="text-xl font-semibold">{isLoading ? "..." : "R$ 0"}</h3>
                     <p className="text-sm text-gray-500">Receita total</p>
                   </CardContent>
                 </Card>
@@ -212,7 +232,7 @@ const Reports = () => {
                     <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mb-4">
                       <Users className="h-6 w-6" />
                     </div>
-                    <h3 className="text-xl font-semibold">87</h3>
+                    <h3 className="text-xl font-semibold">{isLoading ? "..." : "0"}</h3>
                     <p className="text-sm text-gray-500">Novos pacientes</p>
                   </CardContent>
                 </Card>
@@ -233,106 +253,136 @@ const Reports = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Tabs defaultValue="chart" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 mb-6">
-                      <TabsTrigger value="chart" className="flex items-center">
-                        <BarChart3 className="h-4 w-4 mr-2" /> Gráfico
-                      </TabsTrigger>
-                      <TabsTrigger value="line" className="flex items-center">
-                        <LineChart className="h-4 w-4 mr-2" /> Linha
-                      </TabsTrigger>
-                      <TabsTrigger value="pie" className="flex items-center">
-                        <PieChart className="h-4 w-4 mr-2" /> Pizza
-                      </TabsTrigger>
-                    </TabsList>
+                  {isLoading ? (
+                    <div className="h-[400px] flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
+                  ) : (
+                    <Tabs defaultValue="chart" className="w-full">
+                      <TabsList className="grid w-full grid-cols-3 mb-6">
+                        <TabsTrigger value="chart" className="flex items-center">
+                          <BarChart3 className="h-4 w-4 mr-2" /> Gráfico
+                        </TabsTrigger>
+                        <TabsTrigger value="line" className="flex items-center">
+                          <LineChart className="h-4 w-4 mr-2" /> Linha
+                        </TabsTrigger>
+                        <TabsTrigger value="pie" className="flex items-center">
+                          <PieChart className="h-4 w-4 mr-2" /> Pizza
+                        </TabsTrigger>
+                      </TabsList>
 
-                    <TabsContent value="chart">
-                      <div className="h-[400px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          {selectedReport === 'doctors' ? (
-                            <BarChart
-                              data={doctorPerformanceData}
-                              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                            >
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="name" />
-                              <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-                              <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-                              <Tooltip />
-                              <Legend />
-                              <Bar yAxisId="left" dataKey="appointments" fill="#8884d8" name="Consultas" />
-                              <Bar yAxisId="right" dataKey="revenue" fill="#82ca9d" name="Receita (R$)" />
-                            </BarChart>
-                          ) : (
-                            <BarChart
-                              data={selectedReport === 'appointments' ? appointmentsData : revenueData}
-                              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                            >
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="date" />
-                              <YAxis />
-                              <Tooltip />
-                              <Legend />
-                              <Bar 
-                                dataKey={selectedReport === 'appointments' ? 'total' : 'value'} 
-                                fill="#8884d8" 
-                                name={selectedReport === 'appointments' ? 'Consultas' : 'Receita (R$)'} 
-                              />
-                            </BarChart>
-                          )}
-                        </ResponsiveContainer>
-                      </div>
-                    </TabsContent>
+                      <TabsContent value="chart">
+                        {appointmentsData.length > 0 || revenueData.length > 0 || doctorPerformanceData.length > 0 ? (
+                          <div className="h-[400px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              {selectedReport === 'doctors' ? (
+                                <BarChart
+                                  data={doctorPerformanceData}
+                                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" />
+                                  <XAxis dataKey="name" />
+                                  <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
+                                  <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+                                  <Tooltip />
+                                  <Legend />
+                                  <Bar yAxisId="left" dataKey="appointments" fill="#8884d8" name="Consultas" />
+                                  <Bar yAxisId="right" dataKey="revenue" fill="#82ca9d" name="Receita (R$)" />
+                                </BarChart>
+                              ) : (
+                                <BarChart
+                                  data={selectedReport === 'appointments' ? appointmentsData : revenueData}
+                                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" />
+                                  <XAxis dataKey="date" />
+                                  <YAxis />
+                                  <Tooltip />
+                                  <Legend />
+                                  <Bar 
+                                    dataKey={selectedReport === 'appointments' ? 'total' : 'value'} 
+                                    fill="#8884d8" 
+                                    name={selectedReport === 'appointments' ? 'Consultas' : 'Receita (R$)'} 
+                                  />
+                                </BarChart>
+                              )}
+                            </ResponsiveContainer>
+                          </div>
+                        ) : (
+                          <div className="h-[400px] flex flex-col items-center justify-center">
+                            <FileBarChart className="h-16 w-16 text-gray-300 mb-4" />
+                            <p className="text-gray-500">Sem dados para exibir neste período</p>
+                            <p className="text-gray-400 text-sm">Ajuste os filtros ou adicione dados para visualizar relatórios</p>
+                          </div>
+                        )}
+                      </TabsContent>
 
-                    <TabsContent value="line">
-                      <div className="h-[400px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RechartsLineChart
-                            data={selectedReport === 'appointments' ? appointmentsData : revenueData}
-                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            <Line 
-                              type="monotone" 
-                              dataKey={selectedReport === 'appointments' ? 'total' : 'value'} 
-                              stroke="#8884d8" 
-                              activeDot={{ r: 8 }} 
-                              name={selectedReport === 'appointments' ? 'Consultas' : 'Receita (R$)'} 
-                            />
-                          </RechartsLineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </TabsContent>
+                      <TabsContent value="line">
+                        {appointmentsData.length > 0 || revenueData.length > 0 ? (
+                          <div className="h-[400px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <RechartsLineChart
+                                data={selectedReport === 'appointments' ? appointmentsData : revenueData}
+                                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey={selectedReport === 'appointments' ? 'total' : 'value'} 
+                                  stroke="#8884d8" 
+                                  activeDot={{ r: 8 }} 
+                                  name={selectedReport === 'appointments' ? 'Consultas' : 'Receita (R$)'} 
+                                />
+                              </RechartsLineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        ) : (
+                          <div className="h-[400px] flex flex-col items-center justify-center">
+                            <LineChart className="h-16 w-16 text-gray-300 mb-4" />
+                            <p className="text-gray-500">Sem dados para exibir neste período</p>
+                            <p className="text-gray-400 text-sm">Ajuste os filtros ou adicione dados para visualizar relatórios</p>
+                          </div>
+                        )}
+                      </TabsContent>
 
-                    <TabsContent value="pie">
-                      <div className="h-[400px] flex items-center justify-center">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RechartsPieChart>
-                            <Pie
-                              data={appointmentsByTypeData}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                              outerRadius={120}
-                              fill="#8884d8"
-                              dataKey="value"
-                            >
-                              {appointmentsByTypeData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                            <Legend />
-                          </RechartsPieChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
+                      <TabsContent value="pie">
+                        {appointmentsByTypeData.length > 0 && appointmentsByTypeData.some(item => item.value > 0) ? (
+                          <div className="h-[400px] flex items-center justify-center">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <RechartsPieChart>
+                                <Pie
+                                  data={appointmentsByTypeData}
+                                  cx="50%"
+                                  cy="50%"
+                                  labelLine={false}
+                                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                  outerRadius={120}
+                                  fill="#8884d8"
+                                  dataKey="value"
+                                >
+                                  {appointmentsByTypeData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                              </RechartsPieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        ) : (
+                          <div className="h-[400px] flex flex-col items-center justify-center">
+                            <PieChart className="h-16 w-16 text-gray-300 mb-4" />
+                            <p className="text-gray-500">Sem dados para exibir neste período</p>
+                            <p className="text-gray-400 text-sm">Ajuste os filtros ou adicione dados para visualizar relatórios</p>
+                          </div>
+                        )}
+                      </TabsContent>
+                    </Tabs>
+                  )}
                 </CardContent>
               </Card>
             </>

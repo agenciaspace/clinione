@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,65 +8,143 @@ import {
   MessageSquare, 
   Mail, 
   Share2, 
-  FileBar, 
   BarChart,
   Users,
   Bell,
   Send,
   Plus,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  FileBarChart
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useClinic } from '@/contexts/ClinicContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/sonner';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
-// Dados mockados para campanhas de marketing
-const marketingCampaigns = [
-  {
-    id: '1',
-    name: 'Campanha de Prevenção',
-    status: 'active',
-    type: 'email',
-    sent: 345,
-    opened: 220,
-    clicked: 98,
-    date: '2025-04-01'
-  },
-  {
-    id: '2',
-    name: 'Promoção de Aniversário',
-    status: 'scheduled',
-    type: 'sms',
-    sent: 0,
-    opened: 0,
-    clicked: 0,
-    date: '2025-04-20'
-  },
-  {
-    id: '3',
-    name: 'Dicas de Saúde',
-    status: 'completed',
-    type: 'email',
-    sent: 512,
-    opened: 387,
-    clicked: 156,
-    date: '2025-03-15'
-  }
-];
+interface MarketingCampaign {
+  id: string;
+  name: string;
+  status: 'active' | 'scheduled' | 'completed';
+  type: 'email' | 'sms';
+  sent: number;
+  opened: number;
+  clicked: number;
+  date: string;
+  clinic_id: string;
+}
 
-// Dados mockados para análises de marketing
-const marketingStats = {
-  newPatients: 42,
-  websiteVisits: 2345,
-  conversions: 18,
-  socialFollowers: 987
-};
+interface MarketingStats {
+  newPatients: number;
+  websiteVisits: number;
+  conversions: number;
+  socialFollowers: number;
+}
 
 const Marketing = () => {
   const { activeClinic } = useClinic();
   const [activeTab, setActiveTab] = useState('campaigns');
+  const [marketingCampaigns, setMarketingCampaigns] = useState<MarketingCampaign[]>([]);
+  const [marketingStats, setMarketingStats] = useState<MarketingStats>({
+    newPatients: 0,
+    websiteVisits: 0,
+    conversions: 0,
+    socialFollowers: 0
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [campaignForm, setCampaignForm] = useState({
+    name: '',
+    type: 'email',
+    date: new Date().toISOString().split('T')[0]
+  });
+
+  // Carregar dados quando a clínica ativa mudar
+  useEffect(() => {
+    if (activeClinic) {
+      fetchCampaigns();
+      fetchMarketingStats();
+    } else {
+      // Resetar os dados quando não houver clínica selecionada
+      setMarketingCampaigns([]);
+      setMarketingStats({
+        newPatients: 0,
+        websiteVisits: 0,
+        conversions: 0,
+        socialFollowers: 0
+      });
+    }
+  }, [activeClinic]);
+
+  const fetchCampaigns = async () => {
+    if (!activeClinic) return;
+    
+    setIsLoading(true);
+    try {
+      // Aqui seria uma chamada real à API ou ao Supabase para buscar campanhas
+      // Por enquanto, vamos simular uma resposta após um tempo
+      setTimeout(() => {
+        // Deixando a array vazia para simular que não há dados ainda
+        setMarketingCampaigns([]);
+        setIsLoading(false);
+      }, 500);
+    } catch (error) {
+      console.error('Erro ao carregar campanhas:', error);
+      toast.error('Não foi possível carregar as campanhas de marketing');
+      setIsLoading(false);
+    }
+  };
+
+  const fetchMarketingStats = async () => {
+    if (!activeClinic) return;
+    
+    try {
+      // Aqui seria uma chamada real à API para buscar estatísticas
+      // Por enquanto, simulamos uma resposta com zeros
+      setTimeout(() => {
+        setMarketingStats({
+          newPatients: 0,
+          websiteVisits: 0,
+          conversions: 0,
+          socialFollowers: 0
+        });
+      }, 500);
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+    }
+  };
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setCampaignForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCreateCampaign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!activeClinic) {
+      toast.error('Selecione uma clínica para criar uma campanha');
+      return;
+    }
+    
+    try {
+      // Aqui seria uma chamada real à API para criar uma campanha
+      toast.success('Campanha criada com sucesso!');
+      setIsDialogOpen(false);
+      fetchCampaigns(); // Recarregar as campanhas
+    } catch (error) {
+      console.error('Erro ao criar campanha:', error);
+      toast.error('Não foi possível criar a campanha');
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -92,9 +170,65 @@ const Marketing = () => {
             <TabsContent value="campaigns" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Campanhas de Marketing</h2>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" /> Nova campanha
-                </Button>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="mr-2 h-4 w-4" /> Nova campanha
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Criar Nova Campanha</DialogTitle>
+                      <DialogDescription>
+                        Preencha os detalhes da nova campanha de marketing.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateCampaign}>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Nome da Campanha</Label>
+                          <Input 
+                            id="name" 
+                            name="name" 
+                            value={campaignForm.name} 
+                            onChange={handleFormChange} 
+                            required 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="type">Tipo</Label>
+                          <select 
+                            id="type" 
+                            name="type" 
+                            value={campaignForm.type} 
+                            onChange={handleFormChange}
+                            className="w-full p-2 border rounded"
+                          >
+                            <option value="email">Email</option>
+                            <option value="sms">SMS</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="date">Data de Envio</Label>
+                          <Input 
+                            id="date" 
+                            name="date" 
+                            type="date" 
+                            value={campaignForm.date} 
+                            onChange={handleFormChange} 
+                            required 
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                          Cancelar
+                        </Button>
+                        <Button type="submit">Criar Campanha</Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </div>
 
               <Card>
@@ -111,57 +245,73 @@ const Marketing = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {marketingCampaigns.map(campaign => (
-                        <TableRow key={campaign.id}>
-                          <TableCell className="font-medium">{campaign.name}</TableCell>
-                          <TableCell>
-                            {campaign.type === 'email' ? (
-                              <span className="inline-flex items-center">
-                                <Mail className="h-4 w-4 mr-1" /> Email
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center">
-                                <MessageSquare className="h-4 w-4 mr-1" /> SMS
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              className={
-                                campaign.status === 'active' 
-                                  ? 'bg-green-100 text-green-800 hover:bg-green-100' 
-                                  : campaign.status === 'scheduled' 
-                                    ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' 
-                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
-                              }>
-                              {campaign.status === 'active' 
-                                ? 'Ativa' 
-                                : campaign.status === 'scheduled' 
-                                  ? 'Agendada' 
-                                  : 'Concluída'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{new Date(campaign.date).toLocaleDateString('pt-BR')}</TableCell>
-                          <TableCell>
-                            {campaign.status !== 'scheduled' ? (
-                              <div className="flex flex-col gap-1">
-                                <div className="flex justify-between text-xs">
-                                  <span>Taxa de abertura</span>
-                                  <span>{Math.round((campaign.opened / campaign.sent) * 100)}%</span>
-                                </div>
-                                <Progress value={(campaign.opened / campaign.sent) * 100} className="h-2" />
-                              </div>
-                            ) : (
-                              <span className="text-sm text-gray-500">Ainda não enviada</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">
-                              Detalhes <ChevronRight className="ml-1 h-4 w-4" />
-                            </Button>
+                      {isLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="h-24 text-center">
+                            <div className="flex justify-center">
+                              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                            </div>
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : marketingCampaigns.length > 0 ? (
+                        marketingCampaigns.map(campaign => (
+                          <TableRow key={campaign.id}>
+                            <TableCell className="font-medium">{campaign.name}</TableCell>
+                            <TableCell>
+                              {campaign.type === 'email' ? (
+                                <span className="inline-flex items-center">
+                                  <Mail className="h-4 w-4 mr-1" /> Email
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center">
+                                  <MessageSquare className="h-4 w-4 mr-1" /> SMS
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                className={
+                                  campaign.status === 'active' 
+                                    ? 'bg-green-100 text-green-800 hover:bg-green-100' 
+                                    : campaign.status === 'scheduled' 
+                                      ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' 
+                                      : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+                                }>
+                                {campaign.status === 'active' 
+                                  ? 'Ativa' 
+                                  : campaign.status === 'scheduled' 
+                                    ? 'Agendada' 
+                                    : 'Concluída'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{new Date(campaign.date).toLocaleDateString('pt-BR')}</TableCell>
+                            <TableCell>
+                              {campaign.status !== 'scheduled' ? (
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex justify-between text-xs">
+                                    <span>Taxa de abertura</span>
+                                    <span>{Math.round((campaign.opened / campaign.sent) * 100)}%</span>
+                                  </div>
+                                  <Progress value={(campaign.opened / campaign.sent) * 100} className="h-2" />
+                                </div>
+                              ) : (
+                                <span className="text-sm text-gray-500">Ainda não enviada</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm">
+                                Detalhes <ChevronRight className="ml-1 h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="h-24 text-center text-gray-500">
+                            Nenhuma campanha encontrada. Crie sua primeira campanha usando o botão acima.
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -192,10 +342,11 @@ const Marketing = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {Math.round(
-                        (marketingCampaigns.reduce((sum, campaign) => sum + campaign.opened, 0) /
-                        marketingCampaigns.reduce((sum, campaign) => sum + campaign.sent, 0)) * 100
-                      )}%
+                      {marketingCampaigns.length > 0 && marketingCampaigns.reduce((sum, campaign) => sum + campaign.sent, 0) > 0 ? 
+                        Math.round(
+                          (marketingCampaigns.reduce((sum, campaign) => sum + campaign.opened, 0) /
+                          marketingCampaigns.reduce((sum, campaign) => sum + campaign.sent, 0)) * 100
+                        ) : 0}%
                     </div>
                   </CardContent>
                 </Card>
@@ -205,10 +356,11 @@ const Marketing = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {Math.round(
-                        (marketingCampaigns.reduce((sum, campaign) => sum + campaign.clicked, 0) /
-                        marketingCampaigns.reduce((sum, campaign) => sum + campaign.sent, 0)) * 100
-                      )}%
+                      {marketingCampaigns.length > 0 && marketingCampaigns.reduce((sum, campaign) => sum + campaign.sent, 0) > 0 ? 
+                        Math.round(
+                          (marketingCampaigns.reduce((sum, campaign) => sum + campaign.clicked, 0) /
+                          marketingCampaigns.reduce((sum, campaign) => sum + campaign.sent, 0)) * 100
+                        ) : 0}%
                     </div>
                   </CardContent>
                 </Card>
@@ -319,7 +471,7 @@ const Marketing = () => {
                       </div>
                     </div>
                     <p className="text-xs text-green-600 mt-4">
-                      +15% em relação ao mês anterior
+                      Comece a acompanhar suas estatísticas
                     </p>
                   </CardContent>
                 </Card>
@@ -336,7 +488,7 @@ const Marketing = () => {
                       </div>
                     </div>
                     <p className="text-xs text-blue-600 mt-4">
-                      +8% em relação ao mês anterior
+                      Configure o rastreamento do seu site
                     </p>
                   </CardContent>
                 </Card>
@@ -353,7 +505,7 @@ const Marketing = () => {
                       </div>
                     </div>
                     <p className="text-xs text-purple-600 mt-4">
-                      +12% em relação ao mês anterior
+                      Acompanhe suas conversões
                     </p>
                   </CardContent>
                 </Card>
@@ -370,7 +522,7 @@ const Marketing = () => {
                       </div>
                     </div>
                     <p className="text-xs text-orange-600 mt-4">
-                      +22% em relação ao mês anterior
+                      Conecte suas redes sociais
                     </p>
                   </CardContent>
                 </Card>
@@ -385,7 +537,8 @@ const Marketing = () => {
                   <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md">
                     <div className="text-center">
                       <BarChart className="h-16 w-16 mx-auto text-gray-300" />
-                      <p className="text-sm text-gray-500 mt-2">Gráfico de desempenho de marketing</p>
+                      <p className="text-sm text-gray-500 mt-2">Conecte suas fontes de dados para visualizar estatísticas</p>
+                      <Button className="mt-4" variant="outline">Configurar integração</Button>
                     </div>
                   </div>
                 </CardContent>
@@ -410,7 +563,7 @@ const Marketing = () => {
                             <>
                               @{activeClinic.socialMedia.instagram}
                               <br />
-                              <span className="text-gray-400">450 seguidores</span>
+                              <span className="text-gray-400">Conecte para ver estatísticas</span>
                             </>
                           ) : (
                             'Conta não conectada'
@@ -434,7 +587,7 @@ const Marketing = () => {
                             <>
                               {activeClinic.name}
                               <br />
-                              <span className="text-gray-400">320 curtidas</span>
+                              <span className="text-gray-400">Conecte para ver estatísticas</span>
                             </>
                           ) : (
                             'Conta não conectada'
