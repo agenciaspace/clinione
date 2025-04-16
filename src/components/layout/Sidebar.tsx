@@ -23,7 +23,11 @@ interface MenuItem {
   roles: string[];
 }
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  onNavItemClick?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
   const { user } = useAuth();
   const location = useLocation();
   const path = location.pathname;
@@ -45,26 +49,39 @@ export const Sidebar: React.FC = () => {
     item => user?.role && item.roles.includes(user.role)
   );
 
+  const handleNavClick = () => {
+    if (onNavItemClick) {
+      onNavItemClick();
+    }
+  };
+
   return (
-    <aside className="hidden md:flex md:w-64 flex-col bg-white border-r border-gray-200 shadow-sm">
+    <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm h-full">
       <div className="px-6 py-6">
         <h2 className="text-2xl font-bold text-healthblue-600">
           clini.io
         </h2>
       </div>
 
-      <nav className="flex-1 px-4 pb-4">
+      <nav className="flex-1 px-4 pb-4 overflow-y-auto">
         <ul className="space-y-1">
           {filteredMenuItems.map((item) => (
             <li key={item.path}>
               <Link
                 to={item.path}
                 className={cn(
-                  "btn-menu",
-                  path === item.path ? "active" : ""
+                  "flex items-center px-4 py-2.5 text-sm rounded-md transition-colors",
+                  "hover:bg-gray-100",
+                  path === item.path 
+                    ? "bg-healthblue-50 text-healthblue-600 font-medium" 
+                    : "text-gray-700"
                 )}
+                onClick={handleNavClick}
               >
-                <item.icon size={20} className={path === item.path ? "text-healthblue-600" : "text-gray-500"} />
+                <item.icon size={20} className={cn(
+                  "mr-3",
+                  path === item.path ? "text-healthblue-600" : "text-gray-500"
+                )} />
                 <span>{item.title}</span>
               </Link>
             </li>

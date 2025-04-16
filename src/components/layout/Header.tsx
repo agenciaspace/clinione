@@ -20,7 +20,7 @@ export const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const { clinics, activeClinic, setActiveClinic, isLoadingClinics } = useClinic();
   const navigate = useNavigate();
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -31,19 +31,26 @@ export const Header: React.FC = () => {
     <header className="bg-white border-b border-gray-200 shadow-sm">
       <div className="px-4 py-3 flex items-center justify-between">
         {/* Mobile toggle */}
-        <Sheet>
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="md:hidden">
               <Menu className="h-5 w-5" />
-              <span className="sr-only">Alternar navegação</span>
+              <span className="sr-only">Menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0">
+          <SheetContent side="left" className="p-0 w-64">
             <div className="flex flex-col h-full">
-              <Sidebar />
+              <Sidebar onNavItemClick={() => setMobileMenuOpen(false)} />
             </div>
           </SheetContent>
         </Sheet>
+
+        {/* Logo for mobile */}
+        <div className="md:hidden flex items-center">
+          <h2 className="text-xl font-bold text-healthblue-600">
+            clini.io
+          </h2>
+        </div>
 
         {/* Clinic Selector */}
         {clinics.length > 0 && (
@@ -85,44 +92,62 @@ export const Header: React.FC = () => {
         )}
 
         <div className="ml-auto flex items-center space-x-4">
+          {/* Mobile Clinic Selector */}
+          {clinics.length > 0 && (
+            <div className="sm:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="border-dashed h-8 px-2">
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {clinics.map((clinic) => (
+                    <DropdownMenuItem 
+                      key={clinic.id} 
+                      onClick={() => setActiveClinic(clinic)}
+                      className={activeClinic?.id === clinic.id ? 'bg-muted' : ''}
+                    >
+                      {clinic.name}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard/clinic" className="cursor-pointer w-full">
+                      Gerenciar clínicas
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
           </Button>
           
-          <div className="relative">
-            <button
-              className="flex items-center space-x-2"
-              onClick={() => setShowDropdown(!showDropdown)}
-            >
-              <div className="w-8 h-8 rounded-full bg-healthblue-100 flex items-center justify-center text-healthblue-700 font-medium">
-                {user?.name?.charAt(0) || 'U'}
-              </div>
-              <span className="hidden md:inline text-sm font-medium">
-                {user?.name || 'Usuário'}
-              </span>
-            </button>
-            
-            {showDropdown && (
-              <div 
-                className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md py-1 z-10"
-                onMouseLeave={() => setShowDropdown(false)}
-              >
-                <Link 
-                  to="/dashboard/settings" 
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Meu perfil
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Sair
-                </button>
-              </div>
-            )}
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="p-1 flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-healthblue-100 flex items-center justify-center text-healthblue-700 font-medium">
+                  {user?.name?.charAt(0) || 'U'}
+                </div>
+                <span className="hidden md:inline text-sm font-medium">
+                  {user?.name || 'Usuário'}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link to="/dashboard/settings">Meu perfil</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
