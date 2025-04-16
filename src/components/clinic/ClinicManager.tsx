@@ -278,7 +278,7 @@ const ClinicManager: React.FC = () => {
               {clinics.map((clinic) => (
                 <Card 
                   key={clinic.id} 
-                  className={`flex flex-col overflow-hidden h-full ${activeClinic?.id === clinic.id ? 'border-primary' : ''}`}
+                  className={`flex flex-col min-h-[320px] overflow-hidden ${activeClinic?.id === clinic.id ? 'border-primary' : ''}`}
                 >
                   <CardHeader className="p-4 pb-2">
                     <CardTitle className="text-lg truncate">{clinic.name}</CardTitle>
@@ -286,34 +286,36 @@ const ClinicManager: React.FC = () => {
                       {clinic.address || 'Endereço não informado'}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="p-4 pt-0 flex-grow space-y-2">
-                    <div className="text-sm">
-                      <span className="font-medium">Telefone:</span> {clinic.phone || 'Não informado'}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Email:</span> {clinic.email || 'Não informado'}
-                    </div>
-                    {clinic.slug && (
-                      <div className="text-sm flex items-center">
-                        <span className="font-medium mr-1">Página Pública:</span>
-                        <a 
-                          href={getPublicUrl(clinic.slug)} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline flex items-center"
-                        >
-                          {clinic.slug}
-                          <ExternalLink className="h-3 w-3 ml-1" />
-                        </a>
-                        <span className="ml-2">
-                          {clinic.is_published ? (
-                            <span className="text-green-500 text-xs">(Publicada)</span>
-                          ) : (
-                            <span className="text-gray-500 text-xs">(Não publicada)</span>
-                          )}
-                        </span>
+                  <CardContent className="p-4 pt-0 flex-grow">
+                    <div className="space-y-2 mb-4">
+                      <div className="text-sm">
+                        <span className="font-medium">Telefone:</span> {clinic.phone || 'Não informado'}
                       </div>
-                    )}
+                      <div className="text-sm">
+                        <span className="font-medium">Email:</span> {clinic.email || 'Não informado'}
+                      </div>
+                      {clinic.slug && (
+                        <div className="text-sm flex items-center">
+                          <span className="font-medium mr-1">Página Pública:</span>
+                          <a 
+                            href={getPublicUrl(clinic.slug)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline flex items-center"
+                          >
+                            {clinic.slug}
+                            <ExternalLink className="h-3 w-3 ml-1" />
+                          </a>
+                          <span className="ml-2">
+                            {clinic.is_published ? (
+                              <span className="text-green-500 text-xs">(Publicada)</span>
+                            ) : (
+                              <span className="text-gray-500 text-xs">(Não publicada)</span>
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                   <div className="mt-auto p-4 bg-gray-50 flex items-center justify-between">
                     {activeClinic?.id === clinic.id ? (
@@ -467,4 +469,3 @@ const ClinicManager: React.FC = () => {
 };
 
 export default ClinicManager;
-
