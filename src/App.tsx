@@ -42,11 +42,8 @@ const App = () => (
               <Route path="/dashboard/financial" element={<Financial />} />
               <Route path="/dashboard/marketing" element={<Marketing />} />
               <Route path="/dashboard/clinic" element={<ClinicProfile />} />
-              <Route path="/dashboard/settings" element={
-                <RoleBasedRoute requiredRoles={['admin']}>
-                  <Settings />
-                </RoleBasedRoute>
-              } />
+              {/* Temporarily remove role-based protection for Settings page */}
+              <Route path="/dashboard/settings" element={<Settings />} />
               {/* Public clinic routes */}
               <Route path="/c/:slug" element={<PublicClinicPage />} />
               <Route path="/dashboard/public-page" element={<PublicClinicPage />} />

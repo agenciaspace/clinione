@@ -41,7 +41,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
     { title: 'Marketing', path: '/dashboard/marketing', icon: MessageSquare, roles: ['admin'] },
     { title: 'Clínica', path: '/dashboard/clinic', icon: Building2, roles: ['admin'] },
     { title: 'Página Pública', path: '/dashboard/public-page', icon: Globe, roles: ['admin'] },
-    { title: 'Configurações', path: '/dashboard/settings', icon: Settings, roles: ['admin'] },
+    // Make Settings accessible to everyone
+    { title: 'Configurações', path: '/dashboard/settings', icon: Settings, roles: ['admin', 'doctor', 'receptionist'] },
   ];
 
   const handleNavClick = () => {
