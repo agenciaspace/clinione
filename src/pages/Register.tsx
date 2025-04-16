@@ -1,183 +1,143 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { toast } from '@/components/ui/sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 const Register = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'admin' | 'doctor' | 'receptionist'>('admin');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register } = useAuth();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { register } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError('');
+    setIsLoading(true);
     
-    if (!name || !email || !password || !confirmPassword) {
-      toast("Erro de validação", {
-        description: "Por favor, preencha todos os campos"
-      });
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      toast("Erro de validação", {
-        description: "As senhas não coincidem"
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
     try {
-      await register(name, email, password, role);
+      await register(formData.name, formData.email, formData.password, 'patient');
+      // Add the user role to the user_roles table
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await supabase.from('user_roles').insert({
+          user_id: session.user.id,
+          role: 'patient' // Default role for new users
+        });
+      }
       navigate('/dashboard');
-      toast("Registro concluído", {
-        description: "Sua conta foi criada com sucesso!"
-      });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
-      toast("Erro no registro", {
-        description: "Não foi possível criar sua conta. Tente novamente."
-      });
+      setError(error.message || 'Erro ao registrar. Tente novamente.');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-healthblue-50">
-      <div className="flex-1 hidden lg:block bg-healthblue-600 relative">
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-white p-12">
-          <h1 className="text-4xl font-bold mb-6">Clínica Digital Hub</h1>
-          <p className="text-xl mb-8 max-w-md text-center">
-            Uma plataforma completa para gestão da sua clínica e presença online.
-          </p>
-          <ul className="space-y-4 max-w-md">
-            <li className="flex items-start space-x-3">
-              <span className="bg-white text-healthblue-600 rounded-full p-1 mt-0.5">✓</span>
-              <span>Agendamento online para seus pacientes</span>
-            </li>
-            <li className="flex items-start space-x-3">
-              <span className="bg-white text-healthblue-600 rounded-full p-1 mt-0.5">✓</span>
-              <span>Histórico médico e prontuário eletrônico</span>
-            </li>
-            <li className="flex items-start space-x-3">
-              <span className="bg-white text-healthblue-600 rounded-full p-1 mt-0.5">✓</span>
-              <span>Gerenciamento financeiro simplificado</span>
-            </li>
-            <li className="flex items-start space-x-3">
-              <span className="bg-white text-healthblue-600 rounded-full p-1 mt-0.5">✓</span>
-              <span>Página pública personalizada para sua clínica</span>
-            </li>
-            <li className="flex items-start space-x-3">
-              <span className="bg-white text-healthblue-600 rounded-full p-1 mt-0.5">✓</span>
-              <span>Relatórios e análises para decisões estratégicas</span>
-            </li>
-          </ul>
+    <div className="container relative flex h-screen w-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+      <Link to="/login" className="absolute left-4 top-4 md:left-8 md:top-8 text-sm underline underline-offset-4">
+        Já tem uma conta?
+      </Link>
+      <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex">
+        <div className="absolute inset-0 bg-zinc-900" />
+        <div className="relative z-20 flex items-center text-lg font-medium">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="mr-2 h-6 w-6"
+          >
+            <path d="M15 6v12a3 3 0 1 1-6 0V6a3 3 0 1 1 6 0z" />
+          </svg>
+          CliniOne
+        </div>
+        <div className="relative z-20 mt-auto">
+          <blockquote className="space-y-2">
+            <p className="text-lg">
+              &ldquo;Gerencie sua clínica de forma eficiente e ofereça o melhor
+              cuidado aos seus pacientes.&rdquo;
+            </p>
+            <footer className="text-sm">CliniOne</footer>
+          </blockquote>
         </div>
       </div>
-      
-      <div className="flex-1 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Criar conta</CardTitle>
-            <CardDescription className="text-center">
-              Cadastre-se para começar a usar o sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome completo</Label>
-                <Input
-                  id="name"
-                  placeholder="Seu Nome"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
+      <div className="lg:p-8">
+        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+          <div className="flex flex-col space-y-2 text-center">
+            <CardHeader className="space-y-0.5">
+              <CardTitle className="text-2xl">Crie sua conta</CardTitle>
+              <CardDescription>
+                Entre com seu email e senha para começar
+              </CardDescription>
+            </CardHeader>
+          </div>
+          <CardContent className="grid gap-4">
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-2">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="Seu nome"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="seuemail@exemplo.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Senha"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="exemplo@clinica.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar senha</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-3">
-                <Label>Tipo de usuário</Label>
-                <RadioGroup 
-                  defaultValue="admin" 
-                  value={role}
-                  onValueChange={(value) => setRole(value as 'admin' | 'doctor' | 'receptionist')}
-                  className="flex flex-col space-y-1"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="admin" id="admin" />
-                    <Label htmlFor="admin">Administrador da Clínica</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="doctor" id="doctor" />
-                    <Label htmlFor="doctor">Médico/Profissional</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="receptionist" id="receptionist" />
-                    <Label htmlFor="receptionist">Recepcionista</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <Button
-                type="submit"
-                className="w-full bg-healthblue-600 hover:bg-healthblue-700"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Registrando...' : 'Cadastrar'}
+              <Button type="submit" disabled={isLoading} className="w-full mt-4">
+                {isLoading ? 'Criando conta...' : 'Criar conta'}
               </Button>
+              {error && <p className="text-red-500 mt-2">{error}</p>}
             </form>
           </CardContent>
-          <CardFooter className="flex flex-col">
-            <div className="text-center text-sm mt-2">
-              Já tem uma conta?{" "}
-              <Link to="/login" className="text-healthblue-600 hover:underline">
-                Faça login
-              </Link>
-            </div>
-          </CardFooter>
-        </Card>
+        </div>
       </div>
     </div>
   );

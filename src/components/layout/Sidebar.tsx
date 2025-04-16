@@ -28,7 +28,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
-  const { user } = useAuth();
+  const { user, userRoles } = useAuth();
   const location = useLocation();
   const path = location.pathname;
 
@@ -41,12 +41,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
     { title: 'Marketing', path: '/dashboard/marketing', icon: MessageSquare, roles: ['admin'] },
     { title: 'Clínica', path: '/dashboard/clinic', icon: Building2, roles: ['admin'] },
     { title: 'Página Pública', path: '/dashboard/public-page', icon: Globe, roles: ['admin'] },
-    { title: 'Configurações', path: '/dashboard/settings', icon: Settings, roles: ['admin', 'doctor'] },
+    { title: 'Configurações', path: '/dashboard/settings', icon: Settings, roles: ['admin'] },
   ];
 
-  // Filtra apenas os itens permitidos para o papel do usuário atual
+  // Filtra apenas os itens permitidos para os papéis do usuário atual
   const filteredMenuItems = menuItems.filter(
-    item => user?.role && item.roles.includes(user.role)
+    item => userRoles.some(role => item.roles.includes(role))
   );
 
   const handleNavClick = () => {

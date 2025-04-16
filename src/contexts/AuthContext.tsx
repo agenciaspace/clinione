@@ -11,6 +11,8 @@ interface AuthContextType {
   logout: () => void;
   register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   getAccessToken: () => Promise<string | null>;
+  hasRole: (role: UserRole) => boolean;
+  userRoles: UserRole[];
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,13 +23,44 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
   register: async () => {},
   getAccessToken: async () => null,
+  hasRole: () => false,
+  userRoles: [],
 });
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch user roles from the database
+  const fetchUserRoles = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (error) {
+        console.error("Error fetching user roles:", error);
+        return;
+      }
+      
+      // Extract roles from data
+      const roles = data.map(item => item.role as UserRole);
+      setUserRoles(roles);
+      
+      console.log("User roles loaded:", roles);
+    } catch (error) {
+      console.error("Error in fetchUserRoles:", error);
+    }
+  };
+
+  // Check if user has a specific role
+  const hasRole = (role: UserRole) => {
+    return userRoles.includes(role);
+  };
 
   // Verificar autenticação quando o componente monta e monitorar alterações
   useEffect(() => {
@@ -38,16 +71,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("Sessão:", session);
         
         if (session && session.user) {
-          setUser({
+          const userData = {
             id: session.user.id,
             name: session.user.user_metadata?.name || 'Usuário',
             email: session.user.email || '',
-            role: session.user.user_metadata?.role || 'user',
+            role: session.user.user_metadata?.role || 'patient',
             clinicId: session.user.user_metadata?.clinicId
-          });
+          };
+          
+          setUser(userData);
+          fetchUserRoles(session.user.id);
           console.log("ID do usuário definido:", session.user.id);
         } else {
           setUser(null);
+          setUserRoles([]);
           console.log("Usuário definido como null");
         }
         setIsLoading(false);
@@ -60,13 +97,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (session && session.user) {
         console.log("Sessão existente encontrada:", session.user.id);
-        setUser({
+        const userData = {
           id: session.user.id,
           name: session.user.user_metadata?.name || 'Usuário',
           email: session.user.email || '',
-          role: session.user.user_metadata?.role || 'user',
+          role: session.user.user_metadata?.role || 'patient',
           clinicId: session.user.user_metadata?.clinicId
-        });
+        };
+        
+        setUser(userData);
+        fetchUserRoles(session.user.id);
       }
       setIsLoading(false);
     };
@@ -104,13 +144,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (data.user) {
-        setUser({
+        const userData = {
           id: data.user.id,
           name: data.user.user_metadata?.name || 'Usuário',
           email: data.user.email || '',
-          role: data.user.user_metadata?.role || 'user',
+          role: data.user.user_metadata?.role || 'patient',
           clinicId: data.user.user_metadata?.clinicId
-        });
+        };
+        
+        setUser(userData);
+        fetchUserRoles(data.user.id);
       }
     } catch (error) {
       console.error("Erro ao fazer login:", error);
@@ -125,6 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await supabase.auth.signOut();
       setUser(null);
+      setUserRoles([]);
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
     }
@@ -150,13 +194,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (data.user) {
-        setUser({
+        const userData = {
           id: data.user.id,
           name: data.user.user_metadata?.name || name,
           email: data.user.email || '',
           role: data.user.user_metadata?.role || role,
           clinicId: data.user.user_metadata?.clinicId
-        });
+        };
+        
+        setUser(userData);
+        
+        // Insert the role into the user_roles table
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: data.user.id,
+            role: role
+          });
+          
+        if (roleError) {
+          console.error("Error setting user role:", roleError);
+        } else {
+          setUserRoles([role]);
+        }
       }
     } catch (error) {
       console.error("Erro ao registrar:", error);
@@ -175,7 +235,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         logout,
         register,
-        getAccessToken
+        getAccessToken,
+        hasRole,
+        userRoles
       }}
     >
       {children}
