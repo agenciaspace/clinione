@@ -37,8 +37,10 @@ export interface Clinic {
     twitter?: string;
   };
   workingHours?: WorkingHours;
-  slug: string; // Para URL personalizada
+  slug: string; 
   owner_id: string; // ID do proprietário da clínica
+  is_published?: boolean;
+  url_format?: string;
 }
 
 export interface Doctor {
