@@ -6,19 +6,22 @@ import { supabase } from '@/integrations/supabase/client';
  * @param eventType The type of event (e.g., 'appointment.created')
  * @param payload The data to include in the webhook
  * @param clinicId The ID of the clinic
+ * @param triggerSource The source of the trigger (ui, api, automation, system)
  * @returns Promise with the result of the webhook trigger
  */
 export const triggerWebhook = async (
   eventType: string,
   payload: any,
-  clinicId: string
+  clinicId: string,
+  triggerSource: 'ui' | 'api' | 'automation' | 'system' = 'ui'
 ): Promise<{ success: boolean; message: string; eventId?: string }> => {
   try {
     const { data, error } = await supabase.functions.invoke('webhook-trigger', {
       body: {
         event_type: eventType,
         clinic_id: clinicId,
-        payload
+        payload,
+        trigger_source: triggerSource
       }
     });
 

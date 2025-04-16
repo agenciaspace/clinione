@@ -147,6 +147,45 @@ export type Database = {
         }
         Relationships: []
       }
+      dead_webhook_events: {
+        Row: {
+          attempts: number
+          clinic_id: string
+          created_at: string
+          error_message: string | null
+          event_id: string
+          event_type: string
+          id: string
+          last_attempt: string | null
+          payload: Json
+          updated_at: string
+        }
+        Insert: {
+          attempts: number
+          clinic_id: string
+          created_at?: string
+          error_message?: string | null
+          event_id: string
+          event_type: string
+          id?: string
+          last_attempt?: string | null
+          payload: Json
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          clinic_id?: string
+          created_at?: string
+          error_message?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          last_attempt?: string | null
+          payload?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       doctors: {
         Row: {
           bio: string | null
@@ -262,12 +301,57 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_endpoints: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          description: string | null
+          event_types: string[] | null
+          id: string
+          is_active: boolean
+          secret: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          description?: string | null
+          event_types?: string[] | null
+          id?: string
+          is_active?: boolean
+          secret?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          description?: string | null
+          event_types?: string[] | null
+          id?: string
+          is_active?: boolean
+          secret?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_endpoints_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_events: {
         Row: {
           attempts: number
           clinic_id: string
           created_at: string
           event_type: string
+          event_version: string
           http_status: number | null
           id: string
           last_attempt: string | null
@@ -275,6 +359,7 @@ export type Database = {
           payload: Json
           status: string
           timestamp: string
+          trigger_source: string
           updated_at: string
         }
         Insert: {
@@ -282,6 +367,7 @@ export type Database = {
           clinic_id: string
           created_at?: string
           event_type: string
+          event_version?: string
           http_status?: number | null
           id?: string
           last_attempt?: string | null
@@ -289,6 +375,7 @@ export type Database = {
           payload: Json
           status?: string
           timestamp?: string
+          trigger_source?: string
           updated_at?: string
         }
         Update: {
@@ -296,6 +383,7 @@ export type Database = {
           clinic_id?: string
           created_at?: string
           event_type?: string
+          event_version?: string
           http_status?: number | null
           id?: string
           last_attempt?: string | null
@@ -303,6 +391,7 @@ export type Database = {
           payload?: Json
           status?: string
           timestamp?: string
+          trigger_source?: string
           updated_at?: string
         }
         Relationships: [
@@ -315,6 +404,45 @@ export type Database = {
           },
         ]
       }
+      webhook_logs: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          next_retry_at: string | null
+          response_body: string | null
+          response_code: number | null
+          retry_count: number
+          status: string
+          updated_at: string
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          next_retry_at?: string | null
+          response_body?: string | null
+          response_code?: number | null
+          retry_count?: number
+          status: string
+          updated_at?: string
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          next_retry_at?: string | null
+          response_body?: string | null
+          response_code?: number | null
+          retry_count?: number
+          status?: string
+          updated_at?: string
+          webhook_id?: string
+        }
+        Relationships: []
+      }
       webhook_retries: {
         Row: {
           created_at: string
@@ -323,6 +451,7 @@ export type Database = {
           retry_at: string
           status: string
           updated_at: string
+          webhook_id: string | null
         }
         Insert: {
           created_at?: string
@@ -331,6 +460,7 @@ export type Database = {
           retry_at: string
           status?: string
           updated_at?: string
+          webhook_id?: string | null
         }
         Update: {
           created_at?: string
@@ -339,6 +469,7 @@ export type Database = {
           retry_at?: string
           status?: string
           updated_at?: string
+          webhook_id?: string | null
         }
         Relationships: [
           {
