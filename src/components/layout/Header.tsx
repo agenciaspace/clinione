@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useClinic } from '../../contexts/ClinicContext';
@@ -45,10 +44,10 @@ export const Header: React.FC = () => {
           </SheetContent>
         </Sheet>
 
-        {/* Logo for mobile */}
+        {/* Mobile Logo */}
         <div className="md:hidden flex items-center">
           <h2 className="text-xl font-bold text-healthblue-600">
-            clini.io
+            CliniOne
           </h2>
         </div>
 

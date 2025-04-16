@@ -32,7 +32,7 @@ const LandingPage = () => {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <div className="text-xl md:text-2xl font-bold text-healthblue-600">ClínicaDigitalHub</div>
+            <div className="text-xl md:text-2xl font-bold text-healthblue-600">CliniOne</div>
           </div>
           
           {/* Desktop Navigation */}
@@ -514,7 +514,7 @@ const LandingPage = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-lg md:text-xl font-bold mb-4">ClínicaDigitalHub</h3>
+              <h3 className="text-lg md:text-xl font-bold mb-4">CliniOne</h3>
               <p className="text-gray-400 mb-4">
                 Transformando a gestão de clínicas com tecnologia inteligente e focada no paciente.
               </p>
@@ -553,7 +553,7 @@ const LandingPage = () => {
           
           <div className="border-t border-gray-800 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              &copy; {new Date().getFullYear()} ClínicaDigitalHub. Todos os direitos reservados.
+              &copy; {new Date().getFullYear()} CliniOne. Todos os direitos reservados.
             </p>
             <div className="flex space-x-4 mt-4 md:mt-0">
               <a href="#" className="text-gray-400 hover:text-white">

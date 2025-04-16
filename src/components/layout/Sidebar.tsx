@@ -59,7 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
     <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm h-full">
       <div className="px-6 py-6">
         <h2 className="text-2xl font-bold text-healthblue-600">
-          clini.io
+          CliniOne
         </h2>
       </div>
 
