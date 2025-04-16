@@ -13,9 +13,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
 import { Appointment, Doctor } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClinic } from '@/contexts/ClinicContext';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { activeClinic } = useClinic();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [view, setView] = useState<'day' | 'week'>('day');
   const [selectedDoctor, setSelectedDoctor] = useState<string | undefined>(undefined);
@@ -24,108 +26,84 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    const fetchDoctors = async () => {
-      if (!user) return;
-      
-      try {
-        // First get the clinic id of the current user
-        const { data: clinicData, error: clinicError } = await supabase
-          .from('clinics')
-          .select('id')
-          .eq('owner_id', user.id)
-          .single();
-          
-        if (clinicError) {
-          console.error('Error fetching clinic:', clinicError);
-          return;
-        }
-        
-        if (clinicData) {
-          // Then fetch doctors from that clinic
-          const { data, error } = await supabase
-            .from('doctors')
-            .select('*')
-            .eq('clinic_id', clinicData.id);
-            
-          if (error) {
-            console.error('Error fetching doctors:', error);
-            return;
-          }
-          
-          if (data) {
-            setDoctors(data as Doctor[]);
-          }
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    };
+    if (activeClinic) {
+      fetchDoctors();
+    } else {
+      setDoctors([]);
+    }
+  }, [activeClinic]);
+  
+  const fetchDoctors = async () => {
+    if (!activeClinic) return;
     
-    fetchDoctors();
-  }, [user]);
+    try {
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('clinic_id', activeClinic.id);
+        
+      if (error) {
+        console.error('Error fetching doctors:', error);
+        return;
+      }
+      
+      if (data) {
+        setDoctors(data as Doctor[]);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
   
   useEffect(() => {
-    const fetchAppointments = async () => {
-      if (!selectedDate || !user) return;
-      
-      setLoading(true);
-      try {
-        // First get the clinic id of the current user
-        const { data: clinicData, error: clinicError } = await supabase
-          .from('clinics')
-          .select('id')
-          .eq('owner_id', user.id)
-          .single();
-          
-        if (clinicError) {
-          console.error('Error fetching clinic:', clinicError);
-          setLoading(false);
-          return;
-        }
-        
-        if (!clinicData) {
-          setLoading(false);
-          return;
-        }
-        
-        // Format the date to match the database format
-        const dateStart = new Date(selectedDate);
-        dateStart.setHours(0, 0, 0, 0);
-        
-        const dateEnd = new Date(selectedDate);
-        dateEnd.setHours(23, 59, 59, 999);
-        
-        let query = supabase
-          .from('appointments')
-          .select('*')
-          .eq('clinic_id', clinicData.id)
-          .gte('date', dateStart.toISOString())
-          .lte('date', dateEnd.toISOString());
-          
-        if (selectedDoctor) {
-          query = query.eq('doctor_id', selectedDoctor);
-        }
-        
-        const { data, error } = await query;
-        
-        if (error) {
-          console.error('Error fetching appointments:', error);
-          setLoading(false);
-          return;
-        }
-        
-        if (data) {
-          setAppointments(data as Appointment[]);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (selectedDate && activeClinic) {
+      fetchAppointments();
+    } else {
+      setAppointments([]);
+      setLoading(false);
+    }
+  }, [selectedDate, selectedDoctor, activeClinic]);
+  
+  const fetchAppointments = async () => {
+    if (!selectedDate || !activeClinic) return;
     
-    fetchAppointments();
-  }, [selectedDate, selectedDoctor, user]);
+    setLoading(true);
+    try {
+      // Format the date to match the database format
+      const dateStart = new Date(selectedDate);
+      dateStart.setHours(0, 0, 0, 0);
+      
+      const dateEnd = new Date(selectedDate);
+      dateEnd.setHours(23, 59, 59, 999);
+      
+      let query = supabase
+        .from('appointments')
+        .select('*')
+        .eq('clinic_id', activeClinic.id)
+        .gte('date', dateStart.toISOString())
+        .lte('date', dateEnd.toISOString());
+        
+      if (selectedDoctor) {
+        query = query.eq('doctor_id', selectedDoctor);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching appointments:', error);
+        setLoading(false);
+        return;
+      }
+      
+      if (data) {
+        setAppointments(data as Appointment[]);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const filteredAppointments = appointments.filter(appointment => {
     const appointmentDate = new Date(appointment.date);
@@ -199,7 +177,12 @@ const Dashboard = () => {
     <DashboardLayout>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Agenda</h1>
-        <p className="text-gray-500">Gerencie seus agendamentos e consultas</p>
+        <p className="text-gray-500">
+          {activeClinic 
+            ? `Gerencie os agendamentos e consultas da clínica ${activeClinic.name}`
+            : 'Selecione uma clínica para gerenciar agendamentos'
+          }
+        </p>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

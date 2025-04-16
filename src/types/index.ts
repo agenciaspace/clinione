@@ -8,6 +8,7 @@ export interface User {
   role: UserRole;
   avatar?: string;
   clinicId?: string;
+  clinics?: string[]; // Ids of clinics the user has access to
 }
 
 export type WorkingHourPeriod = { start: string; end: string }[];
@@ -37,6 +38,7 @@ export interface Clinic {
   };
   workingHours?: WorkingHours;
   slug: string; // Para URL personalizada
+  owner_id: string; // ID do proprietário da clínica
 }
 
 export interface Doctor {

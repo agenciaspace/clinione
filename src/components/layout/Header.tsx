@@ -1,15 +1,24 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useClinic } from '../../contexts/ClinicContext';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Menu, X } from 'lucide-react';
+import { Bell, Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Sidebar } from './Sidebar';
 import { Link } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuth();
+  const { clinics, activeClinic, setActiveClinic, isLoadingClinics } = useClinic();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -26,7 +35,7 @@ export const Header: React.FC = () => {
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="md:hidden">
               <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle navigation</span>
+              <span className="sr-only">Alternar navegação</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0">
@@ -35,6 +44,45 @@ export const Header: React.FC = () => {
             </div>
           </SheetContent>
         </Sheet>
+
+        {/* Clinic Selector */}
+        {clinics.length > 0 && (
+          <div className="hidden sm:flex items-center ml-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="border-dashed">
+                  {isLoadingClinics ? (
+                    <span className="animate-pulse">Carregando clínicas...</span>
+                  ) : activeClinic ? (
+                    <>
+                      <span className="mr-1">{activeClinic.name}</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </>
+                  ) : (
+                    'Selecionar clínica'
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {clinics.map((clinic) => (
+                  <DropdownMenuItem 
+                    key={clinic.id} 
+                    onClick={() => setActiveClinic(clinic)}
+                    className={activeClinic?.id === clinic.id ? 'bg-muted' : ''}
+                  >
+                    {clinic.name}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/clinic" className="cursor-pointer w-full">
+                    Gerenciar clínicas
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
 
         <div className="ml-auto flex items-center space-x-4">
           <Button variant="ghost" size="icon" className="relative">

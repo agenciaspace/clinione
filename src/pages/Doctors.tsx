@@ -12,6 +12,7 @@ import { toast } from '@/components/ui/sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClinic } from '@/contexts/ClinicContext';
 
 interface DoctorFormData {
   id?: string;
@@ -38,6 +39,7 @@ const specialities = [
 
 const Doctors = () => {
   const { user } = useAuth();
+  const { activeClinic } = useClinic();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -51,44 +53,23 @@ const Doctors = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [clinicId, setClinicId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchClinic = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('clinics')
-          .select('id')
-          .eq('owner_id', user.id)
-          .single();
-          
-        if (error) {
-          console.error('Error fetching clinic:', error);
-          toast.error('Não foi possível carregar informações da clínica');
-          return;
-        }
-        
-        if (data) {
-          setClinicId(data.id);
-          fetchDoctors(data.id);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    };
-    
-    fetchClinic();
-  }, [user]);
+    if (activeClinic) {
+      fetchDoctors(activeClinic.id);
+    } else {
+      setDoctors([]);
+      setLoading(false);
+    }
+  }, [activeClinic]);
 
-  const fetchDoctors = async (clinic_id: string) => {
+  const fetchDoctors = async (clinicId: string) => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('doctors')
         .select('*')
-        .eq('clinic_id', clinic_id);
+        .eq('clinic_id', clinicId);
         
       if (error) {
         console.error('Error fetching doctors:', error);
@@ -182,8 +163,8 @@ const Doctors = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!clinicId) {
-      toast.error('Nenhuma clínica encontrada');
+    if (!activeClinic) {
+      toast.error('Nenhuma clínica selecionada');
       return;
     }
     
@@ -230,7 +211,7 @@ const Doctors = () => {
             bio: formData.bio,
             email: formData.email,
             phone: formData.phone,
-            clinic_id: clinicId
+            clinic_id: activeClinic.id
           })
           .select();
           
@@ -264,11 +245,17 @@ const Doctors = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Profissionais</CardTitle>
-            <CardDescription>Total de {doctors.length} profissionais cadastrados</CardDescription>
+            <CardDescription>
+              {activeClinic 
+                ? `Total de ${doctors.length} profissionais cadastrados na clínica ${activeClinic.name}`
+                : 'Selecione uma clínica para gerenciar profissionais'}
+            </CardDescription>
           </div>
-          <Button onClick={handleAddDoctor}>
-            <Plus className="mr-2 h-4 w-4" /> Novo profissional
-          </Button>
+          {activeClinic && (
+            <Button onClick={handleAddDoctor}>
+              <Plus className="mr-2 h-4 w-4" /> Novo profissional
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <div className="mb-6">
