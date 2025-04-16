@@ -44,18 +44,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
     { title: 'Configurações', path: '/dashboard/settings', icon: Settings, roles: ['admin'] },
   ];
 
-  // Filtra apenas os itens permitidos para os papéis do usuário atual
-  const filteredMenuItems = menuItems.filter(
-    item => userRoles.some(role => item.roles.includes(role))
-  );
-
   const handleNavClick = () => {
     if (onNavItemClick) {
       onNavItemClick();
     }
   };
 
-  console.log('Current user roles:', userRoles); // Add this line for debugging
+  console.log('Current user roles:', userRoles); // Para depuração
+
+  // Se o usuário não tem papéis definidos, mostrar todos os itens do menu
+  // Isso evita que a sidebar fique vazia quando os papéis ainda não foram carregados
+  const filteredMenuItems = userRoles.length === 0 
+    ? menuItems 
+    : menuItems.filter(item => userRoles.some(role => item.roles.includes(role)));
 
   return (
     <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm h-full">
@@ -91,21 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
         </ul>
       </nav>
 
-      <div className="mt-auto px-4 py-4 border-t border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-healthblue-100 flex items-center justify-center text-healthblue-700 font-medium">
-            {user?.name?.charAt(0) || 'U'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {user?.name || 'Usuário'}
-            </p>
-            <p className="text-xs text-gray-500 truncate">
-              {user?.email || 'email@exemplo.com'}
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Removendo o perfil do usuário daqui, já que ele aparece no header */}
     </aside>
   );
 };
