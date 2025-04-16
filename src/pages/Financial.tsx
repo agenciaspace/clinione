@@ -38,17 +38,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useClinic } from '@/contexts/ClinicContext';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from "@/integrations/supabase/client";
-
-// Define the transaction type
-interface Transaction {
-  id: string;
-  date: string;
-  description: string;
-  type: 'income' | 'expense';
-  status: 'completed' | 'pending';
-  amount: number;
-  clinic_id: string;
-}
+import { Transaction } from '@/types';
 
 const Financial = () => {
   const { activeClinic } = useClinic();
@@ -61,6 +51,7 @@ const Financial = () => {
   const [newTransactionAmount, setNewTransactionAmount] = useState('');
   const [newTransactionType, setNewTransactionType] = useState<'income' | 'expense'>('income');
   const [newTransactionStatus, setNewTransactionStatus] = useState<'completed' | 'pending'>('completed');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Fetch transactions from the database
   useEffect(() => {
@@ -79,7 +70,10 @@ const Financial = () => {
           .eq('clinic_id', activeClinic.id);
 
         if (error) throw error;
-        setTransactions(data || []);
+        
+        // Ensure correct typing
+        const typedData = data as Transaction[];
+        setTransactions(typedData || []);
       } catch (error) {
         console.error('Error fetching transactions:', error);
         toast.error('Falha ao carregar transações financeiras');
@@ -123,8 +117,13 @@ const Financial = () => {
 
       if (error) throw error;
 
+      // Close dialog and reset form
+      setIsDialogOpen(false);
+      
       // Update local state with the new transaction
-      setTransactions([...(data || []), ...transactions]);
+      if (data) {
+        setTransactions([...data as Transaction[], ...transactions]);
+      }
       
       // Reset form
       setNewTransactionDescription('');
@@ -355,7 +354,7 @@ const Financial = () => {
                   <Button variant="outline" disabled={transactions.length === 0}>
                     <Download className="h-4 w-4 mr-2" /> Exportar
                   </Button>
-                  <Dialog>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button>
                         <Plus className="h-4 w-4 mr-2" /> Nova transação

@@ -88,3 +88,15 @@ export interface Service {
   price: number;
   clinicId: string;
 }
+
+export interface Transaction {
+  id: string;
+  clinic_id: string;
+  description: string;
+  amount: number;
+  type: 'income' | 'expense';
+  status: 'completed' | 'pending';
+  date: string;
+  created_at?: string;
+  updated_at?: string;
+}

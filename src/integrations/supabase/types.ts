@@ -188,6 +188,50 @@ export type Database = {
           },
         ]
       }
+      transactions: {
+        Row: {
+          amount: number
+          clinic_id: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          clinic_id: string
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          status: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          clinic_id?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
