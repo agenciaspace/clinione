@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,13 +10,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
 import { Clinic } from '@/types';
-import { Building2, Edit, Trash2, Check } from 'lucide-react';
+import { Building2, Edit, Trash2, Check, ExternalLink } from 'lucide-react';
 
 interface ClinicFormData {
   name: string;
   address: string;
   phone: string;
   email: string;
+  slug: string;
 }
 
 const ClinicManager: React.FC = () => {
@@ -29,8 +30,12 @@ const ClinicManager: React.FC = () => {
     name: '',
     address: '',
     phone: '',
-    email: ''
+    email: '',
+    slug: ''
   });
+  const [slugError, setSlugError] = useState('');
+  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+  const baseUrl = "https://clini.one";
 
   const handleAddClinic = () => {
     setIsEditing(false);
@@ -39,8 +44,10 @@ const ClinicManager: React.FC = () => {
       name: '',
       address: '',
       phone: '',
-      email: ''
+      email: '',
+      slug: ''
     });
+    setSlugError('');
     setIsDialogOpen(true);
   };
 
@@ -51,17 +58,69 @@ const ClinicManager: React.FC = () => {
       name: clinic.name,
       address: clinic.address || '',
       phone: clinic.phone || '',
-      email: clinic.email || ''
+      email: clinic.email || '',
+      slug: clinic.slug || ''
     });
+    setSlugError('');
     setIsDialogOpen(true);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'slug') {
+      // Format slug: lowercase, replace spaces and special chars with hyphens
+      const formattedValue = value
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const checkSlugAvailability = async (slug: string) => {
+    if (!slug) return false;
+    
+    setIsCheckingSlug(true);
+    try {
+      const { data, error } = await supabase
+        .from('clinics')
+        .select('id')
+        .eq('slug', slug)
+        .neq('id', editingClinicId || '');
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setSlugError('Este endereço já está sendo usado por outra clínica. Tente outro nome.');
+        return false;
+      } else {
+        setSlugError('');
+        return true;
+      }
+    } catch (error) {
+      console.error('Erro ao verificar disponibilidade do slug:', error);
+      setSlugError('Erro ao verificar disponibilidade do endereço');
+      return false;
+    } finally {
+      setIsCheckingSlug(false);
+    }
+  };
+
+  const handleSlugBlur = async () => {
+    if (formData.slug) {
+      await checkSlugAvailability(formData.slug);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,6 +129,10 @@ const ClinicManager: React.FC = () => {
     if (!user) {
       toast.error('Usuário não autenticado');
       return;
+    }
+    
+    if (formData.slug && !(await checkSlugAvailability(formData.slug))) {
+      return; // Slug is not available, don't proceed
     }
     
     try {
@@ -81,6 +144,7 @@ const ClinicManager: React.FC = () => {
             address: formData.address,
             phone: formData.phone,
             email: formData.email,
+            slug: formData.slug || null,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingClinicId);
@@ -96,6 +160,7 @@ const ClinicManager: React.FC = () => {
             address: formData.address,
             phone: formData.phone,
             email: formData.email,
+            slug: formData.slug || null,
             owner_id: user.id
           })
           .select();
@@ -135,6 +200,10 @@ const ClinicManager: React.FC = () => {
       console.error('Erro ao excluir clínica:', error);
       toast.error('Ocorreu um erro ao excluir a clínica');
     }
+  };
+
+  const getPublicUrl = (slug: string) => {
+    return slug ? `${baseUrl}/c/${slug}` : '';
   };
 
   return (
@@ -182,6 +251,20 @@ const ClinicManager: React.FC = () => {
                     <div className="text-sm">
                       <span className="font-medium">Email:</span> {clinic.email || 'Não informado'}
                     </div>
+                    {clinic.slug && (
+                      <div className="text-sm flex items-center">
+                        <span className="font-medium mr-1">Página Pública:</span>
+                        <a 
+                          href={getPublicUrl(clinic.slug)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline flex items-center"
+                        >
+                          {clinic.slug}
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </div>
+                    )}
                   </CardContent>
                   <div className="p-4 bg-gray-50 flex items-center justify-between">
                     {activeClinic?.id === clinic.id ? (
@@ -239,6 +322,44 @@ const ClinicManager: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="slug">Endereço público da sua clínica</Label>
+                <div className="flex">
+                  <span className="bg-gray-100 px-3 flex items-center border border-r-0 border-input rounded-l-md text-sm text-gray-500">
+                    {baseUrl}/c/
+                  </span>
+                  <Input
+                    id="slug"
+                    name="slug"
+                    className={`rounded-l-none ${slugError ? 'border-red-500' : ''}`}
+                    value={formData.slug}
+                    onChange={handleInputChange}
+                    onBlur={handleSlugBlur}
+                    placeholder="ex: vila-mariana-clinica"
+                  />
+                </div>
+                {slugError ? (
+                  <p className="text-sm text-red-500">{slugError}</p>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    Este será o link usado para divulgar sua clínica online. Ele deve ser único e fácil de lembrar.
+                  </p>
+                )}
+                {formData.slug && !slugError && (
+                  <div className="text-sm flex items-center mt-1">
+                    <span className="mr-1">Ver página pública:</span>
+                    <a 
+                      href={getPublicUrl(formData.slug)} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline flex items-center"
+                    >
+                      {getPublicUrl(formData.slug)}
+                      <ExternalLink className="h-3 w-3 ml-1" />
+                    </a>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="address">Endereço</Label>
                 <Input 
                   id="address" 
@@ -273,7 +394,7 @@ const ClinicManager: React.FC = () => {
               <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit">
+              <Button type="submit" disabled={!!slugError || isCheckingSlug}>
                 {isEditing ? 'Salvar alterações' : 'Criar clínica'}
               </Button>
             </DialogFooter>
