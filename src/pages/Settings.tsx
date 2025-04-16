@@ -25,12 +25,14 @@ import {
   CreditCard,
   Trash2,
   MessageSquare,
-  Server
+  Server,
+  Webhook
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from '@/integrations/supabase/client';
+import WebhookSettings from '@/components/settings/WebhookSettings';
 
 const Settings = () => {
   const { user } = useAuth();
@@ -204,7 +206,7 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 md:grid-cols-6 lg:max-w-[800px]">
+        <TabsList className="grid w-full grid-cols-1 md:grid-cols-7 lg:max-w-[900px]">
           <TabsTrigger value="profile" className="flex items-center">
             <User className="h-4 w-4 mr-2" /> Perfil
           </TabsTrigger>
@@ -222,6 +224,9 @@ const Settings = () => {
           </TabsTrigger>
           <TabsTrigger value="whatsapp" className="flex items-center">
             <MessageSquare className="h-4 w-4 mr-2" /> WhatsApp
+          </TabsTrigger>
+          <TabsTrigger value="webhooks" className="flex items-center">
+            <Webhook className="h-4 w-4 mr-2" /> Webhooks
           </TabsTrigger>
         </TabsList>
 
@@ -1043,6 +1048,11 @@ const Settings = () => {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* New Tab for Webhooks */}
+        <TabsContent value="webhooks" className="space-y-6">
+          <WebhookSettings />
         </TabsContent>
       </Tabs>
     </DashboardLayout>

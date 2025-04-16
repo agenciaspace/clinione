@@ -1,1 +1,14 @@
+
 project_id = "tfkchwuphjaauyfqptbk"
+
+# Webhook Processor function config
+[functions.webhook-processor]
+verify_jwt = true
+
+# Webhook Trigger function config
+[functions.webhook-trigger]
+verify_jwt = true
+
+# Webhook Cron function config - scheduler requires no JWT
+[functions.webhook-cron]
+verify_jwt = false
