@@ -274,18 +274,19 @@ const ClinicManager: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {clinics.map((clinic) => (
-                <Card key={clinic.id} className={`overflow-hidden ${activeClinic?.id === clinic.id ? 'border-primary' : ''}`}>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-lg">
-                      {clinic.name}
-                    </CardTitle>
+                <Card 
+                  key={clinic.id} 
+                  className={`flex flex-col overflow-hidden h-full ${activeClinic?.id === clinic.id ? 'border-primary' : ''}`}
+                >
+                  <CardHeader className="p-4 pb-2">
+                    <CardTitle className="text-lg truncate">{clinic.name}</CardTitle>
                     <CardDescription className="truncate">
-                      {clinic.address}
+                      {clinic.address || 'Endereço não informado'}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="p-4 pt-0 space-y-2">
+                  <CardContent className="p-4 pt-0 flex-grow space-y-2">
                     <div className="text-sm">
                       <span className="font-medium">Telefone:</span> {clinic.phone || 'Não informado'}
                     </div>
@@ -314,7 +315,7 @@ const ClinicManager: React.FC = () => {
                       </div>
                     )}
                   </CardContent>
-                  <div className="p-4 bg-gray-50 flex items-center justify-between">
+                  <div className="mt-auto p-4 bg-gray-50 flex items-center justify-between">
                     {activeClinic?.id === clinic.id ? (
                       <Button variant="ghost" className="text-primary" disabled>
                         <Check className="h-4 w-4 mr-2" />
@@ -466,3 +467,4 @@ const ClinicManager: React.FC = () => {
 };
 
 export default ClinicManager;
+
