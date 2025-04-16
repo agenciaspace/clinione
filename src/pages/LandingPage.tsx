@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,19 +18,25 @@ import {
   Clock,
   Facebook,
   Instagram,
+  Menu,
+  X
 } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const LandingPage = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <div className="text-2xl font-bold text-healthblue-600">ClínicaDigitalHub</div>
+            <div className="text-xl md:text-2xl font-bold text-healthblue-600">ClínicaDigitalHub</div>
           </div>
           
-          <nav className="hidden md:flex items-center space-x-6">
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-3 lg:space-x-6">
             <a href="#features" className="text-gray-700 hover:text-healthblue-600 font-medium">Funcionalidades</a>
             <a href="#benefits" className="text-gray-700 hover:text-healthblue-600 font-medium">Benefícios</a>
             <a href="#pricing" className="text-gray-700 hover:text-healthblue-600 font-medium">Planos</a>
@@ -41,51 +46,76 @@ const LandingPage = () => {
             </Link>
           </nav>
           
+          {/* Mobile Navigation */}
           <div className="md:hidden">
-            <Button variant="ghost">
-              <span className="sr-only">Menu</span>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </Button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[250px] sm:w-[300px]">
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 py-6 flex flex-col gap-4">
+                    <a href="#features" className="text-gray-700 hover:text-healthblue-600 font-medium px-2 py-2">
+                      Funcionalidades
+                    </a>
+                    <a href="#benefits" className="text-gray-700 hover:text-healthblue-600 font-medium px-2 py-2">
+                      Benefícios
+                    </a>
+                    <a href="#pricing" className="text-gray-700 hover:text-healthblue-600 font-medium px-2 py-2">
+                      Planos
+                    </a>
+                    <Link to="/login" className="text-healthblue-600 hover:text-healthblue-700 font-medium px-2 py-2">
+                      Entrar
+                    </Link>
+                  </div>
+                  <div className="pt-6 border-t border-gray-200">
+                    <Link to="/register" className="w-full">
+                      <Button className="w-full">Cadastre-se</Button>
+                    </Link>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-blue-50 to-white py-16 md:py-24">
+      <section className="bg-gradient-to-b from-blue-50 to-white py-12 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center">
-            <div className="md:w-1/2 md:pr-12">
+          <div className="flex flex-col-reverse md:flex-row items-center">
+            <div className="md:w-1/2 md:pr-6 lg:pr-12 mt-8 md:mt-0">
               <Badge className="mb-4">Nova Plataforma</Badge>
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 text-gray-900">
                 Gestão completa para sua clínica e presença online
               </h1>
-              <p className="text-xl text-gray-600 mb-8">
+              <p className="text-lg md:text-xl text-gray-600 mb-6 md:mb-8">
                 Centraliza o gerenciamento da sua clínica e ofereça experiências excepcionais para seus pacientes com nossa plataforma tudo-em-um.
               </p>
               <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                <Link to="/register">
-                  <Button size="lg" className="w-full sm:w-auto">
+                <Link to="/register" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full">
                     Começar agora
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <a href="#features">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                <a href="#features" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="w-full">
                     Conheça os recursos
                   </Button>
                 </a>
               </div>
             </div>
-            <div className="md:w-1/2 mt-12 md:mt-0">
+            <div className="md:w-1/2">
               <div className="relative">
                 <div className="absolute -top-6 -left-6 w-64 h-64 bg-healthblue-100 rounded-full filter blur-3xl opacity-30"></div>
                 <div className="absolute -bottom-8 -right-8 w-64 h-64 bg-healthgreen-100 rounded-full filter blur-3xl opacity-30"></div>
                 <img 
                   src="/lovable-uploads/23a94562-2cda-47ac-ad04-8d2c65539b49.png" 
                   alt="Médico e paciente consultando documentos" 
-                  className="relative z-10 rounded-lg shadow-xl w-full object-cover"
+                  className="relative z-10 rounded-lg shadow-xl w-full h-auto max-h-[400px] object-cover"
                 />
               </div>
             </div>
@@ -94,16 +124,16 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-16 bg-white">
+      <section id="features" className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Tudo que você precisa em um único lugar</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Tudo que você precisa em um único lugar</h2>
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
               Nossa plataforma foi desenvolvida com foco nas necessidades reais de clínicas de pequeno e médio porte.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             <Card>
               <CardHeader className="pb-2">
                 <Calendar className="h-10 w-10 text-healthblue-600 mb-2" />
@@ -211,7 +241,7 @@ const LandingPage = () => {
             <Card>
               <CardHeader className="pb-2">
                 <Smartphone className="h-10 w-10 text-healthblue-600 mb-2" />
-                <CardTitle>Comunicação Integrada</CardTitle>
+                <CardTitle>Comunicaç��o Integrada</CardTitle>
                 <CardDescription>
                   Canais de comunicação eficientes
                 </CardDescription>
@@ -264,51 +294,51 @@ const LandingPage = () => {
       </section>
 
       {/* Benefits Section */}
-      <section id="benefits" className="py-16 bg-gray-50">
+      <section id="benefits" className="py-12 md:py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Benefícios para sua clínica</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Benefícios para sua clínica</h2>
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
               Potencialize seus resultados e ofereça uma experiência superior para seus pacientes
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 text-center">
+            <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm">
               <div className="inline-block p-3 bg-healthblue-50 rounded-full mb-4">
-                <Clock className="h-8 w-8 text-healthblue-600" />
+                <Clock className="h-7 w-7 text-healthblue-600" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Economize Tempo</h3>
+              <h3 className="text-lg md:text-xl font-bold mb-2">Economize Tempo</h3>
               <p className="text-gray-600">
                 Automatize processos administrativos e foque no que realmente importa: o atendimento ao paciente.
               </p>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm">
               <div className="inline-block p-3 bg-healthblue-50 rounded-full mb-4">
-                <LineChart className="h-8 w-8 text-healthblue-600" />
+                <LineChart className="h-7 w-7 text-healthblue-600" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Aumente Receitas</h3>
+              <h3 className="text-lg md:text-xl font-bold mb-2">Aumente Receitas</h3>
               <p className="text-gray-600">
                 Reduza faltas, otimize sua agenda e aumente a satisfação e fidelização dos pacientes.
               </p>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm">
               <div className="inline-block p-3 bg-healthblue-50 rounded-full mb-4">
-                <Users className="h-8 w-8 text-healthblue-600" />
+                <Users className="h-7 w-7 text-healthblue-600" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Melhore a Experiência</h3>
+              <h3 className="text-lg md:text-xl font-bold mb-2">Melhore a Experiência</h3>
               <p className="text-gray-600">
                 Ofereça um atendimento mais eficiente e personalizado para cada paciente.
               </p>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm">
               <div className="inline-block p-3 bg-healthblue-50 rounded-full mb-4">
-                <Globe className="h-8 w-8 text-healthblue-600" />
+                <Globe className="h-7 w-7 text-healthblue-600" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Fortaleça sua Marca</h3>
+              <h3 className="text-lg md:text-xl font-bold mb-2">Fortaleça sua Marca</h3>
               <p className="text-gray-600">
                 Crie uma presença online profissional e aumente a visibilidade da sua clínica.
               </p>
@@ -318,17 +348,17 @@ const LandingPage = () => {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-16 bg-white">
+      <section id="pricing" className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Planos para todos os tamanhos de clínica</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Planos para todos os tamanhos de clínica</h2>
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
               Escolha o plano ideal para as necessidades da sua clínica
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card className="border-2 border-gray-100">
+            <Card className="border-2 border-gray-100 relative">
               <CardHeader className="text-center pb-2">
                 <CardTitle className="text-xl">Essencial</CardTitle>
                 <div className="mt-2">
@@ -459,15 +489,15 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-healthblue-600 to-healthblue-700 text-white">
+      <section className="py-12 md:py-16 bg-gradient-to-r from-healthblue-600 to-healthblue-700 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6">Pronto para transformar sua clínica?</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6">Pronto para transformar sua clínica?</h2>
+          <p className="text-lg md:text-xl mb-6 md:mb-8 max-w-2xl mx-auto">
             Junte-se a milhares de profissionais que já estão usando nossa plataforma para melhorar a gestão e crescer.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link to="/register">
-              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+            <Link to="/register" className="w-full sm:w-auto">
+              <Button size="lg" variant="secondary" className="w-full">
                 Experimente Grátis
               </Button>
             </Link>
@@ -480,11 +510,11 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gray-900 text-white py-8 md:py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">ClínicaDigitalHub</h3>
+              <h3 className="text-lg md:text-xl font-bold mb-4">ClínicaDigitalHub</h3>
               <p className="text-gray-400 mb-4">
                 Transformando a gestão de clínicas com tecnologia inteligente e focada no paciente.
               </p>
@@ -521,7 +551,7 @@ const LandingPage = () => {
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+          <div className="border-t border-gray-800 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
               &copy; {new Date().getFullYear()} ClínicaDigitalHub. Todos os direitos reservados.
             </p>
