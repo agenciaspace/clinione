@@ -3,13 +3,14 @@ import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsListWithMobileSupport, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from '@/components/ui/sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   User, 
   Lock, 
@@ -37,6 +38,8 @@ import WebhookSettings from '@/components/settings/WebhookSettings';
 const Settings = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const isMobile = useIsMobile();
+  const [currentTab, setCurrentTab] = useState('profile');
 
   // Form states
   const [profileData, setProfileData] = useState({
@@ -73,130 +76,16 @@ const Settings = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [showVerificationInput, setShowVerificationInput] = useState(false);
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setProfileData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPassword(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSmtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setSmtpConfig(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setWhatsAppConfig(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleUpdateProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    // Simulação de atualização de perfil
-    setTimeout(() => {
-      setLoading(false);
-      toast("Perfil atualizado com sucesso");
-    }, 1000);
-  };
-
-  const handleUpdatePassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (password.new !== password.confirm) {
-      toast("As senhas não conferem", {
-        description: "Por favor, confirme sua nova senha corretamente."
-      });
-      return;
-    }
-    
-    setLoading(true);
-    
-    // Simulação de atualização de senha
-    setTimeout(() => {
-      setLoading(false);
-      toast("Senha atualizada com sucesso");
-      setPassword({ current: '', new: '', confirm: '' });
-    }, 1000);
-  };
-
-  const handleSaveSmtpConfig = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    // Simulação de salvamento da configuração SMTP
-    setTimeout(() => {
-      setLoading(false);
-      toast("Configurações SMTP salvas com sucesso");
-    }, 1000);
-  };
-
-  const handleTestSmtp = () => {
-    toast("Enviando email de teste...");
-    
-    // Simulação de teste de email
-    setTimeout(() => {
-      toast("Email de teste enviado com sucesso!", {
-        description: "Verifique sua caixa de entrada."
-      });
-    }, 2000);
-  };
-
-  const handleConnectWhatsApp = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!whatsappConfig.phoneNumber) {
-      toast("Número de telefone é obrigatório", {
-        description: "Por favor, insira seu número de WhatsApp com DDD."
-      });
-      return;
-    }
-    
-    // Simulação de envio de código de verificação
-    toast("Enviando código de verificação...");
-    setTimeout(() => {
-      setShowVerificationInput(true);
-      toast("Código de verificação enviado!", {
-        description: "Verifique as mensagens no seu WhatsApp."
-      });
-    }, 1500);
-  };
-
-  const handleVerifyWhatsApp = () => {
-    if (!verificationCode) {
-      toast("Código de verificação é obrigatório", {
-        description: "Por favor, insira o código que enviamos para seu WhatsApp."
-      });
-      return;
-    }
-    
-    setLoading(true);
-    
-    // Simulação de verificação
-    setTimeout(() => {
-      setLoading(false);
-      setWhatsAppConfig(prev => ({ ...prev, isVerified: true }));
-      toast("WhatsApp conectado com sucesso!", {
-        description: "Seu número foi verificado e está pronto para uso."
-      });
-    }, 1500);
-  };
+  // Definição dos itens de abas para fácil renderização
+  const tabItems = [
+    { value: 'profile', label: 'Perfil', icon: <User className="h-4 w-4 mr-2" /> },
+    { value: 'security', label: 'Segurança', icon: <Lock className="h-4 w-4 mr-2" /> },
+    { value: 'notifications', label: 'Notificações', icon: <Bell className="h-4 w-4 mr-2" /> },
+    { value: 'appearance', label: 'Aparência', icon: <PaintBucket className="h-4 w-4 mr-2" /> },
+    { value: 'smtp', label: 'Email', icon: <Mail className="h-4 w-4 mr-2" /> },
+    { value: 'whatsapp', label: 'WhatsApp', icon: <MessageSquare className="h-4 w-4 mr-2" /> },
+    { value: 'webhooks', label: 'Webhooks', icon: <Webhook className="h-4 w-4 mr-2" /> },
+  ];
 
   return (
     <DashboardLayout>
@@ -205,30 +94,28 @@ const Settings = () => {
         <p className="text-gray-500">Gerencie suas preferências e configurações</p>
       </div>
 
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 md:grid-cols-7 lg:max-w-[900px]">
-          <TabsTrigger value="profile" className="flex items-center">
-            <User className="h-4 w-4 mr-2" /> Perfil
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center">
-            <Lock className="h-4 w-4 mr-2" /> Segurança
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center">
-            <Bell className="h-4 w-4 mr-2" /> Notificações
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="flex items-center">
-            <PaintBucket className="h-4 w-4 mr-2" /> Aparência
-          </TabsTrigger>
-          <TabsTrigger value="smtp" className="flex items-center">
-            <Mail className="h-4 w-4 mr-2" /> Email
-          </TabsTrigger>
-          <TabsTrigger value="whatsapp" className="flex items-center">
-            <MessageSquare className="h-4 w-4 mr-2" /> WhatsApp
-          </TabsTrigger>
-          <TabsTrigger value="webhooks" className="flex items-center">
-            <Webhook className="h-4 w-4 mr-2" /> Webhooks
-          </TabsTrigger>
-        </TabsList>
+      <Tabs 
+        defaultValue="profile" 
+        value={currentTab}
+        onValueChange={setCurrentTab}
+        className="w-full"
+      >
+        <TabsListWithMobileSupport 
+          className="grid w-full grid-cols-1 md:grid-cols-7"
+          showScrollButtons={isMobile}
+        >
+          {tabItems.map((item) => (
+            <TabsTrigger 
+              key={item.value} 
+              value={item.value} 
+              className="flex items-center justify-center"
+              onClick={() => setCurrentTab(item.value)}
+            >
+              {item.icon}
+              <span className={isMobile && item.value !== currentTab ? "sr-only" : ""}>{item.label}</span>
+            </TabsTrigger>
+          ))}
+        </TabsListWithMobileSupport>
 
         {/* Tab de Perfil */}
         <TabsContent value="profile" className="space-y-6">
