@@ -28,7 +28,7 @@ const ClinicCard: React.FC<ClinicCardProps> = ({
 }) => {
   return (
     <Card 
-      className={`flex flex-col min-h-[320px] overflow-hidden ${isActive ? 'border-primary' : ''}`}
+      className={`flex flex-col min-h-[240px] overflow-hidden ${isActive ? 'border-primary' : ''}`}
     >
       <CardHeader className="p-4 pb-2">
         <CardTitle className="text-lg truncate">{clinic.name}</CardTitle>
@@ -37,7 +37,7 @@ const ClinicCard: React.FC<ClinicCardProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4 pt-0 flex-grow">
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2">
           <div className="text-sm">
             <span className="font-medium">Telefone:</span> {clinic.phone || 'Não informado'}
           </div>
