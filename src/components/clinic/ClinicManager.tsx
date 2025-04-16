@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
 import { Clinic } from '@/types';
-import { Building2, Edit, Trash2, Check, ExternalLink } from 'lucide-react';
+import { Building2, Edit, Trash2, Check, ExternalLink, Globe } from 'lucide-react';
 
 interface ClinicFormData {
   name: string;
@@ -35,6 +35,7 @@ const ClinicManager: React.FC = () => {
   });
   const [slugError, setSlugError] = useState('');
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const baseUrl = "https://clini.one";
 
   const handleAddClinic = () => {
@@ -202,6 +203,46 @@ const ClinicManager: React.FC = () => {
     }
   };
 
+  const handlePublishToggle = async (clinic: Clinic) => {
+    if (!clinic.slug) {
+      toast.error("URL personalizada necessária", {
+        description: "Por favor, defina uma URL personalizada antes de publicar."
+      });
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      const { error } = await supabase
+        .from('clinics')
+        .update({ 
+          is_published: !clinic.is_published,
+          last_published_at: !clinic.is_published ? new Date().toISOString() : null
+        })
+        .eq('id', clinic.id);
+
+      if (error) throw error;
+      
+      toast.success(
+        clinic.is_published ? "Página despublicada" : "Página publicada", 
+        {
+          description: clinic.is_published 
+            ? "Sua página não está mais publicamente disponível." 
+            : "Sua página agora está publicamente disponível."
+        }
+      );
+      
+      refreshClinics();
+    } catch (error) {
+      console.error('Erro ao atualizar status de publicação:', error);
+      toast.error("Erro ao publicar", {
+        description: "Não foi possível atualizar o status de publicação. Por favor, tente novamente."
+      });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   const getPublicUrl = (slug: string) => {
     return slug ? `${baseUrl}/c/${slug}` : '';
   };
@@ -263,6 +304,13 @@ const ClinicManager: React.FC = () => {
                           {clinic.slug}
                           <ExternalLink className="h-3 w-3 ml-1" />
                         </a>
+                        <span className="ml-2">
+                          {clinic.is_published ? (
+                            <span className="text-green-500 text-xs">(Publicada)</span>
+                          ) : (
+                            <span className="text-gray-500 text-xs">(Não publicada)</span>
+                          )}
+                        </span>
                       </div>
                     )}
                   </CardContent>
@@ -278,6 +326,18 @@ const ClinicManager: React.FC = () => {
                       </Button>
                     )}
                     <div className="flex space-x-2">
+                      {clinic.slug && (
+                        <Button 
+                          variant={clinic.is_published ? "destructive" : "default"}
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => handlePublishToggle(clinic)}
+                          disabled={isPublishing}
+                        >
+                          <Globe className="h-3 w-3 mr-1" />
+                          {clinic.is_published ? "Despublicar" : "Publicar"}
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => handleEditClinic(clinic)}>
                         <Edit className="h-4 w-4" />
                       </Button>
