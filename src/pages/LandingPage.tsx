@@ -83,9 +83,9 @@ const LandingPage = () => {
                 <div className="absolute -top-6 -left-6 w-64 h-64 bg-healthblue-100 rounded-full filter blur-3xl opacity-30"></div>
                 <div className="absolute -bottom-8 -right-8 w-64 h-64 bg-healthgreen-100 rounded-full filter blur-3xl opacity-30"></div>
                 <img 
-                  src="https://cdn.gpteng.co/project_asset/df99da28-b92c-46f8-b879-b7e4e4b7e469/dashboard-mockup.png" 
-                  alt="Dashboard da Clínica" 
-                  className="relative z-10 rounded-lg shadow-xl w-full"
+                  src="/lovable-uploads/23a94562-2cda-47ac-ad04-8d2c65539b49.png" 
+                  alt="Médico e paciente consultando documentos" 
+                  className="relative z-10 rounded-lg shadow-xl w-full object-cover"
                 />
               </div>
             </div>
