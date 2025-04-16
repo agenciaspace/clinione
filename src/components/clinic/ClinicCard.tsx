@@ -28,7 +28,7 @@ const ClinicCard: React.FC<ClinicCardProps> = ({
 }) => {
   return (
     <Card 
-      className={`flex flex-col min-h-[240px] overflow-hidden ${isActive ? 'border-primary' : ''}`}
+      className={`flex flex-col min-h-[260px] overflow-hidden ${isActive ? 'border-primary' : ''}`}
     >
       <CardHeader className="p-4 pb-2">
         <CardTitle className="text-lg truncate">{clinic.name}</CardTitle>
@@ -67,18 +67,20 @@ const ClinicCard: React.FC<ClinicCardProps> = ({
           )}
         </div>
       </CardContent>
-      <div className="mt-auto p-4 bg-gray-50 flex items-center justify-between">
-        {isActive ? (
-          <Button variant="ghost" className="text-primary" disabled>
-            <Check className="h-4 w-4 mr-2" />
-            Selecionada
-          </Button>
-        ) : (
-          <Button variant="outline" onClick={() => onSelect(clinic)}>
-            Selecionar
-          </Button>
-        )}
-        <div className="flex space-x-2">
+      <div className="mt-auto p-4 bg-gray-50 flex flex-wrap gap-2 items-center justify-between">
+        <div>
+          {isActive ? (
+            <Button variant="ghost" className="text-primary" disabled>
+              <Check className="h-4 w-4 mr-2" />
+              Selecionada
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => onSelect(clinic)}>
+              Selecionar
+            </Button>
+          )}
+        </div>
+        <div className="flex gap-2 items-center">
           {clinic.slug && (
             <Button 
               variant={clinic.is_published ? "destructive" : "default"}
