@@ -55,6 +55,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
     }
   };
 
+  console.log('Current user roles:', userRoles); // Add this line for debugging
+
   return (
     <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm h-full">
       <div className="px-6 py-6">
