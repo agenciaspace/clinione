@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useClinic } from '../../contexts/ClinicContext';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Menu, X, ChevronDown } from 'lucide-react';
+import { Bell, Menu, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Sidebar } from './Sidebar';
