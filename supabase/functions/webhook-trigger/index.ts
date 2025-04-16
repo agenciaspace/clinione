@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
     }
 
     // Fall back to clinic's webhook URL if no endpoints are found
+    let endpoints = webhookEndpoints;
     if (!webhookEndpoints || webhookEndpoints.length === 0) {
       const { data: clinic } = await supabase
         .from('clinics')
@@ -61,7 +62,7 @@ Deno.serve(async (req) => {
 
       // Only create event if webhook URL is configured
       if (clinic && clinic.webhook_url) {
-        webhookEndpoints = [{
+        endpoints = [{
           id: 'legacy',
           clinic_id,
           url: clinic.webhook_url,
@@ -100,7 +101,7 @@ Deno.serve(async (req) => {
     }
 
     // For each endpoint, trigger immediate processing of the webhook
-    const processingPromises = webhookEndpoints.map(async (endpoint) => {
+    const processingPromises = endpoints.map(async (endpoint) => {
       try {
         await fetch(`${supabaseUrl}/functions/v1/webhook-processor`, {
           method: 'POST',
@@ -127,7 +128,7 @@ Deno.serve(async (req) => {
         success: true, 
         message: 'Webhook event created', 
         eventId: eventRecord.id,
-        endpoints: webhookEndpoints.length
+        endpoints: endpoints.length
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
