@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,6 @@ interface WebhookEvent {
   http_status: number | null;
   last_response: string | null;
   attempts: number;
-  event_id: string;
 }
 
 interface WebhookEndpoint {
@@ -75,7 +73,6 @@ const WebhookSettings: React.FC = () => {
   const [isSendingTest, setIsSendingTest] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState('legacy');
   
-  // New endpoint form state
   const [isEndpointDialogOpen, setIsEndpointDialogOpen] = useState(false);
   const [editingEndpoint, setEditingEndpoint] = useState<WebhookEndpoint | null>(null);
   const [newEndpointUrl, setNewEndpointUrl] = useState('');
@@ -84,7 +81,6 @@ const WebhookSettings: React.FC = () => {
   const [newEndpointEvents, setNewEndpointEvents] = useState<Record<string, boolean>>({});
   const [showEndpointSecret, setShowEndpointSecret] = useState(false);
 
-  // Load webhook settings for the active clinic
   useEffect(() => {
     if (!activeClinic) return;
     
@@ -115,7 +111,6 @@ const WebhookSettings: React.FC = () => {
     loadWebhookLogs();
   }, [activeClinic]);
 
-  // Load webhook endpoints
   const loadWebhookEndpoints = async () => {
     if (!activeClinic) return;
     
@@ -138,7 +133,6 @@ const WebhookSettings: React.FC = () => {
     }
   };
 
-  // Load webhook events
   const loadWebhookEvents = async () => {
     if (!activeClinic) return;
     
@@ -153,6 +147,7 @@ const WebhookSettings: React.FC = () => {
 
       if (error) throw error;
       
+      // Map the data to match our WebhookEvent interface
       setWebhookEvents(data || []);
     } catch (error) {
       console.error('Error loading webhook events:', error);
@@ -162,7 +157,6 @@ const WebhookSettings: React.FC = () => {
     }
   };
 
-  // Load webhook logs
   const loadWebhookLogs = async () => {
     if (!activeClinic) return;
     
@@ -186,7 +180,6 @@ const WebhookSettings: React.FC = () => {
     }
   };
 
-  // Save webhook settings
   const saveWebhookSettings = async () => {
     if (!activeClinic) return;
     
@@ -213,7 +206,6 @@ const WebhookSettings: React.FC = () => {
     }
   };
 
-  // Generate random webhook secret
   const generateSecret = () => {
     const array = new Uint8Array(32);
     window.crypto.getRandomValues(array);
@@ -221,7 +213,6 @@ const WebhookSettings: React.FC = () => {
     setWebhookSecret(secret);
   };
 
-  // Generate random webhook secret for endpoint
   const generateEndpointSecret = () => {
     const array = new Uint8Array(32);
     window.crypto.getRandomValues(array);
@@ -229,7 +220,6 @@ const WebhookSettings: React.FC = () => {
     setNewEndpointSecret(secret);
   };
 
-  // Send test webhook
   const sendTestWebhook = async () => {
     if (!activeClinic) {
       toast.error('Nenhuma clínica selecionada');
@@ -248,7 +238,6 @@ const WebhookSettings: React.FC = () => {
     
     setIsSendingTest(true);
     try {
-      // Example payload based on event type
       let testPayload = {};
       
       if (testEventType.startsWith('appointment.')) {
@@ -305,7 +294,6 @@ const WebhookSettings: React.FC = () => {
           description: `ID do evento: ${eventId}`
         });
         
-        // Reload events after a short delay to see the new event
         setTimeout(() => {
           loadWebhookEvents();
           loadWebhookLogs();
@@ -321,7 +309,6 @@ const WebhookSettings: React.FC = () => {
     }
   };
 
-  // Save new or edited webhook endpoint
   const saveWebhookEndpoint = async () => {
     if (!activeClinic) return;
     
@@ -332,16 +319,13 @@ const WebhookSettings: React.FC = () => {
     
     setIsSaving(true);
     try {
-      // Convert selected event types to array
       const selectedEvents = Object.entries(newEndpointEvents)
         .filter(([_, isSelected]) => isSelected)
         .map(([eventType]) => eventType);
       
-      // If no events selected, endpoint receives all events
       const eventTypes = selectedEvents.length > 0 ? selectedEvents : null;
       
       if (editingEndpoint) {
-        // Update existing endpoint
         const { error } = await supabase
           .from('webhook_endpoints')
           .update({
@@ -357,7 +341,6 @@ const WebhookSettings: React.FC = () => {
         
         toast.success('Endpoint de webhook atualizado com sucesso');
       } else {
-        // Create new endpoint
         const { error } = await supabase
           .from('webhook_endpoints')
           .insert({
@@ -374,7 +357,6 @@ const WebhookSettings: React.FC = () => {
         toast.success('Endpoint de webhook criado com sucesso');
       }
       
-      // Reload endpoints and reset form
       loadWebhookEndpoints();
       resetEndpointForm();
       setIsEndpointDialogOpen(false);
@@ -386,7 +368,6 @@ const WebhookSettings: React.FC = () => {
     }
   };
 
-  // Delete webhook endpoint
   const deleteWebhookEndpoint = async (endpointId: string) => {
     if (!confirm('Tem certeza que deseja excluir este endpoint?')) {
       return;
@@ -403,7 +384,6 @@ const WebhookSettings: React.FC = () => {
       toast.success('Endpoint removido com sucesso');
       loadWebhookEndpoints();
       
-      // If deleted the active tab, switch to legacy
       if (activeTab === endpointId) {
         setActiveTab('legacy');
       }
@@ -413,7 +393,6 @@ const WebhookSettings: React.FC = () => {
     }
   };
 
-  // Toggle endpoint active status
   const toggleEndpointStatus = async (endpoint: WebhookEndpoint) => {
     try {
       const { error } = await supabase
@@ -434,14 +413,12 @@ const WebhookSettings: React.FC = () => {
     }
   };
 
-  // Open edit endpoint form
   const openEditEndpoint = (endpoint: WebhookEndpoint) => {
     setEditingEndpoint(endpoint);
     setNewEndpointUrl(endpoint.url);
     setNewEndpointSecret(endpoint.secret || '');
     setNewEndpointDescription(endpoint.description || '');
     
-    // Set event types
     const eventTypesObj: Record<string, boolean> = {};
     if (endpoint.event_types) {
       Object.values(WebhookEventType).forEach(eventType => {
@@ -453,7 +430,6 @@ const WebhookSettings: React.FC = () => {
     setIsEndpointDialogOpen(true);
   };
 
-  // Reset endpoint form
   const resetEndpointForm = () => {
     setEditingEndpoint(null);
     setNewEndpointUrl('');
@@ -463,35 +439,29 @@ const WebhookSettings: React.FC = () => {
     setShowEndpointSecret(false);
   };
 
-  // Open new endpoint form
   const openNewEndpoint = () => {
     resetEndpointForm();
     setIsEndpointDialogOpen(true);
   };
 
-  // Format timestamp
   const formatTimestamp = (timestamp: string) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
     return date.toLocaleString('pt-BR');
   };
 
-  // Format status badge
   const getStatusBadge = (status: string) => {
     const colorClass = statusColors[status] || 'bg-gray-100 text-gray-800';
     return <Badge className={colorClass}>{status}</Badge>;
   };
 
-  // Handle tab change
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    // Load logs for the selected tab
     setTimeout(() => {
       loadWebhookLogs();
     }, 100);
   };
 
-  // Get webhook endpoint name for display
   const getEndpointName = (endpointId: string | null) => {
     if (!endpointId || endpointId === 'legacy') {
       return 'Webhook Padrão';
@@ -899,7 +869,6 @@ const WebhookSettings: React.FC = () => {
         </Card>
       )}
 
-      {/* Formulário de edição/criação de endpoint */}
       <Dialog open={isEndpointDialogOpen} onOpenChange={setIsEndpointDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
