@@ -1,639 +1,362 @@
 
 import React, { useState } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
-  Search, 
-  Plus, 
-  ArrowUp, 
-  ArrowDown, 
-  DollarSign, 
-  Calendar, 
-  CreditCard, 
-  Receipt, 
-  PieChart,
-  Filter,
-  Download
-} from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { BadgeDollarSign, Wallet, Store, Printer } from 'lucide-react';
-import { format } from 'date-fns';
 import { 
-  PieChart as RechartsPieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  Tooltip, 
-  Legend 
-} from 'recharts';
-import { toast } from '@/components/ui/sonner';
+  DollarSign, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  CreditCard, 
+  BanknoteIcon, 
+  Receipt,
+  FileText,
+  BarChart,
+  Download,
+  Plus
+} from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useClinic } from '@/contexts/ClinicContext';
 
-// Dados mockados para exemplo
+// Dados mockados para as transações
 const mockTransactions = [
   {
     id: '1',
-    date: new Date(2025, 3, 15),
-    description: 'Consulta - Maria Silva',
+    date: '2025-04-15',
+    description: 'Consulta - João Silva',
     type: 'income',
-    amount: 250,
-    category: 'Consultas',
-    paymentMethod: 'Cartão de crédito',
-    status: 'completed'
+    status: 'completed',
+    amount: 250
   },
   {
     id: '2',
-    date: new Date(2025, 3, 14),
-    description: 'Consulta - João Pereira',
+    date: '2025-04-14',
+    description: 'Consulta - Maria Oliveira',
     type: 'income',
-    amount: 250,
-    category: 'Consultas',
-    paymentMethod: 'Pix',
-    status: 'completed'
+    status: 'completed',
+    amount: 300
   },
   {
     id: '3',
-    date: new Date(2025, 3, 14),
+    date: '2025-04-13',
     description: 'Exame - Pedro Santos',
     type: 'income',
-    amount: 150,
-    category: 'Exames',
-    paymentMethod: 'Dinheiro',
-    status: 'completed'
+    status: 'pending',
+    amount: 150
   },
   {
     id: '4',
-    date: new Date(2025, 3, 13),
+    date: '2025-04-12',
     description: 'Material de escritório',
     type: 'expense',
-    amount: 120,
-    category: 'Despesas operacionais',
-    paymentMethod: 'Cartão de crédito',
-    status: 'completed'
+    status: 'completed',
+    amount: 85
   },
   {
     id: '5',
-    date: new Date(2025, 3, 10),
-    description: 'Aluguel',
+    date: '2025-04-10',
+    description: 'Pagamento de água',
     type: 'expense',
-    amount: 2000,
-    category: 'Aluguel',
-    paymentMethod: 'Transferência',
-    status: 'completed'
-  },
-  {
-    id: '6',
-    date: new Date(2025, 3, 5),
-    description: 'Salários',
-    type: 'expense',
-    amount: 5000,
-    category: 'Pessoal',
-    paymentMethod: 'Transferência',
-    status: 'completed'
-  },
+    status: 'completed',
+    amount: 120
+  }
 ];
-
-// Dados para o gráfico de pizza
-const categoryData = [
-  { name: 'Consultas', value: 8500, color: '#8884d8' },
-  { name: 'Exames', value: 3500, color: '#82ca9d' },
-  { name: 'Procedimentos', value: 5200, color: '#ffc658' },
-  { name: 'Outros', value: 1800, color: '#ff8042' }
-];
-
-const expensesData = [
-  { name: 'Pessoal', value: 5000, color: '#ff8042' },
-  { name: 'Aluguel', value: 2000, color: '#ffc658' },
-  { name: 'Materiais', value: 1200, color: '#82ca9d' },
-  { name: 'Serviços', value: 800, color: '#8884d8' }
-];
-
-interface TransactionFormData {
-  id?: string;
-  description: string;
-  type: 'income' | 'expense';
-  amount: number;
-  category: string;
-  paymentMethod: string;
-  date: Date;
-}
 
 const Financial = () => {
-  const [transactions, setTransactions] = useState(mockTransactions);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<string | undefined>(undefined);
-  const [dateRange, setDateRange] = useState<{
-    from: Date;
-    to: Date;
-  } | undefined>({
-    from: new Date(2025, 3, 1),
-    to: new Date(2025, 3, 15),
-  });
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<TransactionFormData>({
-    description: '',
-    type: 'income',
-    amount: 0,
-    category: '',
-    paymentMethod: '',
-    date: new Date(),
-  });
+  const { activeClinic } = useClinic();
+  const [activeTab, setActiveTab] = useState('overview');
 
-  // Calcular totais
-  const income = transactions
+  // Em uma aplicação real, esses dados seriam filtrados com base na clínica selecionada
+  const transactions = mockTransactions;
+
+  // Cálculos para o dashboard financeiro
+  const totalIncome = transactions
     .filter(t => t.type === 'income')
-    .reduce((acc, transaction) => acc + transaction.amount, 0);
-  
-  const expenses = transactions
+    .reduce((sum, t) => sum + t.amount, 0);
+    
+  const totalExpense = transactions
     .filter(t => t.type === 'expense')
-    .reduce((acc, transaction) => acc + transaction.amount, 0);
-  
-  const balance = income - expenses;
-
-  // Filtrar transações
-  const filteredTransactions = transactions.filter(transaction => {
-    // Filtro por texto
-    const textMatch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase());
+    .reduce((sum, t) => sum + t.amount, 0);
     
-    // Filtro por tipo
-    const typeMatch = !filterType || 
-                     (filterType === 'income' && transaction.type === 'income') || 
-                     (filterType === 'expense' && transaction.type === 'expense');
-    
-    // Filtro por data
-    const dateMatch = !dateRange || 
-                     (transaction.date >= dateRange.from && 
-                      transaction.date <= dateRange.to);
-    
-    return textMatch && typeMatch && dateMatch;
-  });
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'amount' ? parseFloat(value) : value
-    }));
-  };
-
-  const handleSelectChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleAddTransaction = () => {
-    setFormData({
-      description: '',
-      type: 'income',
-      amount: 0,
-      category: '',
-      paymentMethod: '',
-      date: new Date(),
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const newTransaction = {
-      id: `${Date.now()}`,
-      date: formData.date,
-      description: formData.description,
-      type: formData.type,
-      amount: formData.amount,
-      category: formData.category,
-      paymentMethod: formData.paymentMethod,
-      status: 'completed' as const
-    };
-    
-    setTransactions([newTransaction, ...transactions]);
-    toast(formData.type === 'income' ? "Receita adicionada com sucesso" : "Despesa adicionada com sucesso");
-    setIsDialogOpen(false);
-  };
+  const pendingAmount = transactions
+    .filter(t => t.status === 'pending')
+    .reduce((sum, t) => sum + t.amount, 0);
 
   return (
     <DashboardLayout>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Financeiro</h1>
-        <p className="text-gray-500">Gerencie as finanças da sua clínica</p>
+        <p className="text-gray-500">
+          {activeClinic
+            ? `Controle financeiro da clínica ${activeClinic.name}`
+            : 'Selecione uma clínica para visualizar os dados financeiros'}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card className={balance >= 0 ? "border-l-4 border-l-green-500" : "border-l-4 border-l-red-500"}>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Saldo</p>
-                <h3 className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  R$ {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </h3>
-              </div>
-              <div className={`h-12 w-12 rounded-full ${balance >= 0 ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                <Wallet className="h-6 w-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="overview" className="space-y-6" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="transactions">Transações</TabsTrigger>
+          <TabsTrigger value="invoices">Faturas</TabsTrigger>
+          <TabsTrigger value="reports">Relatórios</TabsTrigger>
+        </TabsList>
 
-        <Card className="border-l-4 border-l-blue-500">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Receitas</p>
-                <h3 className="text-2xl font-bold text-blue-600">
-                  R$ {income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </h3>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                <ArrowDown className="h-6 w-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-500">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Despesas</p>
-                <h3 className="text-2xl font-bold text-amber-600">
-                  R$ {expenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </h3>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                <ArrowUp className="h-6 w-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Transações</CardTitle>
-                <CardDescription>Gerencie suas receitas e despesas</CardDescription>
-              </div>
-              <Button onClick={handleAddTransaction}>
-                <Plus className="mr-2 h-4 w-4" /> Nova transação
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-6 flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-grow">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Buscar transações..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    className="pl-10"
-                  />
-                </div>
-                
-                <div className="flex gap-2">
-                  <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="w-[180px]">
-                      <div className="flex items-center">
-                        <Filter className="mr-2 h-4 w-4" />
-                        <SelectValue placeholder="Todos os tipos" />
+        {activeClinic ? (
+          <>
+            <TabsContent value="overview" className="space-y-6">
+              {/* Cards de resumo financeiro */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Receitas</p>
+                        <h3 className="text-2xl font-bold mt-1">R$ {totalIncome.toFixed(2)}</h3>
                       </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={undefined}>Todos os tipos</SelectItem>
-                      <SelectItem value="income">Receitas</SelectItem>
-                      <SelectItem value="expense">Despesas</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <DatePickerWithRange date={dateRange} setDate={setDateRange} />
-                </div>
+                      <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <ArrowUpRight className="h-5 w-5 text-green-600" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-green-600 flex items-center mt-4">
+                      <ArrowUpRight className="h-3 w-3 mr-1" /> 12% em relação ao mês anterior
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Despesas</p>
+                        <h3 className="text-2xl font-bold mt-1">R$ {totalExpense.toFixed(2)}</h3>
+                      </div>
+                      <div className="h-10 w-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <ArrowDownRight className="h-5 w-5 text-red-600" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-red-600 flex items-center mt-4">
+                      <ArrowUpRight className="h-3 w-3 mr-1" /> 8% em relação ao mês anterior
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Pendente</p>
+                        <h3 className="text-2xl font-bold mt-1">R$ {pendingAmount.toFixed(2)}</h3>
+                      </div>
+                      <div className="h-10 w-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <CreditCard className="h-5 w-5 text-yellow-600" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-yellow-600 flex items-center mt-4">
+                      3 pagamentos pendentes
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
 
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Método</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTransactions.length > 0 ? (
-                      filteredTransactions.map((transaction) => (
+              {/* Gráfico e últimas transações */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="lg:col-span-2">
+                  <CardHeader className="pb-0">
+                    <CardTitle>Receitas e despesas</CardTitle>
+                    <CardDescription>Comparativo mensal</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md">
+                      <div className="text-center">
+                        <BarChart className="h-16 w-16 mx-auto text-gray-300" />
+                        <p className="text-sm text-gray-500 mt-2">Gráfico de receitas e despesas</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-0">
+                    <CardTitle className="flex justify-between items-center">
+                      <span>Últimas transações</span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <div className="space-y-4">
+                      {transactions.slice(0, 3).map(transaction => (
+                        <div key={transaction.id} className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            <div className={`h-9 w-9 rounded-full flex items-center justify-center ${
+                              transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
+                            }`}>
+                              {transaction.type === 'income' ? (
+                                <ArrowUpRight className={`h-5 w-5 ${
+                                  transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                                }`} />
+                              ) : (
+                                <ArrowDownRight className={`h-5 w-5 ${
+                                  transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                                }`} />
+                              )}
+                            </div>
+                            <div className="ml-3">
+                              <p className="text-sm font-medium">{transaction.description}</p>
+                              <p className="text-xs text-gray-500">{
+                                new Date(transaction.date).toLocaleDateString('pt-BR')
+                              }</p>
+                            </div>
+                          </div>
+                          <p className={`font-medium ${
+                            transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {transaction.type === 'income' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="transactions" className="space-y-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Transações</h2>
+                <div className="flex gap-2">
+                  <Button variant="outline">
+                    <Download className="h-4 w-4 mr-2" /> Exportar
+                  </Button>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" /> Nova transação
+                  </Button>
+                </div>
+              </div>
+              
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transactions.map(transaction => (
                         <TableRow key={transaction.id}>
-                          <TableCell>{format(transaction.date, 'dd/MM/yyyy')}</TableCell>
+                          <TableCell>{new Date(transaction.date).toLocaleDateString('pt-BR')}</TableCell>
                           <TableCell>{transaction.description}</TableCell>
-                          <TableCell>{transaction.category}</TableCell>
-                          <TableCell>{transaction.paymentMethod}</TableCell>
-                          <TableCell className={`text-right font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                            {transaction.type === 'income' ? '+' : '-'} R$ {transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          <TableCell>
+                            {transaction.type === 'income' ? (
+                              <span className="inline-flex items-center text-green-600">
+                                <ArrowUpRight className="h-4 w-4 mr-1" /> Receita
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center text-red-600">
+                                <ArrowDownRight className="h-4 w-4 mr-1" /> Despesa
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              transaction.status === 'completed' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {transaction.status === 'completed' ? 'Concluído' : 'Pendente'}
+                            </span>
+                          </TableCell>
+                          <TableCell className={`text-right font-medium ${
+                            transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {transaction.type === 'income' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
-                          Nenhuma transação encontrada.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="invoices" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Faturas</CardTitle>
+                  <CardDescription>Gerencie faturas e recebimentos</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Receipt className="h-16 w-16 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium">Nenhuma fatura encontrada</h3>
+                    <p className="text-gray-500 max-w-md mt-2">
+                      Você ainda não tem faturas registradas. Clique no botão abaixo para criar sua primeira fatura.
+                    </p>
+                    <Button className="mt-4">
+                      <Plus className="h-4 w-4 mr-2" /> Criar fatura
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="reports" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Relatórios financeiros</CardTitle>
+                  <CardDescription>Analise o desempenho financeiro da sua clínica</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center justify-center">
+                      <BarChart className="h-10 w-10 mb-2" />
+                      <span className="font-medium">Relatório de receitas</span>
+                      <span className="text-sm text-gray-500">Análise detalhada de receitas</span>
+                    </Button>
+                    
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center justify-center">
+                      <FileText className="h-10 w-10 mb-2" />
+                      <span className="font-medium">Demonstrativo financeiro</span>
+                      <span className="text-sm text-gray-500">Resumo financeiro completo</span>
+                    </Button>
+                    
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center justify-center">
+                      <BanknoteIcon className="h-10 w-10 mb-2" />
+                      <span className="font-medium">Fluxo de caixa</span>
+                      <span className="text-sm text-gray-500">Entradas e saídas de recursos</span>
+                    </Button>
+                    
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center justify-center">
+                      <DollarSign className="h-10 w-10 mb-2" />
+                      <span className="font-medium">Inadimplência</span>
+                      <span className="text-sm text-gray-500">Controle de contas a receber</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </>
+        ) : (
+          <Card className="mt-4">
+            <CardContent className="p-8 text-center">
+              <div className="mb-4">
+                <DollarSign className="h-12 w-12 mx-auto text-gray-400" />
               </div>
-            </CardContent>
-            <CardFooter className="justify-between">
-              <p className="text-sm text-gray-500">
-                Exibindo {filteredTransactions.length} de {transactions.length} transações
+              <h3 className="text-lg font-medium">Nenhuma clínica selecionada</h3>
+              <p className="text-gray-500 mt-2">
+                Selecione uma clínica para visualizar os dados financeiros.
               </p>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" /> Exportar
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-4 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Resumo financeiro</CardTitle>
-              <CardDescription>Distribuição das receitas e despesas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="income">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="income">Receitas</TabsTrigger>
-                  <TabsTrigger value="expense">Despesas</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="income" className="space-y-4">
-                  <div className="h-[220px] mt-6">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsPieChart>
-                        <Pie
-                          data={categoryData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {categoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR')}`} />
-                        <Legend />
-                      </RechartsPieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {categoryData.map((item) => (
-                      <div key={item.name} className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div 
-                            className="w-3 h-3 rounded-full mr-2" 
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <span className="text-sm">{item.name}</span>
-                        </div>
-                        <span className="text-sm font-medium">
-                          R$ {item.value.toLocaleString('pt-BR')}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="expense" className="space-y-4">
-                  <div className="h-[220px] mt-6">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsPieChart>
-                        <Pie
-                          data={expensesData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {expensesData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR')}`} />
-                        <Legend />
-                      </RechartsPieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {expensesData.map((item) => (
-                      <div key={item.name} className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div 
-                            className="w-3 h-3 rounded-full mr-2" 
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <span className="text-sm">{item.name}</span>
-                        </div>
-                        <span className="text-sm font-medium">
-                          R$ {item.value.toLocaleString('pt-BR')}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Métodos de pagamento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
-                      <CreditCard className="h-4 w-4" />
-                    </div>
-                    <span>Cartão de crédito</span>
-                  </div>
-                  <span className="font-medium">45%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
-                      <BadgeDollarSign className="h-4 w-4" />
-                    </div>
-                    <span>Pix</span>
-                  </div>
-                  <span className="font-medium">35%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mr-3">
-                      <Receipt className="h-4 w-4" />
-                    </div>
-                    <span>Dinheiro</span>
-                  </div>
-                  <span className="font-medium">15%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 mr-3">
-                      <Store className="h-4 w-4" />
-                    </div>
-                    <span>Outros</span>
-                  </div>
-                  <span className="font-medium">5%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-      
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Nova transação</DialogTitle>
-            <DialogDescription>
-              Adicione uma nova receita ou despesa.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="type">Tipo</Label>
-                  <Select 
-                    value={formData.type} 
-                    onValueChange={(value) => handleSelectChange('type', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="income">Receita</SelectItem>
-                      <SelectItem value="expense">Despesa</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Valor (R$)</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input 
-                      id="amount" 
-                      name="amount" 
-                      type="number" 
-                      step="0.01" 
-                      value={formData.amount || ''} 
-                      onChange={handleInputChange} 
-                      className="pl-10" 
-                      required 
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Input 
-                  id="description" 
-                  name="description" 
-                  value={formData.description} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Categoria</Label>
-                  <Select 
-                    value={formData.category} 
-                    onValueChange={(value) => handleSelectChange('category', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {formData.type === 'income' ? (
-                        <>
-                          <SelectItem value="Consultas">Consultas</SelectItem>
-                          <SelectItem value="Exames">Exames</SelectItem>
-                          <SelectItem value="Procedimentos">Procedimentos</SelectItem>
-                          <SelectItem value="Outros">Outros</SelectItem>
-                        </>
-                      ) : (
-                        <>
-                          <SelectItem value="Pessoal">Pessoal</SelectItem>
-                          <SelectItem value="Aluguel">Aluguel</SelectItem>
-                          <SelectItem value="Materiais">Materiais</SelectItem>
-                          <SelectItem value="Serviços">Serviços</SelectItem>
-                          <SelectItem value="Outros">Outros</SelectItem>
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="paymentMethod">Método de pagamento</Label>
-                  <Select 
-                    value={formData.paymentMethod} 
-                    onValueChange={(value) => handleSelectChange('paymentMethod', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                      <SelectItem value="Cartão de crédito">Cartão de crédito</SelectItem>
-                      <SelectItem value="Cartão de débito">Cartão de débito</SelectItem>
-                      <SelectItem value="Pix">Pix</SelectItem>
-                      <SelectItem value="Transferência">Transferência</SelectItem>
-                      <SelectItem value="Boleto">Boleto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit">
-                {formData.type === 'income' ? 'Adicionar receita' : 'Adicionar despesa'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        )}
+      </Tabs>
     </DashboardLayout>
   );
 };

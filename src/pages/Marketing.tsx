@@ -3,833 +3,486 @@ import React, { useState } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { 
   MessageSquare, 
   Mail, 
-  Send, 
-  Plus, 
-  Users, 
-  CalendarClock,
-  Instagram,
-  Facebook,
-  Twitter,
-  Globe,
-  Calendar,
-  BarChart4,
-  ImageIcon,
-  FileEdit,
-  Trash2,
-  Search,
-  Filter,
-  Bell
-} from 'lucide-react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast } from '@/components/ui/sonner';
-import {
+  Share2, 
+  FileBar, 
   BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+  Users,
+  Bell,
+  Send,
+  Plus,
+  Calendar,
+  ChevronRight
+} from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { useClinic } from '@/contexts/ClinicContext';
 
-// Dados mockados para exemplo
-const mockCampaigns = [
+// Dados mockados para campanhas de marketing
+const marketingCampaigns = [
   {
     id: '1',
-    name: 'Promoção de Primavera',
-    type: 'email',
+    name: 'Campanha de Prevenção',
     status: 'active',
-    target: 'Todos os pacientes',
-    sentTo: 240,
-    openRate: 45,
-    clickRate: 12,
-    scheduledDate: new Date(2025, 3, 20)
+    type: 'email',
+    sent: 345,
+    opened: 220,
+    clicked: 98,
+    date: '2025-04-01'
   },
   {
     id: '2',
-    name: 'Lembrete de Consulta',
-    type: 'sms',
-    status: 'active',
-    target: 'Pacientes com agendamento',
-    sentTo: 85,
-    openRate: 95,
-    clickRate: 0,
-    scheduledDate: new Date(2025, 3, 15)
-  },
-  {
-    id: '3',
-    name: 'Atualização de Serviços',
-    type: 'email',
+    name: 'Promoção de Aniversário',
     status: 'scheduled',
-    target: 'Pacientes antigos',
-    sentTo: 0,
-    openRate: 0,
-    clickRate: 0,
-    scheduledDate: new Date(2025, 4, 5)
-  },
-  {
-    id: '4',
-    name: 'Dia da Saúde',
-    type: 'social',
-    status: 'draft',
-    target: 'Redes sociais',
-    sentTo: 0,
-    openRate: 0,
-    clickRate: 0,
-    scheduledDate: null
-  }
-];
-
-const mockAnalytics = [
-  { month: 'Jan', emails: 120, sms: 50, social: 30 },
-  { month: 'Fev', emails: 150, sms: 60, social: 45 },
-  { month: 'Mar', emails: 180, sms: 70, social: 60 },
-  { month: 'Abr', emails: 220, sms: 85, social: 75 }
-];
-
-const mockTemplates = [
-  {
-    id: '1',
-    name: 'Boas-vindas',
-    type: 'email',
-    lastUsed: new Date(2025, 3, 10)
-  },
-  {
-    id: '2',
-    name: 'Aniversário',
-    type: 'email',
-    lastUsed: new Date(2025, 3, 5)
+    type: 'sms',
+    sent: 0,
+    opened: 0,
+    clicked: 0,
+    date: '2025-04-20'
   },
   {
     id: '3',
-    name: 'Confirmação de Consulta',
-    type: 'sms',
-    lastUsed: new Date(2025, 3, 12)
-  },
-  {
-    id: '4',
-    name: 'Lembrete de Consulta',
-    type: 'sms',
-    lastUsed: new Date(2025, 3, 14)
+    name: 'Dicas de Saúde',
+    status: 'completed',
+    type: 'email',
+    sent: 512,
+    opened: 387,
+    clicked: 156,
+    date: '2025-03-15'
   }
 ];
 
-interface CampaignFormData {
-  id?: string;
-  name: string;
-  type: 'email' | 'sms' | 'social';
-  target: string;
-  content: string;
-  scheduledDate: Date | null;
-}
+// Dados mockados para análises de marketing
+const marketingStats = {
+  newPatients: 42,
+  websiteVisits: 2345,
+  conversions: 18,
+  socialFollowers: 987
+};
 
 const Marketing = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [campaigns, setCampaigns] = useState(mockCampaigns);
-  const [templates, setTemplates] = useState(mockTemplates);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<CampaignFormData>({
-    name: '',
-    type: 'email',
-    target: '',
-    content: '',
-    scheduledDate: null
-  });
-
-  // Filtrar campanhas
-  const filteredCampaigns = campaigns.filter(campaign =>
-    campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    campaign.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    campaign.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSelectChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleAddCampaign = () => {
-    setFormData({
-      name: '',
-      type: 'email',
-      target: '',
-      content: '',
-      scheduledDate: null
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const newCampaign = {
-      id: `${Date.now()}`,
-      name: formData.name,
-      type: formData.type,
-      status: formData.scheduledDate ? 'scheduled' : 'draft',
-      target: formData.target,
-      sentTo: 0,
-      openRate: 0,
-      clickRate: 0,
-      scheduledDate: formData.scheduledDate
-    };
-    
-    setCampaigns([newCampaign, ...campaigns]);
-    toast("Campanha criada com sucesso");
-    setIsDialogOpen(false);
-  };
-
-  const handleDeleteCampaign = (id: string) => {
-    setCampaigns(campaigns.filter(campaign => campaign.id !== id));
-    toast("Campanha excluída com sucesso");
-  };
+  const { activeClinic } = useClinic();
+  const [activeTab, setActiveTab] = useState('campaigns');
 
   return (
     <DashboardLayout>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Marketing</h1>
-        <p className="text-gray-500">Gerencie as campanhas de marketing da sua clínica</p>
+        <p className="text-gray-500">
+          {activeClinic
+            ? `Gerencie as campanhas de marketing da clínica ${activeClinic.name}`
+            : 'Selecione uma clínica para gerenciar campanhas de marketing'}
+        </p>
       </div>
 
-      <Tabs defaultValue="campaigns" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-          <TabsTrigger value="campaigns" className="flex items-center">
-            <MessageSquare className="h-4 w-4 mr-2" /> Campanhas
-          </TabsTrigger>
-          <TabsTrigger value="templates" className="flex items-center">
-            <FileEdit className="h-4 w-4 mr-2" /> Modelos
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center">
-            <BarChart4 className="h-4 w-4 mr-2" /> Análise
-          </TabsTrigger>
+      <Tabs defaultValue="campaigns" className="space-y-6" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
+          <TabsTrigger value="automation">Automação</TabsTrigger>
+          <TabsTrigger value="analytics">Análises</TabsTrigger>
+          <TabsTrigger value="social">Redes Sociais</TabsTrigger>
         </TabsList>
 
-        {/* Tab de Campanhas */}
-        <TabsContent value="campaigns" className="space-y-6">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-            <div className="relative flex-grow max-w-md">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Buscar campanhas..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="pl-10"
-              />
-            </div>
-            <Button onClick={handleAddCampaign}>
-              <Plus className="mr-2 h-4 w-4" /> Nova campanha
-            </Button>
-          </div>
+        {activeClinic ? (
+          <>
+            <TabsContent value="campaigns" className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold">Campanhas de Marketing</h2>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" /> Nova campanha
+                </Button>
+              </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Campanhas de Marketing</CardTitle>
-              <CardDescription>Gerencie suas campanhas de email, SMS e redes sociais</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[250px]">Nome</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Público-alvo</TableHead>
-                      <TableHead>Data programada</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCampaigns.length > 0 ? (
-                      filteredCampaigns.map((campaign) => (
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Desempenho</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {marketingCampaigns.map(campaign => (
                         <TableRow key={campaign.id}>
                           <TableCell className="font-medium">{campaign.name}</TableCell>
                           <TableCell>
-                            {campaign.type === 'email' && <Mail className="h-4 w-4 inline mr-1" />}
-                            {campaign.type === 'sms' && <MessageSquare className="h-4 w-4 inline mr-1" />}
-                            {campaign.type === 'social' && <Instagram className="h-4 w-4 inline mr-1" />}
-                            {campaign.type.charAt(0).toUpperCase() + campaign.type.slice(1)}
+                            {campaign.type === 'email' ? (
+                              <span className="inline-flex items-center">
+                                <Mail className="h-4 w-4 mr-1" /> Email
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center">
+                                <MessageSquare className="h-4 w-4 mr-1" /> SMS
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'scheduled' ? 'outline' : 'secondary'}>
-                              {campaign.status === 'active' && 'Ativo'}
-                              {campaign.status === 'scheduled' && 'Agendado'}
-                              {campaign.status === 'draft' && 'Rascunho'}
+                            <Badge 
+                              className={
+                                campaign.status === 'active' 
+                                  ? 'bg-green-100 text-green-800 hover:bg-green-100' 
+                                  : campaign.status === 'scheduled' 
+                                    ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' 
+                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+                              }>
+                              {campaign.status === 'active' 
+                                ? 'Ativa' 
+                                : campaign.status === 'scheduled' 
+                                  ? 'Agendada' 
+                                  : 'Concluída'}
                             </Badge>
                           </TableCell>
-                          <TableCell>{campaign.target}</TableCell>
+                          <TableCell>{new Date(campaign.date).toLocaleDateString('pt-BR')}</TableCell>
                           <TableCell>
-                            {campaign.scheduledDate 
-                              ? format(campaign.scheduledDate, "dd 'de' MMMM", { locale: ptBR }) 
-                              : '—'}
+                            {campaign.status !== 'scheduled' ? (
+                              <div className="flex flex-col gap-1">
+                                <div className="flex justify-between text-xs">
+                                  <span>Taxa de abertura</span>
+                                  <span>{Math.round((campaign.opened / campaign.sent) * 100)}%</span>
+                                </div>
+                                <Progress value={(campaign.opened / campaign.sent) * 100} className="h-2" />
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-500">Ainda não enviada</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex justify-end space-x-2">
-                              <Button variant="ghost" size="icon">
-                                <FileEdit className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={() => handleDeleteCampaign(campaign.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </div>
+                            <Button variant="ghost" size="sm">
+                              Detalhes <ChevronRight className="ml-1 h-4 w-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
-                          Nenhuma campanha encontrada.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Total de campanhas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{marketingCampaigns.length}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Emails enviados</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {marketingCampaigns.reduce((sum, campaign) => sum + campaign.sent, 0)}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Taxa média de abertura</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {Math.round(
+                        (marketingCampaigns.reduce((sum, campaign) => sum + campaign.opened, 0) /
+                        marketingCampaigns.reduce((sum, campaign) => sum + campaign.sent, 0)) * 100
+                      )}%
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Taxa média de cliques</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {Math.round(
+                        (marketingCampaigns.reduce((sum, campaign) => sum + campaign.clicked, 0) /
+                        marketingCampaigns.reduce((sum, campaign) => sum + campaign.sent, 0)) * 100
+                      )}%
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
+            </TabsContent>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Campanhas de Email</CardTitle>
-                  <Mail className="h-5 w-5 text-blue-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {campaigns.filter(c => c.type === 'email').length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Taxa de abertura média: 42%
-                </p>
-                <div className="mt-4">
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Plus className="h-4 w-4 mr-2" /> Novo email
+            <TabsContent value="automation" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Automação de Marketing</CardTitle>
+                  <CardDescription>
+                    Configure mensagens automáticas para seus pacientes
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card>
+                      <CardContent className="p-4 flex justify-between items-center">
+                        <div className="flex items-center">
+                          <div className="bg-blue-100 p-2 rounded-full mr-3">
+                            <Calendar className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">Lembrete de consulta</h3>
+                            <p className="text-sm text-gray-500">Envio 24h antes da consulta</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <Badge variant="outline" className="mr-2">Ativo</Badge>
+                          <Button variant="ghost" size="sm">Editar</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardContent className="p-4 flex justify-between items-center">
+                        <div className="flex items-center">
+                          <div className="bg-green-100 p-2 rounded-full mr-3">
+                            <Bell className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">Aniversário</h3>
+                            <p className="text-sm text-gray-500">Mensagem de felicitação</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <Badge variant="outline" className="mr-2">Ativo</Badge>
+                          <Button variant="ghost" size="sm">Editar</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardContent className="p-4 flex justify-between items-center">
+                        <div className="flex items-center">
+                          <div className="bg-purple-100 p-2 rounded-full mr-3">
+                            <Users className="h-5 w-5 text-purple-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">Retorno</h3>
+                            <p className="text-sm text-gray-500">90 dias após última consulta</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <Badge variant="outline" className="mr-2">Inativo</Badge>
+                          <Button variant="ghost" size="sm">Editar</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardContent className="p-4 flex justify-between items-center">
+                        <div className="flex items-center">
+                          <div className="bg-orange-100 p-2 rounded-full mr-3">
+                            <Send className="h-5 w-5 text-orange-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">Feedback</h3>
+                            <p className="text-sm text-gray-500">Após cada consulta</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <Badge variant="outline" className="mr-2">Ativo</Badge>
+                          <Button variant="ghost" size="sm">Editar</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <Button className="w-full">
+                    <Plus className="mr-2 h-4 w-4" /> Criar nova automação
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Campanhas de SMS</CardTitle>
-                  <MessageSquare className="h-5 w-5 text-green-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {campaigns.filter(c => c.type === 'sms').length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Taxa de entrega: 98%
-                </p>
-                <div className="mt-4">
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Plus className="h-4 w-4 mr-2" /> Novo SMS
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Redes Sociais</CardTitle>
-                  <Instagram className="h-5 w-5 text-purple-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {campaigns.filter(c => c.type === 'social').length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Alcance médio: 520 pessoas
-                </p>
-                <div className="mt-4">
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Plus className="h-4 w-4 mr-2" /> Nova publicação
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Próximas Campanhas</CardTitle>
-              <CardDescription>Campanhas programadas para os próximos dias</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {campaigns
-                  .filter(c => c.status === 'scheduled' && c.scheduledDate)
-                  .sort((a, b) => a.scheduledDate && b.scheduledDate ? a.scheduledDate.getTime() - b.scheduledDate.getTime() : 0)
-                  .slice(0, 3)
-                  .map(campaign => (
-                    <div key={campaign.id} className="flex items-start space-x-4 border-b pb-3">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center
-                        ${campaign.type === 'email' ? 'bg-blue-100 text-blue-600' : ''}
-                        ${campaign.type === 'sms' ? 'bg-green-100 text-green-600' : ''}
-                        ${campaign.type === 'social' ? 'bg-purple-100 text-purple-600' : ''}
-                      `}>
-                        {campaign.type === 'email' && <Mail className="h-5 w-5" />}
-                        {campaign.type === 'sms' && <MessageSquare className="h-5 w-5" />}
-                        {campaign.type === 'social' && <Instagram className="h-5 w-5" />}
+            <TabsContent value="analytics" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Novos pacientes</p>
+                        <h3 className="text-2xl font-bold mt-1">{marketingStats.newPatients}</h3>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold">{campaign.name}</h4>
-                          <Badge variant="outline">{campaign.type}</Badge>
-                        </div>
-                        <p className="text-sm text-gray-500">{campaign.target}</p>
-                        <div className="flex items-center mt-1 text-xs text-gray-500">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {campaign.scheduledDate && format(campaign.scheduledDate, "dd/MM/yyyy")}
-                        </div>
+                      <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <Users className="h-5 w-5 text-green-600" />
                       </div>
                     </div>
-                  ))}
-
-                {campaigns.filter(c => c.status === 'scheduled' && c.scheduledDate).length === 0 && (
-                  <div className="text-center py-4">
-                    <CalendarClock className="mx-auto h-8 w-8 text-gray-400" />
-                    <p className="mt-2 text-sm text-gray-500">Nenhuma campanha agendada</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab de Templates */}
-        <TabsContent value="templates" className="space-y-6">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-            <div className="relative flex-grow max-w-md">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Buscar modelos..."
-                className="pl-10"
-              />
-            </div>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Novo modelo
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates.map(template => (
-              <Card key={template.id} className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="h-32 bg-gray-100 flex items-center justify-center border-b">
-                    {template.type === 'email' ? (
-                      <Mail className="h-12 w-12 text-gray-400" />
-                    ) : (
-                      <MessageSquare className="h-12 w-12 text-gray-400" />
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold">{template.name}</h3>
-                    <div className="flex items-center justify-between mt-2">
-                      <Badge variant="outline">{template.type}</Badge>
-                      <span className="text-xs text-gray-500">
-                        Última utilização: {format(template.lastUsed, "dd/MM/yyyy")}
-                      </span>
+                    <p className="text-xs text-green-600 mt-4">
+                      +15% em relação ao mês anterior
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Visitas ao site</p>
+                        <h3 className="text-2xl font-bold mt-1">{marketingStats.websiteVisits}</h3>
+                      </div>
+                      <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Share2 className="h-5 w-5 text-blue-600" />
+                      </div>
                     </div>
-                    <div className="mt-4 flex space-x-2">
-                      <Button variant="outline" size="sm" className="flex-1">Editar</Button>
-                      <Button size="sm" className="flex-1">Usar</Button>
+                    <p className="text-xs text-blue-600 mt-4">
+                      +8% em relação ao mês anterior
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Conversões</p>
+                        <h3 className="text-2xl font-bold mt-1">{marketingStats.conversions}</h3>
+                      </div>
+                      <div className="h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <Calendar className="h-5 w-5 text-purple-600" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-purple-600 mt-4">
+                      +12% em relação ao mês anterior
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Seguidores</p>
+                        <h3 className="text-2xl font-bold mt-1">{marketingStats.socialFollowers}</h3>
+                      </div>
+                      <div className="h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center">
+                        <Share2 className="h-5 w-5 text-orange-600" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-orange-600 mt-4">
+                      +22% em relação ao mês anterior
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Desempenho de marketing</CardTitle>
+                  <CardDescription>Análise dos últimos 30 dias</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md">
+                    <div className="text-center">
+                      <BarChart className="h-16 w-16 mx-auto text-gray-300" />
+                      <p className="text-sm text-gray-500 mt-2">Gráfico de desempenho de marketing</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            </TabsContent>
 
-            <Card className="border-dashed overflow-hidden">
-              <CardContent className="p-0 h-full">
-                <div className="flex flex-col items-center justify-center h-full p-6">
-                  <Plus className="h-12 w-12 text-gray-400 mb-2" />
-                  <h3 className="font-medium text-gray-700">Adicionar modelo</h3>
-                  <p className="text-xs text-gray-500 text-center mt-1">
-                    Crie um modelo personalizado para suas campanhas
+            <TabsContent value="social" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Redes Sociais</CardTitle>
+                  <CardDescription>Gerencie a presença da clínica nas redes sociais</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">Instagram</CardTitle>
+                      </CardHeader>
+                      <CardContent className="py-2">
+                        <p className="text-sm text-gray-500">
+                          {activeClinic.socialMedia?.instagram ? (
+                            <>
+                              @{activeClinic.socialMedia.instagram}
+                              <br />
+                              <span className="text-gray-400">450 seguidores</span>
+                            </>
+                          ) : (
+                            'Conta não conectada'
+                          )}
+                        </p>
+                      </CardContent>
+                      <CardFooter>
+                        <Button variant="outline" className="w-full">
+                          {activeClinic.socialMedia?.instagram ? 'Gerenciar' : 'Conectar conta'}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">Facebook</CardTitle>
+                      </CardHeader>
+                      <CardContent className="py-2">
+                        <p className="text-sm text-gray-500">
+                          {activeClinic.socialMedia?.facebook ? (
+                            <>
+                              {activeClinic.name}
+                              <br />
+                              <span className="text-gray-400">320 curtidas</span>
+                            </>
+                          ) : (
+                            'Conta não conectada'
+                          )}
+                        </p>
+                      </CardContent>
+                      <CardFooter>
+                        <Button variant="outline" className="w-full">
+                          {activeClinic.socialMedia?.facebook ? 'Gerenciar' : 'Conectar conta'}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Calendário de publicações</CardTitle>
+                  <CardDescription>Planeje e agende publicações para suas redes sociais</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                  <Calendar className="h-16 w-16 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium">Nenhuma publicação agendada</h3>
+                  <p className="text-gray-500 max-w-md mt-2">
+                    Você ainda não tem publicações agendadas. Clique no botão abaixo para criar sua primeira publicação.
                   </p>
-                  <Button className="mt-4" variant="outline">Criar modelo</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Tab de Analytics */}
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <h2 className="text-xl font-bold">Desempenho de Marketing</h2>
-            <Select defaultValue="month">
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">Última semana</SelectItem>
-                <SelectItem value="month">Último mês</SelectItem>
-                <SelectItem value="quarter">Último trimestre</SelectItem>
-                <SelectItem value="year">Último ano</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Total de Emails</p>
-                    <h3 className="text-2xl font-bold">670</h3>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                    <Mail className="h-6 w-6" />
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <p className="text-sm text-green-600">↑ 24% em relação ao período anterior</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Total de SMS</p>
-                    <h3 className="text-2xl font-bold">265</h3>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                    <MessageSquare className="h-6 w-6" />
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <p className="text-sm text-green-600">↑ 12% em relação ao período anterior</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Público atingido</p>
-                    <h3 className="text-2xl font-bold">2.450</h3>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                    <Users className="h-6 w-6" />
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <p className="text-sm text-green-600">↑ 18% em relação ao período anterior</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Desempenho por Canal</CardTitle>
-              <CardDescription>Campanhas enviadas por canal ao longo do tempo</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={mockAnalytics}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="emails" name="Emails" fill="#3b82f6" />
-                    <Bar dataKey="sms" name="SMS" fill="#22c55e" />
-                    <Bar dataKey="social" name="Redes Sociais" fill="#a855f7" />
-                  </BarChart>
-                </ResponsiveContainer>
+                  <Button className="mt-4">
+                    <Plus className="h-4 w-4 mr-2" /> Nova publicação
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </>
+        ) : (
+          <Card className="mt-4">
+            <CardContent className="p-8 text-center">
+              <div className="mb-4">
+                <MessageSquare className="h-12 w-12 mx-auto text-gray-400" />
               </div>
+              <h3 className="text-lg font-medium">Nenhuma clínica selecionada</h3>
+              <p className="text-gray-500 mt-2">
+                Selecione uma clínica para gerenciar as campanhas de marketing.
+              </p>
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Conexões de Redes Sociais</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 border rounded-lg flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
-                      <Facebook className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">Facebook</h4>
-                      <p className="text-sm text-gray-500">1.250 seguidores</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">Desconectar</Button>
-                </div>
-
-                <div className="p-4 border rounded-lg flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 mr-3">
-                      <Instagram className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">Instagram</h4>
-                      <p className="text-sm text-gray-500">3.450 seguidores</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">Desconectar</Button>
-                </div>
-
-                <div className="p-4 border rounded-lg flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 mr-3">
-                      <Twitter className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">Twitter</h4>
-                      <p className="text-sm text-gray-500">840 seguidores</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">Conectar</Button>
-                </div>
-
-                <div className="p-4 border border-dashed rounded-lg flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mr-3">
-                      <Plus className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">Adicionar nova rede</h4>
-                      <p className="text-sm text-gray-500">Conecte mais canais</p>
-                    </div>
-                  </div>
-                  <Button size="sm">Adicionar</Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Campanhas mais efetivas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-4 pb-4 border-b">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                      <Bell className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">Promoção de Primavera</h4>
-                      <p className="text-sm text-gray-500">Enviado para 240 pacientes</p>
-                      <div className="mt-2 grid grid-cols-3 gap-4 text-center">
-                        <div>
-                          <p className="text-xs text-gray-500">Abertura</p>
-                          <p className="text-sm font-medium">45%</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Cliques</p>
-                          <p className="text-sm font-medium">12%</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Conversões</p>
-                          <p className="text-sm font-medium">8%</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-4 pb-4 border-b">
-                    <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                      <MessageSquare className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">Lembrete de Consulta</h4>
-                      <p className="text-sm text-gray-500">Enviado para 85 pacientes</p>
-                      <div className="mt-2 grid grid-cols-3 gap-4 text-center">
-                        <div>
-                          <p className="text-xs text-gray-500">Abertura</p>
-                          <p className="text-sm font-medium">95%</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Cliques</p>
-                          <p className="text-sm font-medium">0%</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Conversões</p>
-                          <p className="text-sm font-medium">92%</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button variant="ghost" className="w-full">
-                    Ver relatório completo
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+        )}
       </Tabs>
-      
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Nova Campanha</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome da campanha</Label>
-                  <Input 
-                    id="name" 
-                    name="name" 
-                    value={formData.name} 
-                    onChange={handleInputChange} 
-                    required 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="type">Tipo</Label>
-                  <Select 
-                    value={formData.type} 
-                    onValueChange={(value: string) => handleSelectChange('type', value)}
-                  >
-                    <SelectTrigger id="type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="email">Email</SelectItem>
-                      <SelectItem value="sms">SMS</SelectItem>
-                      <SelectItem value="social">Redes Sociais</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="target">Público-alvo</Label>
-                <Select 
-                  value={formData.target} 
-                  onValueChange={(value) => handleSelectChange('target', value)}
-                >
-                  <SelectTrigger id="target">
-                    <SelectValue placeholder="Selecione o público-alvo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Todos os pacientes">Todos os pacientes</SelectItem>
-                    <SelectItem value="Pacientes novos">Pacientes novos</SelectItem>
-                    <SelectItem value="Pacientes antigos">Pacientes antigos</SelectItem>
-                    <SelectItem value="Pacientes com agendamento">Pacientes com agendamento</SelectItem>
-                    <SelectItem value="Redes sociais">Redes sociais</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="content">Conteúdo</Label>
-                <textarea
-                  id="content"
-                  name="content"
-                  value={formData.content}
-                  onChange={handleInputChange}
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  rows={4}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Template</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um template" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="basic">Template básico</SelectItem>
-                      <SelectItem value="promotion">Promoção</SelectItem>
-                      <SelectItem value="reminder">Lembrete</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {formData.type !== 'sms' && (
-                  <div className="space-y-2">
-                    <Label>Imagem</Label>
-                    <div className="flex items-center justify-center border border-dashed rounded-md h-10">
-                      <Button variant="ghost" size="sm" className="h-full w-full flex items-center">
-                        <ImageIcon className="h-4 w-4 mr-2" /> Carregar imagem
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Agendar envio?</Label>
-                  <Button variant="outline" size="sm" type="button">
-                    <Calendar className="h-4 w-4 mr-2" /> Selecionar data
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-500">
-                  {formData.scheduledDate 
-                    ? `Agendado para ${format(formData.scheduledDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}` 
-                    : 'Será salvo como rascunho'}
-                </p>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit">
-                Criar campanha
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };
