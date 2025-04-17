@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'doctor' | 'receptionist' | 'patient';
 
 export interface User {
@@ -71,6 +70,7 @@ export interface Patient {
   created_at?: string;
   updated_at?: string;
   last_visit?: string;
+  lastVisit?: string; // Adicionando para compatibilidade com nomes de propriedades em camelCase
 }
 
 export interface Appointment {
