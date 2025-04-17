@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -91,6 +92,32 @@ const Patients = () => {
     }
   });
 
+  const updatePatientMutation = useMutation({
+    mutationFn: async (updatePatient: Patient) => {
+      const { data, error } = await supabase
+        .from('patients')
+        .update({
+          name: updatePatient.name,
+          email: updatePatient.email,
+          phone: updatePatient.phone,
+          birth_date: updatePatient.birthDate,
+        })
+        .eq('id', updatePatient.id)
+        .select();
+      
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
+      toast.success("Paciente atualizado com sucesso");
+    },
+    onError: (error) => {
+      console.error("Erro ao atualizar paciente:", error);
+      toast.error("Erro ao atualizar paciente");
+    }
+  });
+
   const deletePatientMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -162,6 +189,10 @@ const Patients = () => {
     });
   };
 
+  const handleUpdatePatient = (patient: Patient) => {
+    updatePatientMutation.mutate(patient);
+  };
+
   return (
     <DashboardLayout>
       <PageHeader />
@@ -201,6 +232,7 @@ const Patients = () => {
                     setSelectedPatient(patient);
                     setIsRecordModalOpen(true);
                   }}
+                  onUpdatePatient={handleUpdatePatient}
                 />
               </div>
             </TabsContent>
@@ -219,6 +251,7 @@ const Patients = () => {
                     setSelectedPatient(patient);
                     setIsRecordModalOpen(true);
                   }}
+                  onUpdatePatient={handleUpdatePatient}
                 />
               </div>
             </TabsContent>
@@ -237,6 +270,7 @@ const Patients = () => {
                     setSelectedPatient(patient);
                     setIsRecordModalOpen(true);
                   }}
+                  onUpdatePatient={handleUpdatePatient}
                 />
               </div>
             </TabsContent>

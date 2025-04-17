@@ -13,6 +13,7 @@ interface PatientListProps {
   onToggleStatus: (patient: Patient) => void;
   onDelete: (id: string) => void;
   onOpenRecord: (patient: Patient) => void;
+  onUpdatePatient?: (patient: Patient) => void;
 }
 
 export const PatientList = ({
@@ -21,26 +22,35 @@ export const PatientList = ({
   onToggleStatus,
   onDelete,
   onOpenRecord,
+  onUpdatePatient,
 }: PatientListProps) => {
   if (isLoading) {
     return (
-      <TableRow>
-        <TableCell colSpan={6} className="h-24 text-center">
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        </TableCell>
-      </TableRow>
+      <Table>
+        <TableBody>
+          <TableRow>
+            <TableCell colSpan={6} className="h-24 text-center">
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
     );
   }
 
   if (patients.length === 0) {
     return (
-      <TableRow>
-        <TableCell colSpan={6} className="h-24 text-center py-6 text-gray-500">
-          Nenhum paciente encontrado. Adicione seu primeiro paciente usando o botão acima.
-        </TableCell>
-      </TableRow>
+      <Table>
+        <TableBody>
+          <TableRow>
+            <TableCell colSpan={6} className="h-24 text-center py-6 text-gray-500">
+              Nenhum paciente encontrado. Adicione seu primeiro paciente usando o botão acima.
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
     );
   }
 
@@ -86,6 +96,7 @@ export const PatientList = ({
                 onToggleStatus={onToggleStatus}
                 onDelete={onDelete}
                 onOpenRecord={onOpenRecord}
+                onUpdatePatient={onUpdatePatient}
               />
             </TableCell>
           </TableRow>
