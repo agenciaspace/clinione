@@ -12,7 +12,9 @@ import {
   MoreVertical, 
   FileText, 
   Trash2, 
-  Edit
+  Edit,
+  UserCheck,
+  UserX
 } from 'lucide-react';
 import { 
   Dialog,
@@ -27,6 +29,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,6 +40,9 @@ import { toast } from '@/components/ui/sonner';
 import { useClinic } from '@/contexts/ClinicContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Switch } from '@/components/ui/switch';
+import PatientRecord from '@/components/patients/PatientRecord';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Patient {
   id: string;
@@ -58,9 +64,12 @@ interface PatientFormData {
 
 const Patients = () => {
   const { activeClinic } = useClinic();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [patientForm, setPatientForm] = useState<PatientFormData>({
     name: '',
     email: '',
@@ -74,7 +83,6 @@ const Patients = () => {
     queryFn: async () => {
       if (!activeClinic?.id) return [];
       
-      // Aqui estamos usando a tabela 'patients' que acabamos de criar no Supabase
       const { data, error } = await supabase
         .from('patients')
         .select('*')
@@ -86,7 +94,6 @@ const Patients = () => {
         return [];
       }
       
-      // Converter para o formato esperado pela interface Patient
       return data.map((patient: any) => ({
         id: patient.id,
         name: patient.name,
@@ -153,6 +160,27 @@ const Patients = () => {
     }
   });
 
+  // Mutation para alternar o status do paciente
+  const togglePatientStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'inactive' }) => {
+      const { error } = await supabase
+        .from('patients')
+        .update({ status })
+        .eq('id', id);
+      
+      if (error) throw error;
+      return { id, status };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
+      toast.success(`Status do paciente alterado para ${data.status === 'active' ? 'ativo' : 'inativo'}`);
+    },
+    onError: (error) => {
+      console.error("Erro ao alterar status do paciente:", error);
+      toast.error("Erro ao alterar status do paciente");
+    }
+  });
+
   // Filtrar pacientes com base na pesquisa
   const filteredPatients = patients.filter(patient => 
     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -187,6 +215,19 @@ const Patients = () => {
 
   const handleDeletePatient = async (id: string) => {
     deletePatientMutation.mutate(id);
+  };
+
+  const handleToggleStatus = async (patient: Patient) => {
+    const newStatus = patient.status === 'active' ? 'inactive' : 'active';
+    togglePatientStatusMutation.mutate({ 
+      id: patient.id, 
+      status: newStatus 
+    });
+  };
+
+  const openPatientRecord = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setIsRecordModalOpen(true);
   };
 
   return (
@@ -332,9 +373,16 @@ const Patients = () => {
                             {format(new Date(patient.birthDate), 'dd/MM/yyyy')}
                           </TableCell>
                           <TableCell className="hidden lg:table-cell">
-                            <Badge variant={patient.status === 'active' ? 'default' : 'outline'} className={patient.status === 'active' ? 'bg-healthgreen-600' : ''}>
-                              {patient.status === 'active' ? 'Ativo' : 'Inativo'}
-                            </Badge>
+                            <div className="flex items-center space-x-2">
+                              <Switch 
+                                checked={patient.status === 'active'} 
+                                onCheckedChange={() => handleToggleStatus(patient)}
+                                className={patient.status === 'active' ? 'bg-healthgreen-600' : ''}
+                              />
+                              <Badge variant={patient.status === 'active' ? 'default' : 'outline'} className={patient.status === 'active' ? 'bg-healthgreen-600' : ''}>
+                                {patient.status === 'active' ? 'Ativo' : 'Inativo'}
+                              </Badge>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -349,13 +397,33 @@ const Patients = () => {
                                   <Calendar className="mr-2 h-4 w-4" />
                                   <span>Agendar consulta</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer">
+                                <DropdownMenuItem 
+                                  className="cursor-pointer"
+                                  onClick={() => openPatientRecord(patient)}
+                                >
                                   <FileText className="mr-2 h-4 w-4" />
-                                  <span>Ver prontuário</span>
+                                  <span>Prontuário</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="cursor-pointer">
                                   <Edit className="mr-2 h-4 w-4" />
                                   <span>Editar</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="cursor-pointer"
+                                  onClick={() => handleToggleStatus(patient)}
+                                >
+                                  {patient.status === 'active' ? (
+                                    <>
+                                      <UserX className="mr-2 h-4 w-4 text-orange-500" />
+                                      <span className="text-orange-500">Desativar</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserCheck className="mr-2 h-4 w-4 text-healthgreen-600" />
+                                      <span className="text-healthgreen-600">Ativar</span>
+                                    </>
+                                  )}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   className="cursor-pointer text-red-600"
@@ -418,7 +486,14 @@ const Patients = () => {
                               {format(new Date(patient.birthDate), 'dd/MM/yyyy')}
                             </TableCell>
                             <TableCell className="hidden lg:table-cell">
-                              <Badge className="bg-healthgreen-600">Ativo</Badge>
+                              <div className="flex items-center space-x-2">
+                                <Switch 
+                                  checked={true} 
+                                  onCheckedChange={() => handleToggleStatus(patient)}
+                                  className="bg-healthgreen-600"
+                                />
+                                <Badge className="bg-healthgreen-600">Ativo</Badge>
+                              </div>
                             </TableCell>
                             <TableCell>
                               <DropdownMenu>
@@ -433,13 +508,24 @@ const Patients = () => {
                                     <Calendar className="mr-2 h-4 w-4" />
                                     <span>Agendar consulta</span>
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem className="cursor-pointer">
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer"
+                                    onClick={() => openPatientRecord(patient)}
+                                  >
                                     <FileText className="mr-2 h-4 w-4" />
-                                    <span>Ver prontuário</span>
+                                    <span>Prontuário</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem className="cursor-pointer">
                                     <Edit className="mr-2 h-4 w-4" />
                                     <span>Editar</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer"
+                                    onClick={() => handleToggleStatus(patient)}
+                                  >
+                                    <UserX className="mr-2 h-4 w-4 text-orange-500" />
+                                    <span className="text-orange-500">Desativar</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
                                     className="cursor-pointer text-red-600"
@@ -502,7 +588,13 @@ const Patients = () => {
                               {format(new Date(patient.birthDate), 'dd/MM/yyyy')}
                             </TableCell>
                             <TableCell className="hidden lg:table-cell">
-                              <Badge variant="outline">Inativo</Badge>
+                              <div className="flex items-center space-x-2">
+                                <Switch 
+                                  checked={false} 
+                                  onCheckedChange={() => handleToggleStatus(patient)}
+                                />
+                                <Badge variant="outline">Inativo</Badge>
+                              </div>
                             </TableCell>
                             <TableCell>
                               <DropdownMenu>
@@ -517,13 +609,24 @@ const Patients = () => {
                                     <Calendar className="mr-2 h-4 w-4" />
                                     <span>Agendar consulta</span>
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem className="cursor-pointer">
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer"
+                                    onClick={() => openPatientRecord(patient)}
+                                  >
                                     <FileText className="mr-2 h-4 w-4" />
-                                    <span>Ver prontuário</span>
+                                    <span>Prontuário</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem className="cursor-pointer">
                                     <Edit className="mr-2 h-4 w-4" />
                                     <span>Editar</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer"
+                                    onClick={() => handleToggleStatus(patient)}
+                                  >
+                                    <UserCheck className="mr-2 h-4 w-4 text-healthgreen-600" />
+                                    <span className="text-healthgreen-600">Ativar</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
                                     className="cursor-pointer text-red-600"
@@ -545,6 +648,19 @@ const Patients = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Modal de prontuário */}
+      <Dialog open={isRecordModalOpen} onOpenChange={setIsRecordModalOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedPatient && (
+            <PatientRecord 
+              patient={selectedPatient} 
+              onClose={() => setIsRecordModalOpen(false)} 
+              currentUser={user}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
