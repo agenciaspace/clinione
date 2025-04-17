@@ -233,6 +233,85 @@ export type Database = {
           },
         ]
       }
+      patient_record_audit: {
+        Row: {
+          action: string
+          content_after: string | null
+          content_before: string | null
+          created_at: string
+          id: string
+          record_id: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          content_after?: string | null
+          content_before?: string | null
+          created_at?: string
+          id?: string
+          record_id: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          content_after?: string | null
+          content_before?: string | null
+          created_at?: string
+          id?: string
+          record_id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_record_audit_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "patient_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_records: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          id: string
+          patient_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          patient_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          patient_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_records_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           birth_date: string

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   DialogHeader, 
@@ -36,42 +35,16 @@ import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
-
-interface Patient {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  birthDate: string;
-  status: 'active' | 'inactive';
-}
-
-interface RecordEntry {
-  id: string;
-  patient_id: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-  created_by: string;
-  created_by_name: string;
-}
-
-interface RecordAuditLog {
-  id: string;
-  record_id: string;
-  action: 'create' | 'update' | 'delete';
-  content_before?: string;
-  content_after?: string;
-  user_id: string;
-  user_name: string;
-  created_at: string;
-}
+import { Tables } from '@/integrations/supabase/types';
 
 interface PatientRecordProps {
-  patient: Patient;
+  patient: Tables['patients']['Row'];
   onClose: () => void;
   currentUser: any;
 }
+
+type RecordEntry = Tables['patient_records']['Row'];
+type RecordAuditLog = Tables['patient_record_audit']['Row'];
 
 const recordEntrySchema = z.object({
   content: z.string().min(1, { message: 'O conteúdo do prontuário não pode ficar vazio.' })
@@ -542,7 +515,6 @@ const PatientRecord: React.FC<PatientRecordProps> = ({ patient, onClose, current
         </Button>
       </DialogFooter>
 
-      {/* Diálogo de confirmação para excluir entrada */}
       <AlertDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
