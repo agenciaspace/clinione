@@ -82,34 +82,30 @@ const WebhookSettings: React.FC = () => {
   const [newEndpointEvents, setNewEndpointEvents] = useState<Record<string, boolean>>({});
   const [showEndpointSecret, setShowEndpointSecret] = useState(false);
 
+  const fetchWebhookLogs = async () => {
+    if (!activeClinic) return;
+    
+    setIsLoadingLogs(true);
+    try {
+      const result = await loadWebhookLogs(activeClinic.id, activeTab);
+      
+      if (result.error) throw result.error;
+      setWebhookLogs(result.data || []);
+    } catch (error) {
+      console.error('Error loading webhook logs:', error);
+      toast.error('Erro ao carregar logs de webhook');
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  };
+
   useEffect(() => {
     if (!activeClinic) return;
     
-    const loadWebhookSettings = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('clinics')
-          .select('webhook_url, webhook_secret')
-          .eq('id', activeClinic.id)
-          .single();
-
-        if (error) throw error;
-        
-        setWebhookUrl(data.webhook_url || '');
-        setWebhookSecret(data.webhook_secret || '');
-      } catch (error) {
-        console.error('Error loading webhook settings:', error);
-        toast.error('Erro ao carregar configurações de webhook');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadWebhookSettings();
     loadWebhookEvents();
     loadWebhookEndpoints();
-    loadWebhookLogs();
+    fetchWebhookLogs();
   }, [activeClinic]);
 
   const loadWebhookEndpoints = async () => {
@@ -154,23 +150,6 @@ const WebhookSettings: React.FC = () => {
       toast.error('Erro ao carregar eventos de webhook');
     } finally {
       setIsLoadingEvents(false);
-    }
-  };
-
-  const loadWebhookLogs = async () => {
-    if (!activeClinic) return;
-    
-    setIsLoadingLogs(true);
-    try {
-      const result: WebhookLogResponse = await loadWebhookLogs(activeClinic.id, activeTab);
-      
-      if (result.error) throw result.error;
-      setWebhookLogs(result.data || []);
-    } catch (error) {
-      console.error('Error loading webhook logs:', error);
-      toast.error('Erro ao carregar logs de webhook');
-    } finally {
-      setIsLoadingLogs(false);
     }
   };
 
@@ -290,7 +269,7 @@ const WebhookSettings: React.FC = () => {
         
         setTimeout(() => {
           loadWebhookEvents();
-          loadWebhookLogs();
+          fetchWebhookLogs();
         }, 1000);
       } else {
         toast.error(`Erro ao enviar webhook de teste: ${message}`);
@@ -452,7 +431,7 @@ const WebhookSettings: React.FC = () => {
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setTimeout(() => {
-      loadWebhookLogs();
+      fetchWebhookLogs();
     }, 100);
   };
 
@@ -463,6 +442,11 @@ const WebhookSettings: React.FC = () => {
     
     const endpoint = webhookEndpoints.find(ep => ep.id === endpointId);
     return endpoint?.description || `Endpoint ${endpoint?.id.substring(0, 8)}`;
+  };
+
+  const handleRefreshData = () => {
+    loadWebhookEvents();
+    fetchWebhookLogs();
   };
 
   if (isLoading) {
@@ -726,10 +710,7 @@ const WebhookSettings: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              loadWebhookEvents();
-              loadWebhookLogs();
-            }}
+            onClick={handleRefreshData}
             disabled={isLoadingEvents || isLoadingLogs}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingEvents || isLoadingLogs ? 'animate-spin' : ''}`} />
