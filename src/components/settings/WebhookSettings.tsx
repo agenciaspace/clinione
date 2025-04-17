@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useClinic } from '@/contexts/ClinicContext';
-import { WebhookEventType, triggerWebhook, loadWebhookLogs, WebhookLogResponse, testPatientWebhook, checkRealtimeSubscription } from '@/utils/webhook-service';
+import { WebhookEventType, triggerWebhook, loadWebhookLogs, WebhookLogResponse, testPatientWebhook, checkRealtimeSubscription, setupWebhookRealtimeListeners } from '@/utils/webhook-service';
 import { Loader2, AlertCircle, CheckCircle2, RefreshCw, Send, Plus, Trash2, Code, Copy, Pencil, Eye, EyeOff, Activity } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -376,11 +375,23 @@ const WebhookSettings: React.FC = () => {
       const status = checkRealtimeSubscription(activeClinic.id);
       setRealtimeStatus(status);
       
-      // Fix: Check if status is not false before accessing isSubscribed property
       if (status && typeof status === 'object' && status.isSubscribed) {
         toast.success('Conexão realtime está ativa');
       } else {
         toast.error('Conexão realtime não está ativa');
+        
+        const channel = setupWebhookRealtimeListeners(activeClinic.id);
+        if (channel) {
+          toast.info('Tentando reconectar...');
+          setTimeout(() => {
+            const newStatus = checkRealtimeSubscription(activeClinic.id);
+            if (newStatus && newStatus.isSubscribed) {
+              toast.success('Reconexão bem-sucedida!');
+            } else {
+              toast.error('Falha na reconexão. Por favor, recarregue a página.');
+            }
+          }, 2000);
+        }
       }
       
       console.log('Realtime subscription status:', status);

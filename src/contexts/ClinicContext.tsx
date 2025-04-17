@@ -91,19 +91,28 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.log(`Setting up new webhook channel for clinic ${activeClinic.id}`);
       const channel = setupWebhookRealtimeListeners(activeClinic.id);
       
-      // Subscribe to the channel and log its status
-      channel.subscribe((status) => {
-        console.log(`Webhook channel subscription status for clinic ${activeClinic.id}: ${status}`);
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to realtime webhook events');
-          // Force an event to verify the subscription is working
-          console.log('Testing patient webhook by manually triggering an event');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('Error subscribing to webhook channel');
-        }
-      });
-      
-      setWebhookChannel(channel);
+      if (channel) {
+        // Subscribe to the channel and log its status
+        channel.subscribe((status) => {
+          console.log(`Webhook channel subscription status for clinic ${activeClinic.id}: ${status}`);
+          if (status === 'SUBSCRIBED') {
+            console.log('Successfully subscribed to realtime webhook events');
+            // Force an event to verify the subscription is working
+            console.log('Testing patient webhook by manually triggering an event');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Error subscribing to webhook channel');
+            
+            // Retry after a delay in case of error
+            setTimeout(() => {
+              console.log('Retrying webhook channel subscription...');
+              // Attempt to resubscribe
+              channel.subscribe();
+            }, 3000);
+          }
+        });
+        
+        setWebhookChannel(channel);
+      }
     }
     
     return () => {

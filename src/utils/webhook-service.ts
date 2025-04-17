@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -310,7 +311,7 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
   
   console.log(`[WEBHOOK] Setting up webhook realtime listeners for clinic ${clinicId}`);
 
-  // Create a channel to listen for changes
+  // Create a channel to listen for changes with correct schema:table format
   const channel = supabase
     .channel(`webhook-events-${clinicId}`)
     // Listen for appointment changes
@@ -319,7 +320,7 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       async (payload) => {
         const newAppointment = payload.new;
         if (newAppointment && newAppointment.clinic_id === clinicId) {
-          console.log('Appointment created, triggering webhook:', newAppointment);
+          console.log('[WEBHOOK] Appointment created, triggering webhook:', newAppointment);
           await webhookEvents.appointments.created(newAppointment, clinicId);
         }
       }
@@ -331,7 +332,7 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
         const oldAppointment = payload.old;
         
         if (updatedAppointment && updatedAppointment.clinic_id === clinicId) {
-          console.log('Appointment updated, triggering webhook:', updatedAppointment);
+          console.log('[WEBHOOK] Appointment updated, triggering webhook:', updatedAppointment);
           await webhookEvents.appointments.updated(updatedAppointment, clinicId);
           
           // If status changed, trigger specific status changed event
@@ -351,7 +352,7 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       async (payload) => {
         const deletedAppointment = payload.old;
         if (deletedAppointment && deletedAppointment.clinic_id === clinicId) {
-          console.log('Appointment deleted, triggering webhook:', deletedAppointment);
+          console.log('[WEBHOOK] Appointment deleted, triggering webhook:', deletedAppointment);
           await webhookEvents.appointments.deleted(deletedAppointment, clinicId);
         }
       }
@@ -425,7 +426,7 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       async (payload) => {
         const newDoctor = payload.new;
         if (newDoctor && newDoctor.clinic_id === clinicId) {
-          console.log('Doctor created, triggering webhook:', newDoctor);
+          console.log('[WEBHOOK] Doctor created, triggering webhook:', newDoctor);
           await webhookEvents.doctors.created(newDoctor, clinicId);
         }
       }
@@ -435,7 +436,7 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       async (payload) => {
         const updatedDoctor = payload.new;
         if (updatedDoctor && updatedDoctor.clinic_id === clinicId) {
-          console.log('Doctor updated, triggering webhook:', updatedDoctor);
+          console.log('[WEBHOOK] Doctor updated, triggering webhook:', updatedDoctor);
           await webhookEvents.doctors.updated(updatedDoctor, clinicId);
         }
       }
@@ -445,7 +446,7 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       async (payload) => {
         const deletedDoctor = payload.old;
         if (deletedDoctor && deletedDoctor.clinic_id === clinicId) {
-          console.log('Doctor deleted, triggering webhook:', deletedDoctor);
+          console.log('[WEBHOOK] Doctor deleted, triggering webhook:', deletedDoctor);
           await webhookEvents.doctors.deleted(deletedDoctor, clinicId);
         }
       }
@@ -457,7 +458,7 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       async (payload) => {
         const updatedClinic = payload.new;
         if (updatedClinic && updatedClinic.id === clinicId) {
-          console.log('Clinic updated, triggering webhook:', updatedClinic);
+          console.log('[WEBHOOK] Clinic updated, triggering webhook:', updatedClinic);
           await webhookEvents.clinics.updated(updatedClinic, clinicId);
         }
       }
@@ -469,7 +470,7 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       async (payload) => {
         const newTransaction = payload.new;
         if (newTransaction && newTransaction.clinic_id === clinicId) {
-          console.log('Transaction created, triggering webhook:', newTransaction);
+          console.log('[WEBHOOK] Transaction created, triggering webhook:', newTransaction);
           await webhookEvents.transactions.created(newTransaction, clinicId);
         }
       }
@@ -479,7 +480,7 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       async (payload) => {
         const updatedTransaction = payload.new;
         if (updatedTransaction && updatedTransaction.clinic_id === clinicId) {
-          console.log('Transaction updated, triggering webhook:', updatedTransaction);
+          console.log('[WEBHOOK] Transaction updated, triggering webhook:', updatedTransaction);
           await webhookEvents.transactions.updated(updatedTransaction, clinicId);
         }
       }
@@ -525,12 +526,28 @@ export const checkRealtimeSubscription = (clinicId: string): RealtimeSubscriptio
   if (!clinicId) return null;
   
   const channels = supabase.getChannels();
-  const webhookChannel = channels.find(chan => chan.topic === `realtime:public:patients`);
+  
+  // Check for postgres changes subscriptions
+  const hasPatientChannel = channels.some(chan => 
+    chan.topic.includes('postgres_changes') && 
+    chan.topic.includes('public:patients')
+  );
+  
+  const hasAppointmentChannel = channels.some(chan => 
+    chan.topic.includes('postgres_changes') && 
+    chan.topic.includes('public:appointments')
+  );
+  
+  const webhookChannel = channels.find(chan => 
+    chan.topic === `webhook-events-${clinicId}`
+  );
+  
+  const isActive = !!webhookChannel && webhookChannel.state === 'joined';
   
   return {
     hasWebhookChannel: !!webhookChannel,
-    isSubscribed: webhookChannel?.state === 'joined',
-    channelState: webhookChannel?.state,
+    isSubscribed: isActive,
+    channelState: webhookChannel?.state || 'no channel',
     allChannels: channels.map(c => ({ topic: c.topic, state: c.state }))
   };
 };
