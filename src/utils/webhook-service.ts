@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -54,7 +53,7 @@ export interface WebhookLogResponse {
 export const loadWebhookLogs = async (
   clinicId: string, 
   webhookId: string | null
-): Promise<WebhookLogResponse> => {
+): Promise<{ data: any[] | null; error: Error | null }> => {
   try {
     // If it's a legacy webhook, we need a different query
     if (webhookId === 'legacy') {
