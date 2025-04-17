@@ -25,6 +25,7 @@ const ClinicManager: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingClinicId, setEditingClinicId] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const baseUrl = "https://clini.one";
 
   const handleAddClinic = () => {
@@ -98,19 +99,63 @@ const ClinicManager: React.FC = () => {
       return;
     }
     
+    setIsDeleting(true);
+    
     try {
-      const { error } = await supabase
+      // Primeiro, deletar todas as entradas de webhook_events relacionadas à clínica
+      const { error: webhookEventsError } = await supabase
+        .from('webhook_events')
+        .delete()
+        .eq('clinic_id', id);
+        
+      if (webhookEventsError) {
+        console.error('Erro ao excluir webhook events:', webhookEventsError);
+        toast.error('Ocorreu um erro ao excluir os eventos de webhook associados à clínica');
+        setIsDeleting(false);
+        return;
+      }
+      
+      // Verificar e excluir também registros na tabela webhook_endpoints
+      const { error: webhookEndpointsError } = await supabase
+        .from('webhook_endpoints')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (webhookEndpointsError) {
+        console.error('Erro ao excluir webhook endpoints:', webhookEndpointsError);
+        toast.error('Ocorreu um erro ao excluir os endpoints de webhook associados à clínica');
+        setIsDeleting(false);
+        return;
+      }
+      
+      // Verificar e excluir também registros na tabela dead_webhook_events
+      const { error: deadWebhookEventsError } = await supabase
+        .from('dead_webhook_events')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (deadWebhookEventsError) {
+        console.error('Erro ao excluir dead webhook events:', deadWebhookEventsError);
+        toast.error('Ocorreu um erro ao excluir os eventos de webhook mortos associados à clínica');
+        setIsDeleting(false);
+        return;
+      }
+
+      // Finalmente, deletar a clínica
+      const { error: clinicError } = await supabase
         .from('clinics')
         .delete()
         .eq('id', id);
         
-      if (error) throw error;
+      if (clinicError) throw clinicError;
       
       toast.success('Clínica excluída com sucesso');
       refreshClinics();
     } catch (error) {
       console.error('Erro ao excluir clínica:', error);
       toast.error('Ocorreu um erro ao excluir a clínica');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -180,6 +225,7 @@ const ClinicManager: React.FC = () => {
             onDeleteClinic={handleDeleteClinic}
             onPublishToggle={handlePublishToggle}
             isPublishing={isPublishing}
+            isDeleting={isDeleting}
             getPublicUrl={getPublicUrl}
           />
         </CardContent>

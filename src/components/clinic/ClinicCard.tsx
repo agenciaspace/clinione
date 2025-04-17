@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Edit, ExternalLink, Globe, Trash2 } from 'lucide-react';
+import { Check, Edit, ExternalLink, Globe, Trash2, Loader2 } from 'lucide-react';
 import { Clinic } from '@/types';
 
 interface ClinicCardProps {
@@ -13,6 +13,7 @@ interface ClinicCardProps {
   onDelete: (id: string) => void;
   onPublishToggle: (clinic: Clinic) => void;
   isPublishing: boolean;
+  isDeleting: boolean;
   getPublicUrl: (slug: string) => string;
 }
 
@@ -24,6 +25,7 @@ const ClinicCard: React.FC<ClinicCardProps> = ({
   onDelete,
   onPublishToggle,
   isPublishing,
+  isDeleting,
   getPublicUrl
 }) => {
   return (
@@ -87,13 +89,22 @@ const ClinicCard: React.FC<ClinicCardProps> = ({
               size="sm"
               className="text-xs"
               onClick={() => onPublishToggle(clinic)}
-              disabled={isPublishing}
+              disabled={isPublishing || isDeleting}
             >
-              <Globe className="h-3 w-3 mr-1" />
+              {isPublishing ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Globe className="h-3 w-3 mr-1" />
+              )}
               {clinic.is_published ? "Despublicar" : "Publicar"}
             </Button>
           )}
-          <Button variant="ghost" size="icon" onClick={() => onEdit(clinic)}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => onEdit(clinic)}
+            disabled={isDeleting}
+          >
             <Edit className="h-4 w-4" />
           </Button>
           <Button 
@@ -101,8 +112,13 @@ const ClinicCard: React.FC<ClinicCardProps> = ({
             size="icon" 
             className="text-red-500"
             onClick={() => onDelete(clinic.id)}
+            disabled={isDeleting}
           >
-            <Trash2 className="h-4 w-4" />
+            {isDeleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>

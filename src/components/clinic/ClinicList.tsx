@@ -13,6 +13,7 @@ interface ClinicListProps {
   onDeleteClinic: (id: string) => void;
   onPublishToggle: (clinic: Clinic) => void;
   isPublishing: boolean;
+  isDeleting: boolean;
   getPublicUrl: (slug: string) => string;
 }
 
@@ -25,6 +26,7 @@ const ClinicList: React.FC<ClinicListProps> = ({
   onDeleteClinic,
   onPublishToggle,
   isPublishing,
+  isDeleting,
   getPublicUrl
 }) => {
   if (clinics.length === 0) {
@@ -43,6 +45,7 @@ const ClinicList: React.FC<ClinicListProps> = ({
           onDelete={onDeleteClinic}
           onPublishToggle={onPublishToggle}
           isPublishing={isPublishing}
+          isDeleting={isDeleting}
           getPublicUrl={getPublicUrl}
         />
       ))}
