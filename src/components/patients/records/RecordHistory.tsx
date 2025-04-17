@@ -5,7 +5,7 @@ import { Tables } from '@/integrations/supabase/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-type RecordAuditLog = Tables<'patient_record_audit'>['Row'];
+type RecordAuditLog = Tables<'patient_record_audit'>;
 
 interface RecordHistoryProps {
   auditLogs: RecordAuditLog[];

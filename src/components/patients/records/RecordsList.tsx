@@ -5,7 +5,7 @@ import { Tables } from '@/integrations/supabase/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-type RecordEntry = Tables<'patient_records'>['Row'];
+type RecordEntry = Tables<'patient_records'>;
 
 interface RecordsListProps {
   records: RecordEntry[];

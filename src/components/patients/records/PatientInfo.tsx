@@ -5,7 +5,7 @@ import { Tables } from '@/integrations/supabase/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 interface PatientInfoProps {
-  patient: Tables<'patients'>['Row'];
+  patient: Tables<'patients'>;
 }
 
 export const PatientInfo = ({ patient }: PatientInfoProps) => {

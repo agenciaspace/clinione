@@ -14,14 +14,14 @@ import { RecordsList } from './records/RecordsList';
 import { PatientInfo } from './records/PatientInfo';
 
 interface PatientRecordProps {
-  patient: Tables<'patients'>['Row'];
+  patient: Tables<'patients'>;
   onClose: () => void;
   currentUser: any;
 }
 
 export const PatientRecord: React.FC<PatientRecordProps> = ({ patient, onClose, currentUser }) => {
   const queryClient = useQueryClient();
-  const [activeEntry, setActiveEntry] = useState<Tables<'patient_records'>['Row'] | null>(null);
+  const [activeEntry, setActiveEntry] = useState<Tables<'patient_records'> | null>(null);
   const [isViewingHistory, setIsViewingHistory] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
@@ -187,6 +187,17 @@ export const PatientRecord: React.FC<PatientRecordProps> = ({ patient, onClose, 
     } else {
       createRecordMutation.mutate(data);
     }
+  };
+
+  // Funções para manipular edição e visualização de histórico
+  const handleEditEntry = (entry: Tables<'patient_records'>) => {
+    setActiveEntry(entry);
+    setIsViewingHistory(false);
+  };
+
+  const handleViewHistory = (entry: Tables<'patient_records'>) => {
+    setActiveEntry(entry);
+    setIsViewingHistory(true);
   };
 
   return (
