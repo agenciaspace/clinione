@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -22,6 +21,8 @@ export const triggerWebhook = async (
       eventId?: string;
     };
 
+    console.log(`Triggering webhook: ${eventType} for clinic ${clinicId}`, payload);
+
     const { data, error } = await supabase.functions.invoke<WebhookTriggerResponse>('webhook-trigger', {
       body: {
         event_type: eventType,
@@ -36,6 +37,7 @@ export const triggerWebhook = async (
       return { success: false, message: error.message };
     }
 
+    console.log('Webhook triggered successfully:', data);
     return data;
   } catch (error) {
     console.error('Error triggering webhook:', error);
@@ -168,6 +170,7 @@ export const webhookEvents = {
    */
   patients: {
     created: async (patientData: any, clinicId: string) => {
+      console.log('Patient created, triggering webhook manually:', patientData);
       return triggerWebhook(
         WebhookEventType.PATIENT_CREATED,
         patientData,
@@ -175,6 +178,7 @@ export const webhookEvents = {
       );
     },
     updated: async (patientData: any, clinicId: string) => {
+      console.log('Patient updated, triggering webhook manually:', patientData);
       return triggerWebhook(
         WebhookEventType.PATIENT_UPDATED,
         patientData,
@@ -182,6 +186,7 @@ export const webhookEvents = {
       );
     },
     deleted: async (patientData: any, clinicId: string) => {
+      console.log('Patient deleted, triggering webhook manually:', patientData);
       return triggerWebhook(
         WebhookEventType.PATIENT_DELETED,
         patientData,
@@ -341,14 +346,17 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       }
     )
     
-    // Listen for patient changes
+    // Listen for patient changes with enhanced logging
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'patients' },
       async (payload) => {
         const newPatient = payload.new;
+        console.log('Patient INSERT detected:', newPatient);
         if (newPatient && newPatient.clinic_id === clinicId) {
           console.log('Patient created, triggering webhook:', newPatient);
           await webhookEvents.patients.created(newPatient, clinicId);
+        } else {
+          console.log('Patient not matching clinic_id:', newPatient?.clinic_id, 'expected:', clinicId);
         }
       }
     )
@@ -356,9 +364,12 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       { event: 'UPDATE', schema: 'public', table: 'patients' },
       async (payload) => {
         const updatedPatient = payload.new;
+        console.log('Patient UPDATE detected:', updatedPatient);
         if (updatedPatient && updatedPatient.clinic_id === clinicId) {
           console.log('Patient updated, triggering webhook:', updatedPatient);
           await webhookEvents.patients.updated(updatedPatient, clinicId);
+        } else {
+          console.log('Patient not matching clinic_id:', updatedPatient?.clinic_id, 'expected:', clinicId);
         }
       }
     )
@@ -366,9 +377,12 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       { event: 'DELETE', schema: 'public', table: 'patients' },
       async (payload) => {
         const deletedPatient = payload.old;
+        console.log('Patient DELETE detected:', deletedPatient);
         if (deletedPatient && deletedPatient.clinic_id === clinicId) {
           console.log('Patient deleted, triggering webhook:', deletedPatient);
           await webhookEvents.patients.deleted(deletedPatient, clinicId);
+        } else {
+          console.log('Patient not matching clinic_id:', deletedPatient?.clinic_id, 'expected:', clinicId);
         }
       }
     )
@@ -439,9 +453,14 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       }
     );
 
-  // Subscribe to the channel to start receiving events
+  // Subscribe to the channel to start receiving events with enhanced logging
   channel.subscribe((status) => {
     console.log(`Webhook realtime subscription status: ${status}`);
+    if (status === 'SUBSCRIBED') {
+      console.log('Successfully subscribed to realtime changes for patients and other tables');
+    } else if (status === 'CHANNEL_ERROR') {
+      console.error('Error subscribing to realtime changes');
+    }
   });
 
   return channel;

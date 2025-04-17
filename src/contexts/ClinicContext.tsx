@@ -30,6 +30,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [activeClinic, setActiveClinicState] = useState<Clinic | null>(null);
   const [isLoadingClinics, setIsLoadingClinics] = useState(true);
+  const [webhookChannel, setWebhookChannel] = useState<RealtimeChannel | null>(null);
 
   const fetchClinics = async () => {
     if (!user) {
@@ -79,14 +80,22 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [user]);
 
   useEffect(() => {
-    let webhookChannel: RealtimeChannel | null = null;
+    // Cleanup previous channel subscription if exists
+    if (webhookChannel) {
+      console.log('Removing previous webhook channel');
+      supabase.removeChannel(webhookChannel);
+      setWebhookChannel(null);
+    }
     
     if (activeClinic?.id) {
-      webhookChannel = setupWebhookRealtimeListeners(activeClinic.id);
+      console.log(`Setting up new webhook channel for clinic ${activeClinic.id}`);
+      const channel = setupWebhookRealtimeListeners(activeClinic.id);
+      setWebhookChannel(channel);
     }
     
     return () => {
       if (webhookChannel) {
+        console.log('Cleanup: Removing webhook channel on unmount');
         supabase.removeChannel(webhookChannel);
       }
     };
