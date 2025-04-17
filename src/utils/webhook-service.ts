@@ -128,7 +128,6 @@ export enum WebhookEventType {
 
 /**
  * A utility to automatically send webhook events when data changes
- * This centralizes the webhook triggering logic to avoid duplicating it across the application
  */
 export const webhookEvents = {
   /**
@@ -291,8 +290,17 @@ export const webhookEvents = {
 };
 
 /**
+ * Type definition for realtime subscription status
+ */
+export type RealtimeSubscriptionStatus = {
+  hasWebhookChannel: boolean;
+  isSubscribed: boolean;
+  channelState: string;
+  allChannels: { topic: string; state: string }[];
+};
+
+/**
  * A hook for Supabase realtime events to automatically trigger webhooks
- * This can be used to listen for database changes and automatically send webhooks
  */
 export const setupWebhookRealtimeListeners = (clinicId: string) => {
   if (!clinicId) {
@@ -485,8 +493,6 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
 
 /**
  * Manually test the webhook for patient creation.
- * This can be used to verify the webhook is working.
- * @param clinicId The clinic ID to test
  */
 export const testPatientWebhook = async (clinicId: string) => {
   if (!clinicId) {
@@ -513,9 +519,10 @@ export const testPatientWebhook = async (clinicId: string) => {
 /**
  * Manually check if the realtime subscription for the clinic is working.
  * @param clinicId The clinic ID to check
+ * @returns RealtimeSubscriptionStatus object or null if clinicId is missing
  */
-export const checkRealtimeSubscription = (clinicId: string) => {
-  if (!clinicId) return false;
+export const checkRealtimeSubscription = (clinicId: string): RealtimeSubscriptionStatus | null => {
+  if (!clinicId) return null;
   
   const channels = supabase.getChannels();
   const webhookChannel = channels.find(chan => chan.topic === `realtime:public:patients`);

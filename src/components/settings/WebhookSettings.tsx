@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -375,7 +376,8 @@ const WebhookSettings: React.FC = () => {
       const status = checkRealtimeSubscription(activeClinic.id);
       setRealtimeStatus(status);
       
-      if (status.isSubscribed) {
+      // Fix: Check if status is not false before accessing isSubscribed property
+      if (status && typeof status === 'object' && status.isSubscribed) {
         toast.success('Conexão realtime está ativa');
       } else {
         toast.error('Conexão realtime não está ativa');
