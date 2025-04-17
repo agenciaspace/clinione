@@ -14,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-
 interface WebhookEvent {
   id: string;
   event_type: string;
@@ -31,7 +30,6 @@ interface WebhookEvent {
   updated_at: string;
   created_at: string;
 }
-
 interface WebhookEndpoint {
   id: string;
   url: string;
@@ -41,7 +39,6 @@ interface WebhookEndpoint {
   event_types: string[] | null;
   created_at: string;
 }
-
 interface WebhookLog {
   id: string;
   event_type: string;
@@ -58,7 +55,6 @@ interface WebhookLog {
   updated_at: string;
   created_at: string;
 }
-
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   'in-progress': 'bg-blue-100 text-blue-800',
@@ -66,9 +62,11 @@ const statusColors: Record<string, string> = {
   failed: 'bg-red-100 text-red-800',
   sending: 'bg-blue-100 text-blue-800'
 };
-
 const WebhookSettings: React.FC = () => {
-  const { activeClinic, refreshClinics } = useClinic();
+  const {
+    activeClinic,
+    refreshClinics
+  } = useClinic();
   const [webhookUrl, setWebhookUrl] = useState<string>('');
   const [webhookSecret, setWebhookSecret] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -83,7 +81,6 @@ const WebhookSettings: React.FC = () => {
   const [testEventType, setTestEventType] = useState<string>(WebhookEventType.APPOINTMENT_CREATED);
   const [isSendingTest, setIsSendingTest] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState('legacy');
-  
   const [isEndpointDialogOpen, setIsEndpointDialogOpen] = useState(false);
   const [editingEndpoint, setEditingEndpoint] = useState<WebhookEndpoint | null>(null);
   const [newEndpointUrl, setNewEndpointUrl] = useState('');
@@ -93,30 +90,26 @@ const WebhookSettings: React.FC = () => {
   const [showEndpointSecret, setShowEndpointSecret] = useState(false);
   const [isTestingRealtimeStatus, setIsTestingRealtimeStatus] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState<any>(null);
-
   const fetchWebhookLogs = async () => {
     if (!activeClinic) return;
-    
     setIsLoadingLogs(true);
     try {
       if (activeTab === 'legacy') {
-        const { data, error } = await supabase
-          .from('webhook_events')
-          .select('*')
-          .eq('clinic_id', activeClinic.id)
-          .order('timestamp', { ascending: false })
-          .limit(20);
-        
+        const {
+          data,
+          error
+        } = await supabase.from('webhook_events').select('*').eq('clinic_id', activeClinic.id).order('timestamp', {
+          ascending: false
+        }).limit(20);
         if (error) throw error;
         setWebhookLogs(data as WebhookLog[] || []);
       } else {
-        const { data, error } = await supabase
-          .from('webhook_events')
-          .select('*')
-          .eq('clinic_id', activeClinic.id)
-          .order('timestamp', { ascending: false })
-          .limit(20);
-        
+        const {
+          data,
+          error
+        } = await supabase.from('webhook_events').select('*').eq('clinic_id', activeClinic.id).order('timestamp', {
+          ascending: false
+        }).limit(20);
         if (error) throw error;
         setWebhookLogs(data as WebhookLog[] || []);
       }
@@ -127,20 +120,15 @@ const WebhookSettings: React.FC = () => {
       setIsLoadingLogs(false);
     }
   };
-
   const loadWebhookSettings = async () => {
     setIsLoading(true);
     try {
       if (!activeClinic) return;
-      
-      const { data, error } = await supabase
-        .from('clinics')
-        .select('webhook_url, webhook_secret')
-        .eq('id', activeClinic.id)
-        .single();
-
+      const {
+        data,
+        error
+      } = await supabase.from('clinics').select('webhook_url, webhook_secret').eq('id', activeClinic.id).single();
       if (error) throw error;
-      
       setWebhookUrl(data.webhook_url || '');
       setWebhookSecret(data.webhook_secret || '');
     } catch (error) {
@@ -150,29 +138,24 @@ const WebhookSettings: React.FC = () => {
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
     if (!activeClinic) return;
-    
     loadWebhookSettings();
     loadWebhookEvents();
     loadWebhookEndpoints();
     fetchWebhookLogs();
   }, [activeClinic]);
-
   const loadWebhookEndpoints = async () => {
     if (!activeClinic) return;
-    
     setIsLoadingEndpoints(true);
     try {
-      const { data, error } = await supabase
-        .from('webhook_endpoints')
-        .select('*')
-        .eq('clinic_id', activeClinic.id)
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('webhook_endpoints').select('*').eq('clinic_id', activeClinic.id).order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
-      
       setWebhookEndpoints(data || []);
     } catch (error) {
       console.error('Error loading webhook endpoints:', error);
@@ -181,21 +164,17 @@ const WebhookSettings: React.FC = () => {
       setIsLoadingEndpoints(false);
     }
   };
-
   const loadWebhookEvents = async () => {
     if (!activeClinic) return;
-    
     setIsLoadingEvents(true);
     try {
-      const { data, error } = await supabase
-        .from('webhook_events')
-        .select('*')
-        .eq('clinic_id', activeClinic.id)
-        .order('timestamp', { ascending: false })
-        .limit(20);
-
+      const {
+        data,
+        error
+      } = await supabase.from('webhook_events').select('*').eq('clinic_id', activeClinic.id).order('timestamp', {
+        ascending: false
+      }).limit(20);
       if (error) throw error;
-      
       setWebhookEvents(data || []);
     } catch (error) {
       console.error('Error loading webhook events:', error);
@@ -204,23 +183,18 @@ const WebhookSettings: React.FC = () => {
       setIsLoadingEvents(false);
     }
   };
-
   const saveWebhookSettings = async () => {
     if (!activeClinic) return;
-    
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from('clinics')
-        .update({
-          webhook_url: webhookUrl.trim() || null,
-          webhook_secret: webhookSecret.trim() || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', activeClinic.id);
-
+      const {
+        error
+      } = await supabase.from('clinics').update({
+        webhook_url: webhookUrl.trim() || null,
+        webhook_secret: webhookSecret.trim() || null,
+        updated_at: new Date().toISOString()
+      }).eq('id', activeClinic.id);
       if (error) throw error;
-      
       toast.success('Configurações de webhook salvas com sucesso');
       refreshClinics();
     } catch (error) {
@@ -230,41 +204,34 @@ const WebhookSettings: React.FC = () => {
       setIsSaving(false);
     }
   };
-
   const generateSecret = () => {
     const array = new Uint8Array(32);
     window.crypto.getRandomValues(array);
     const secret = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
     setWebhookSecret(secret);
   };
-
   const generateEndpointSecret = () => {
     const array = new Uint8Array(32);
     window.crypto.getRandomValues(array);
     const secret = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
     setNewEndpointSecret(secret);
   };
-
   const sendTestWebhook = async () => {
     if (!activeClinic) {
       toast.error('Nenhuma clínica selecionada');
       return;
     }
-    
     if (activeTab === 'legacy' && !webhookUrl) {
       toast.error('Configure uma URL de webhook primeiro');
       return;
     }
-    
     if (activeTab !== 'legacy' && !webhookEndpoints.find(ep => ep.id === activeTab)?.url) {
       toast.error('Endpoint não encontrado ou sem URL configurada');
       return;
     }
-    
     setIsSendingTest(true);
     try {
       let testPayload = {};
-      
       if (testEventType.startsWith('appointment.')) {
         testPayload = {
           id: 'test-id',
@@ -307,18 +274,15 @@ const WebhookSettings: React.FC = () => {
           date: new Date().toISOString()
         };
       }
-      
-      const { success, message, eventId } = await triggerWebhook(
-        testEventType as WebhookEventType,
-        testPayload,
-        activeClinic.id
-      );
-
+      const {
+        success,
+        message,
+        eventId
+      } = await triggerWebhook(testEventType as WebhookEventType, testPayload, activeClinic.id);
       if (success) {
         toast.success('Webhook de teste enviado com sucesso', {
           description: `ID do evento: ${eventId}`
         });
-        
         setTimeout(() => {
           loadWebhookEvents();
           fetchWebhookLogs();
@@ -333,22 +297,22 @@ const WebhookSettings: React.FC = () => {
       setIsSendingTest(false);
     }
   };
-
   const testPatientCreatedWebhook = async () => {
     if (!activeClinic) {
       toast.error('Nenhuma clínica selecionada');
       return;
     }
-    
     setIsSendingTest(true);
     try {
-      const { success, message, eventId } = await testPatientWebhook(activeClinic.id);
-      
+      const {
+        success,
+        message,
+        eventId
+      } = await testPatientWebhook(activeClinic.id);
       if (success) {
         toast.success('Webhook de paciente teste enviado com sucesso', {
           description: `ID do evento: ${eventId}`
         });
-        
         setTimeout(() => {
           loadWebhookEvents();
           fetchWebhookLogs();
@@ -363,23 +327,19 @@ const WebhookSettings: React.FC = () => {
       setIsSendingTest(false);
     }
   };
-
   const checkRealtimeStatus = () => {
     if (!activeClinic) {
       toast.error('Nenhuma clínica selecionada');
       return;
     }
-    
     setIsTestingRealtimeStatus(true);
     try {
       const status = checkRealtimeSubscription(activeClinic.id);
       setRealtimeStatus(status);
-      
       if (status && typeof status === 'object' && status.isSubscribed) {
         toast.success('Conexão realtime está ativa');
       } else {
         toast.error('Conexão realtime não está ativa');
-        
         const channel = setupWebhookRealtimeListeners(activeClinic.id);
         if (channel) {
           toast.info('Tentando reconectar...');
@@ -393,7 +353,6 @@ const WebhookSettings: React.FC = () => {
           }, 2000);
         }
       }
-      
       console.log('Realtime subscription status:', status);
     } catch (error) {
       console.error('Error checking realtime status:', error);
@@ -402,55 +361,42 @@ const WebhookSettings: React.FC = () => {
       setIsTestingRealtimeStatus(false);
     }
   };
-
   const saveWebhookEndpoint = async () => {
     if (!activeClinic) return;
-    
     if (!newEndpointUrl.trim()) {
       toast.error('URL é obrigatória');
       return;
     }
-    
     setIsSaving(true);
     try {
-      const selectedEvents = Object.entries(newEndpointEvents)
-        .filter(([_, isSelected]) => isSelected)
-        .map(([eventType]) => eventType);
-      
+      const selectedEvents = Object.entries(newEndpointEvents).filter(([_, isSelected]) => isSelected).map(([eventType]) => eventType);
       const eventTypes = selectedEvents.length > 0 ? selectedEvents : null;
-      
       if (editingEndpoint) {
-        const { error } = await supabase
-          .from('webhook_endpoints')
-          .update({
-            url: newEndpointUrl.trim(),
-            secret: newEndpointSecret.trim() || null,
-            description: newEndpointDescription.trim() || null,
-            event_types: eventTypes,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editingEndpoint.id);
-
+        const {
+          error
+        } = await supabase.from('webhook_endpoints').update({
+          url: newEndpointUrl.trim(),
+          secret: newEndpointSecret.trim() || null,
+          description: newEndpointDescription.trim() || null,
+          event_types: eventTypes,
+          updated_at: new Date().toISOString()
+        }).eq('id', editingEndpoint.id);
         if (error) throw error;
-        
         toast.success('Endpoint de webhook atualizado com sucesso');
       } else {
-        const { error } = await supabase
-          .from('webhook_endpoints')
-          .insert({
-            clinic_id: activeClinic.id,
-            url: newEndpointUrl.trim(),
-            secret: newEndpointSecret.trim() || null,
-            description: newEndpointDescription.trim() || null,
-            event_types: eventTypes,
-            is_active: true
-          });
-
+        const {
+          error
+        } = await supabase.from('webhook_endpoints').insert({
+          clinic_id: activeClinic.id,
+          url: newEndpointUrl.trim(),
+          secret: newEndpointSecret.trim() || null,
+          description: newEndpointDescription.trim() || null,
+          event_types: eventTypes,
+          is_active: true
+        });
         if (error) throw error;
-        
         toast.success('Endpoint de webhook criado com sucesso');
       }
-      
       loadWebhookEndpoints();
       resetEndpointForm();
       setIsEndpointDialogOpen(false);
@@ -461,23 +407,17 @@ const WebhookSettings: React.FC = () => {
       setIsSaving(false);
     }
   };
-
   const deleteWebhookEndpoint = async (endpointId: string) => {
     if (!confirm('Tem certeza que deseja excluir este endpoint?')) {
       return;
     }
-    
     try {
-      const { error } = await supabase
-        .from('webhook_endpoints')
-        .delete()
-        .eq('id', endpointId);
-
+      const {
+        error
+      } = await supabase.from('webhook_endpoints').delete().eq('id', endpointId);
       if (error) throw error;
-      
       toast.success('Endpoint removido com sucesso');
       loadWebhookEndpoints();
-      
       if (activeTab === endpointId) {
         setActiveTab('legacy');
       }
@@ -486,19 +426,15 @@ const WebhookSettings: React.FC = () => {
       toast.error('Erro ao remover endpoint de webhook');
     }
   };
-
   const toggleEndpointStatus = async (endpoint: WebhookEndpoint) => {
     try {
-      const { error } = await supabase
-        .from('webhook_endpoints')
-        .update({
-          is_active: !endpoint.is_active,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', endpoint.id);
-
+      const {
+        error
+      } = await supabase.from('webhook_endpoints').update({
+        is_active: !endpoint.is_active,
+        updated_at: new Date().toISOString()
+      }).eq('id', endpoint.id);
       if (error) throw error;
-      
       toast.success(`Endpoint ${endpoint.is_active ? 'desativado' : 'ativado'} com sucesso`);
       loadWebhookEndpoints();
     } catch (error) {
@@ -506,13 +442,11 @@ const WebhookSettings: React.FC = () => {
       toast.error('Erro ao alterar status do endpoint');
     }
   };
-
   const openEditEndpoint = (endpoint: WebhookEndpoint) => {
     setEditingEndpoint(endpoint);
     setNewEndpointUrl(endpoint.url);
     setNewEndpointSecret(endpoint.secret || '');
     setNewEndpointDescription(endpoint.description || '');
-    
     const eventTypesObj: Record<string, boolean> = {};
     if (endpoint.event_types) {
       Object.values(WebhookEventType).forEach(eventType => {
@@ -520,10 +454,8 @@ const WebhookSettings: React.FC = () => {
       });
     }
     setNewEndpointEvents(eventTypesObj);
-    
     setIsEndpointDialogOpen(true);
   };
-
   const resetEndpointForm = () => {
     setEditingEndpoint(null);
     setNewEndpointUrl('');
@@ -532,54 +464,42 @@ const WebhookSettings: React.FC = () => {
     setNewEndpointEvents({});
     setShowEndpointSecret(false);
   };
-
   const openNewEndpoint = () => {
     resetEndpointForm();
     setIsEndpointDialogOpen(true);
   };
-
   const formatTimestamp = (timestamp: string) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
     return date.toLocaleString('pt-BR');
   };
-
   const getStatusBadge = (status: string) => {
     const colorClass = statusColors[status] || 'bg-gray-100 text-gray-800';
     return <Badge className={colorClass}>{status}</Badge>;
   };
-
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setTimeout(() => {
       fetchWebhookLogs();
     }, 100);
   };
-
   const getEndpointName = (endpointId: string | null) => {
     if (!endpointId || endpointId === 'legacy') {
       return 'Webhook Padrão';
     }
-    
     const endpoint = webhookEndpoints.find(ep => ep.id === endpointId);
     return endpoint?.description || `Endpoint ${endpoint?.id.substring(0, 8)}`;
   };
-
   const handleRefreshData = () => {
     loadWebhookEvents();
     fetchWebhookLogs();
   };
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
+    return <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Diagnóstico de Webhook</CardTitle>
@@ -588,43 +508,25 @@ const WebhookSettings: React.FC = () => {
         <CardContent>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Button onClick={testPatientCreatedWebhook} disabled={isSendingTest || !activeClinic}>
-                {isSendingTest ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testando...
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Testar Webhook de Paciente
-                  </>
-                )}
-              </Button>
+              
               
               <Button onClick={checkRealtimeStatus} disabled={isTestingRealtimeStatus || !activeClinic} variant="outline">
-                {isTestingRealtimeStatus ? (
-                  <>
+                {isTestingRealtimeStatus ? <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Verificando...
-                  </>
-                ) : (
-                  <>
+                  </> : <>
                     <Activity className="mr-2 h-4 w-4" />
                     Verificar Status Realtime
-                  </>
-                )}
+                  </>}
               </Button>
             </div>
             
-            {realtimeStatus && (
-              <div className="mt-4 p-4 border rounded bg-gray-50">
+            {realtimeStatus && <div className="mt-4 p-4 border rounded bg-gray-50">
                 <h4 className="text-sm font-medium mb-2">Status da Conexão Realtime:</h4>
                 <pre className="text-xs overflow-auto p-2 bg-gray-100 rounded">
                   {JSON.stringify(realtimeStatus, null, 2)}
                 </pre>
-              </div>
-            )}
+              </div>}
             
             <div className="p-4 border rounded bg-blue-50 text-blue-800">
               <h4 className="font-medium mb-1">Dicas para resolução de problemas:</h4>
@@ -643,12 +545,10 @@ const WebhookSettings: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <TabsList>
             <TabsTrigger value="legacy">Webhook Padrão</TabsTrigger>
-            {webhookEndpoints.map(endpoint => (
-              <TabsTrigger key={endpoint.id} value={endpoint.id} className="flex items-center space-x-1">
+            {webhookEndpoints.map(endpoint => <TabsTrigger key={endpoint.id} value={endpoint.id} className="flex items-center space-x-1">
                 <span>{endpoint.description || `Endpoint ${endpoint.id.substring(0, 8)}`}</span>
                 {!endpoint.is_active && <Badge variant="outline" className="ml-1 bg-gray-100">Inativo</Badge>}
-              </TabsTrigger>
-            ))}
+              </TabsTrigger>)}
           </TabsList>
           
           <Button variant="outline" onClick={openNewEndpoint}>
@@ -667,13 +567,7 @@ const WebhookSettings: React.FC = () => {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="webhook-url">URL do Webhook</Label>
-                  <Input
-                    id="webhook-url"
-                    placeholder="https://sua-api.com/webhooks"
-                    value={webhookUrl}
-                    onChange={(e) => setWebhookUrl(e.target.value)}
-                    disabled={isSaving}
-                  />
+                  <Input id="webhook-url" placeholder="https://sua-api.com/webhooks" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} disabled={isSaving} />
                   <p className="text-sm text-gray-500">
                     Todos os eventos da clínica serão enviados para esta URL como requisições POST.
                   </p>
@@ -682,31 +576,13 @@ const WebhookSettings: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="webhook-secret">Token Secreto</Label>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      onClick={generateSecret}
-                      disabled={isSaving}
-                    >
+                    <Button variant="outline" size="sm" type="button" onClick={generateSecret} disabled={isSaving}>
                       Gerar
                     </Button>
                   </div>
                   <div className="flex">
-                    <Input
-                      id="webhook-secret"
-                      type={showSecret ? "text" : "password"}
-                      value={webhookSecret}
-                      onChange={(e) => setWebhookSecret(e.target.value)}
-                      disabled={isSaving}
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="ghost"
-                      type="button"
-                      onClick={() => setShowSecret(!showSecret)}
-                      className="ml-2"
-                    >
+                    <Input id="webhook-secret" type={showSecret ? "text" : "password"} value={webhookSecret} onChange={e => setWebhookSecret(e.target.value)} disabled={isSaving} className="flex-1" />
+                    <Button variant="ghost" type="button" onClick={() => setShowSecret(!showSecret)} className="ml-2">
                       {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
@@ -716,24 +592,18 @@ const WebhookSettings: React.FC = () => {
                 </div>
 
                 <div className="pt-4 flex justify-end">
-                  <Button
-                    onClick={saveWebhookSettings}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <>
+                  <Button onClick={saveWebhookSettings} disabled={isSaving}>
+                    {isSaving ? <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Salvando...
-                      </>
-                    ) : 'Salvar Configurações'}
+                      </> : 'Salvar Configurações'}
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {webhookUrl && (
-            <Card className="mt-6">
+          {webhookUrl && <Card className="mt-6">
               <CardHeader>
                 <CardTitle>Testar Webhook Padrão</CardTitle>
                 <CardDescription>Envie um evento de teste para verificar sua integração</CardDescription>
@@ -742,10 +612,7 @@ const WebhookSettings: React.FC = () => {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="test-event-type">Tipo de Evento</Label>
-                    <Select
-                      value={testEventType}
-                      onValueChange={setTestEventType}
-                    >
+                    <Select value={testEventType} onValueChange={setTestEventType}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o tipo de evento" />
                       </SelectTrigger>
@@ -776,31 +643,22 @@ const WebhookSettings: React.FC = () => {
                   </div>
 
                   <div className="pt-2 flex justify-end">
-                    <Button
-                      onClick={sendTestWebhook}
-                      disabled={isSendingTest}
-                    >
-                      {isSendingTest ? (
-                        <>
+                    <Button onClick={sendTestWebhook} disabled={isSendingTest}>
+                      {isSendingTest ? <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Enviando...
-                        </>
-                      ) : (
-                        <>
+                        </> : <>
                           <Send className="mr-2 h-4 w-4" />
                           Enviar Webhook de Teste
-                        </>
-                      )}
+                        </>}
                     </Button>
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          )}
+            </Card>}
         </TabsContent>
 
-        {webhookEndpoints.map(endpoint => (
-          <TabsContent key={endpoint.id} value={endpoint.id}>
+        {webhookEndpoints.map(endpoint => <TabsContent key={endpoint.id} value={endpoint.id}>
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -809,76 +667,48 @@ const WebhookSettings: React.FC = () => {
                     <CardDescription>{endpoint.url}</CardDescription>
                   </div>
                   <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => toggleEndpointStatus(endpoint)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => toggleEndpointStatus(endpoint)}>
                       {endpoint.is_active ? 'Desativar' : 'Ativar'}
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => openEditEndpoint(endpoint)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => openEditEndpoint(endpoint)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => deleteWebhookEndpoint(endpoint.id)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => deleteWebhookEndpoint(endpoint.id)}>
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
                 </div>
-                {!endpoint.is_active && (
-                  <Badge variant="outline" className="bg-gray-100">Inativo</Badge>
-                )}
+                {!endpoint.is_active && <Badge variant="outline" className="bg-gray-100">Inativo</Badge>}
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {endpoint.event_types && endpoint.event_types.length > 0 ? (
-                    <div>
+                  {endpoint.event_types && endpoint.event_types.length > 0 ? <div>
                       <h4 className="text-sm font-medium mb-2">Eventos filtrados:</h4>
                       <div className="flex flex-wrap gap-2">
-                        {endpoint.event_types.map(eventType => (
-                          <Badge key={eventType} variant="secondary">{eventType}</Badge>
-                        ))}
+                        {endpoint.event_types.map(eventType => <Badge key={eventType} variant="secondary">{eventType}</Badge>)}
                       </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500">
+                    </div> : <p className="text-sm text-gray-500">
                       Este endpoint recebe todos os tipos de evento.
-                    </p>
-                  )}
+                    </p>}
 
                   <div className="pt-4">
-                    <Button
-                      onClick={() => {
-                        setTestEventType(WebhookEventType.APPOINTMENT_CREATED);
-                        sendTestWebhook();
-                      }}
-                      disabled={isSendingTest || !endpoint.is_active}
-                    >
-                      {isSendingTest ? (
-                        <>
+                    <Button onClick={() => {
+                  setTestEventType(WebhookEventType.APPOINTMENT_CREATED);
+                  sendTestWebhook();
+                }} disabled={isSendingTest || !endpoint.is_active}>
+                      {isSendingTest ? <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Enviando...
-                        </>
-                      ) : (
-                        <>
+                        </> : <>
                           <Send className="mr-2 h-4 w-4" />
                           Enviar Webhook de Teste
-                        </>
-                      )}
+                        </>}
                     </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        ))}
+          </TabsContent>)}
       </Tabs>
 
       <Card>
@@ -887,25 +717,16 @@ const WebhookSettings: React.FC = () => {
             <CardTitle>Log de Eventos</CardTitle>
             <CardDescription>Últimos eventos de webhook enviados</CardDescription>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefreshData}
-            disabled={isLoadingEvents || isLoadingLogs}
-          >
+          <Button variant="outline" size="sm" onClick={handleRefreshData} disabled={isLoadingEvents || isLoadingLogs}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingEvents || isLoadingLogs ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
         </CardHeader>
         <CardContent>
-          {isLoadingEvents ? (
-            <div className="flex items-center justify-center p-8">
+          {isLoadingEvents ? <div className="flex items-center justify-center p-8">
               <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-            </div>
-          ) : webhookEvents.length > 0 ? (
-            <div className="space-y-4">
-              {webhookEvents.map((event) => (
-                <div key={event.id} className="border rounded-md p-4">
+            </div> : webhookEvents.length > 0 ? <div className="space-y-4">
+              {webhookEvents.map(event => <div key={event.id} className="border rounded-md p-4">
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center space-x-2">
@@ -918,65 +739,46 @@ const WebhookSettings: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       {getStatusBadge(event.status)}
-                      {event.http_status && (
-                        <Badge variant="outline">HTTP {event.http_status}</Badge>
-                      )}
+                      {event.http_status && <Badge variant="outline">HTTP {event.http_status}</Badge>}
                     </div>
                   </div>
                   
-                  {event.last_attempt && (
-                    <div className="mt-2 text-sm">
+                  {event.last_attempt && <div className="mt-2 text-sm">
                       <span className="text-gray-500">Última tentativa:</span>{' '}
                       {formatTimestamp(event.last_attempt)}
-                      {event.attempts > 1 && (
-                        <span className="ml-2 text-gray-500">
+                      {event.attempts > 1 && <span className="ml-2 text-gray-500">
                           ({event.attempts} tentativas)
-                        </span>
-                      )}
-                    </div>
-                  )}
+                        </span>}
+                    </div>}
                   
-                  {event.last_response && (
-                    <div className="mt-2">
+                  {event.last_response && <div className="mt-2">
                       <Separator className="my-2" />
                       <div className="text-sm font-medium">Resposta:</div>
                       <div className="p-2 bg-gray-50 rounded mt-1 text-xs font-mono overflow-auto max-h-24">
                         {event.last_response}
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="p-8 text-center">
+                    </div>}
+                </div>)}
+            </div> : <div className="p-8 text-center">
               <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
               <p className="text-gray-500">Nenhum evento de webhook encontrado</p>
-              {activeTab === 'legacy' && !webhookUrl && (
-                <p className="text-sm text-gray-400 mt-1">
+              {activeTab === 'legacy' && !webhookUrl && <p className="text-sm text-gray-400 mt-1">
                   Configure uma URL de webhook para começar a enviar eventos
-                </p>
-              )}
-            </div>
-          )}
+                </p>}
+            </div>}
         </CardContent>
       </Card>
 
-      {activeTab !== 'legacy' && (
-        <Card>
+      {activeTab !== 'legacy' && <Card>
           <CardHeader>
             <CardTitle>Log de Entregas</CardTitle>
             <CardDescription>Histórico de entregas para este endpoint de webhook</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoadingLogs ? (
-              <div className="flex items-center justify-center p-8">
+            {isLoadingLogs ? <div className="flex items-center justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-              </div>
-            ) : webhookLogs.length > 0 ? (
-              <div className="space-y-4">
-                {webhookLogs.map((log) => (
-                  <div key={log.id} className="border rounded-md p-4">
+              </div> : webhookLogs.length > 0 ? <div className="space-y-4">
+                {webhookLogs.map(log => <div key={log.id} className="border rounded-md p-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="text-sm">Evento: <span className="font-mono">{log.id.substring(0, 8)}</span></div>
@@ -984,45 +786,32 @@ const WebhookSettings: React.FC = () => {
                       </div>
                       <div className="flex items-center space-x-2">
                         {getStatusBadge(log.status)}
-                        {log.http_status && (
-                          <Badge variant="outline">HTTP {log.http_status}</Badge>
-                        )}
+                        {log.http_status && <Badge variant="outline">HTTP {log.http_status}</Badge>}
                       </div>
                     </div>
                     
-                    {log.attempts > 1 && (
-                      <div className="mt-2 text-sm">
+                    {log.attempts > 1 && <div className="mt-2 text-sm">
                         <span className="text-gray-500">Tentativas:</span>{' '}
                         {log.attempts}
-                        {log.last_attempt && (
-                          <span className="ml-2 text-gray-500">
+                        {log.last_attempt && <span className="ml-2 text-gray-500">
                             (Próxima tentativa em breve)
-                          </span>
-                        )}
-                      </div>
-                    )}
+                          </span>}
+                      </div>}
                     
-                    {log.last_response && (
-                      <div className="mt-2">
+                    {log.last_response && <div className="mt-2">
                         <Separator className="my-2" />
                         <div className="text-sm font-medium">Resposta:</div>
                         <div className="p-2 bg-gray-50 rounded mt-1 text-xs font-mono overflow-auto max-h-24">
                           {log.last_response}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center">
+                      </div>}
+                  </div>)}
+              </div> : <div className="p-8 text-center">
                 <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-500">Nenhum log de entrega encontrado</p>
-              </div>
-            )}
+              </div>}
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       <Dialog open={isEndpointDialogOpen} onOpenChange={setIsEndpointDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -1036,50 +825,24 @@ const WebhookSettings: React.FC = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="endpoint-url">URL do Endpoint</Label>
-              <Input
-                id="endpoint-url"
-                placeholder="https://sua-api.com/webhooks"
-                value={newEndpointUrl}
-                onChange={(e) => setNewEndpointUrl(e.target.value)}
-              />
+              <Input id="endpoint-url" placeholder="https://sua-api.com/webhooks" value={newEndpointUrl} onChange={e => setNewEndpointUrl(e.target.value)} />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="endpoint-description">Descrição (opcional)</Label>
-              <Input
-                id="endpoint-description"
-                placeholder="API de integração"
-                value={newEndpointDescription}
-                onChange={(e) => setNewEndpointDescription(e.target.value)}
-              />
+              <Input id="endpoint-description" placeholder="API de integração" value={newEndpointDescription} onChange={e => setNewEndpointDescription(e.target.value)} />
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="endpoint-secret">Token Secreto (opcional)</Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  onClick={generateEndpointSecret}
-                >
+                <Button variant="outline" size="sm" type="button" onClick={generateEndpointSecret}>
                   Gerar
                 </Button>
               </div>
               <div className="flex">
-                <Input
-                  id="endpoint-secret"
-                  type={showEndpointSecret ? "text" : "password"}
-                  value={newEndpointSecret}
-                  onChange={(e) => setNewEndpointSecret(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  variant="ghost"
-                  type="button"
-                  onClick={() => setShowEndpointSecret(!showEndpointSecret)}
-                  className="ml-2"
-                >
+                <Input id="endpoint-secret" type={showEndpointSecret ? "text" : "password"} value={newEndpointSecret} onChange={e => setNewEndpointSecret(e.target.value)} className="flex-1" />
+                <Button variant="ghost" type="button" onClick={() => setShowEndpointSecret(!showEndpointSecret)} className="ml-2">
                   {showEndpointSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
@@ -1088,26 +851,17 @@ const WebhookSettings: React.FC = () => {
             <div className="space-y-2">
               <Label className="block mb-2">Filtrar Eventos (opcional)</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {Object.values(WebhookEventType).map(eventType => (
-                  <div key={eventType} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={`event-${eventType}`} 
-                      checked={newEndpointEvents[eventType] || false}
-                      onCheckedChange={(checked) => {
-                        setNewEndpointEvents(prev => ({
-                          ...prev,
-                          [eventType]: !!checked
-                        }));
-                      }}
-                    />
-                    <Label 
-                      htmlFor={`event-${eventType}`}
-                      className="text-sm cursor-pointer"
-                    >
+                {Object.values(WebhookEventType).map(eventType => <div key={eventType} className="flex items-center space-x-2">
+                    <Checkbox id={`event-${eventType}`} checked={newEndpointEvents[eventType] || false} onCheckedChange={checked => {
+                  setNewEndpointEvents(prev => ({
+                    ...prev,
+                    [eventType]: !!checked
+                  }));
+                }} />
+                    <Label htmlFor={`event-${eventType}`} className="text-sm cursor-pointer">
                       {eventType}
                     </Label>
-                  </div>
-                ))}
+                  </div>)}
               </div>
             </div>
           </div>
@@ -1115,18 +869,14 @@ const WebhookSettings: React.FC = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEndpointDialogOpen(false)}>Cancelar</Button>
             <Button onClick={saveWebhookEndpoint} disabled={isSaving}>
-              {isSaving ? (
-                <>
+              {isSaving ? <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Salvando...
-                </>
-              ) : editingEndpoint ? 'Atualizar' : 'Criar'}
+                </> : editingEndpoint ? 'Atualizar' : 'Criar'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
-
 export default WebhookSettings;
