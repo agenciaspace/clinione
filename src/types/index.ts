@@ -65,8 +65,12 @@ export interface Patient {
   birthDate: string;
   address?: string;
   medicalHistory?: string;
-  clinicId: string;
-  status: 'active' | 'inactive'; // Adicionada a propriedade status que faltava
+  clinicId?: string;
+  clinic_id?: string; // Adicionado para compatibilidade com o formato do Supabase
+  status: 'active' | 'inactive';
+  created_at?: string;
+  updated_at?: string;
+  last_visit?: string;
 }
 
 export interface Appointment {

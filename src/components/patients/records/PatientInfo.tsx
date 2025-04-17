@@ -18,7 +18,10 @@ export const PatientInfo = ({ patient }: PatientInfoProps) => {
         return format(new Date(patient.birthDate), 'dd/MM/yyyy');
       }
       // birth_date é usado no tipo Tables<'patients'>
-      return format(new Date(patient.birth_date), 'dd/MM/yyyy');
+      if ('birth_date' in patient) {
+        return format(new Date(patient.birth_date), 'dd/MM/yyyy');
+      }
+      return 'Data não disponível';
     } catch (error) {
       console.error('Erro ao formatar data:', error);
       return 'Data inválida';
@@ -28,11 +31,14 @@ export const PatientInfo = ({ patient }: PatientInfoProps) => {
   // Função auxiliar para determinar o status do paciente
   const getPatientStatus = (): string => {
     // Se for do tipo Patient da aplicação
-    if ('status' in patient) {
+    if ('status' in patient && patient.status) {
       return patient.status;
     }
     // Se for do tipo Tables<'patients'> do Supabase
-    return patient.status || 'active';
+    if ('status' in patient) {
+      return patient.status || 'active';
+    }
+    return 'active';
   };
 
   return (

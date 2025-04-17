@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -223,10 +223,11 @@ const Patients = () => {
     const mappedPatient = {
       ...patient,
       birth_date: patient.birthDate, 
-      clinic_id: patient.clinicId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      last_visit: undefined,
+      clinic_id: patient.clinic_id || activeClinic?.id || '',
+      created_at: patient.created_at || new Date().toISOString(),
+      updated_at: patient.updated_at || new Date().toISOString(),
+      last_visit: patient.lastVisit,
+      status: patient.status || 'active'
     };
     
     setSelectedPatient(mappedPatient);
