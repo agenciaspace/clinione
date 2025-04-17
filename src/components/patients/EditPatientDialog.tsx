@@ -4,8 +4,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Patient } from '@/types';
-import { format } from 'date-fns';
 
 interface EditPatientDialogProps {
   open: boolean;
@@ -74,7 +72,7 @@ export const EditPatientDialog = ({
             <Input 
               id="birthDate" 
               name="birthDate"
-              value={formData.birthDate ? format(new Date(formData.birthDate), 'yyyy-MM-dd') : ''}
+              value={formData.birthDate ? formData.birthDate.split('T')[0] : ''}
               onChange={onInputChange}
               type="date" 
             />

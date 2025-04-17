@@ -28,7 +28,7 @@ export const PatientActions = ({
     birthDate: '',
   });
 
-  // Atualiza o formulário sempre que o paciente ou o estado do diálogo mudar
+  // Inicializa o formulário com os dados do paciente sempre que o paciente ou o estado do diálogo mudar
   useEffect(() => {
     if (isEditDialogOpen && patient) {
       setEditForm({
@@ -49,6 +49,8 @@ export const PatientActions = ({
   };
 
   const handleSaveEdit = () => {
+    if (!onUpdatePatient) return;
+    
     const updatedPatient = {
       ...patient,
       name: editForm.name,
@@ -57,28 +59,19 @@ export const PatientActions = ({
       birthDate: editForm.birthDate,
     };
     
-    if (onUpdatePatient) {
-      onUpdatePatient(updatedPatient);
-    }
-    
+    onUpdatePatient(updatedPatient);
     handleCloseEditDialog();
     toast.success("Paciente atualizado com sucesso");
   };
 
   const handleOpenEditDialog = () => {
-    // Inicializa os dados do formulário com os valores atuais do paciente
-    setEditForm({
-      name: patient.name || '',
-      email: patient.email || '',
-      phone: patient.phone || '',
-      birthDate: patient.birthDate || '',
-    });
+    // Não precisamos inicializar o formulário aqui, pois o useEffect já faz isso
     setIsEditDialogOpen(true);
   };
 
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false);
-    // Limpa o formulário ao fechar
+    // Limpa o formulário ao fechar para garantir que na próxima abertura ele será reinicializado
     setEditForm({
       name: '',
       email: '',
@@ -101,10 +94,10 @@ export const PatientActions = ({
         open={isEditDialogOpen}
         onOpenChange={(open) => {
           if (open) {
-            // Se estiver abrindo, atualize os dados do formulário
-            handleOpenEditDialog();
+            // Se estiver abrindo, atualize o estado
+            setIsEditDialogOpen(true);
           } else {
-            // Se estiver fechando, limpe o formulário
+            // Se estiver fechando, use a função de fechamento que limpa o formulário
             handleCloseEditDialog();
           }
         }}
