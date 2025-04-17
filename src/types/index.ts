@@ -66,6 +66,7 @@ export interface Patient {
   address?: string;
   medicalHistory?: string;
   clinicId: string;
+  status: 'active' | 'inactive'; // Adicionada a propriedade status que faltava
 }
 
 export interface Appointment {

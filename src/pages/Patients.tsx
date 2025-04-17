@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -77,7 +76,6 @@ const Patients = () => {
     birthDate: new Date().toISOString().split('T')[0]
   });
   
-  // Query para buscar pacientes
   const { data: patients = [], isLoading } = useQuery({
     queryKey: ['patients', activeClinic?.id],
     queryFn: async () => {
@@ -108,7 +106,6 @@ const Patients = () => {
     enabled: !!activeClinic?.id
   });
 
-  // Mutation para adicionar um novo paciente
   const addPatientMutation = useMutation({
     mutationFn: async (newPatient: { name: string, email: string, phone: string, birth_date: string, clinic_id: string }) => {
       const { data, error } = await supabase
@@ -139,7 +136,6 @@ const Patients = () => {
     }
   });
 
-  // Mutation para excluir um paciente
   const deletePatientMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -160,7 +156,6 @@ const Patients = () => {
     }
   });
 
-  // Mutation para alternar o status do paciente
   const togglePatientStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: 'active' | 'inactive' }) => {
       const { error } = await supabase
@@ -181,7 +176,6 @@ const Patients = () => {
     }
   });
 
-  // Filtrar pacientes com base na pesquisa
   const filteredPatients = patients.filter(patient => 
     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -226,7 +220,16 @@ const Patients = () => {
   };
 
   const openPatientRecord = (patient: Patient) => {
-    setSelectedPatient(patient);
+    const mappedPatient = {
+      ...patient,
+      birth_date: patient.birthDate, 
+      clinic_id: patient.clinicId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      last_visit: undefined,
+    };
+    
+    setSelectedPatient(mappedPatient);
     setIsRecordModalOpen(true);
   };
 

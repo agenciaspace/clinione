@@ -25,6 +25,16 @@ export const PatientInfo = ({ patient }: PatientInfoProps) => {
     }
   };
 
+  // Função auxiliar para determinar o status do paciente
+  const getPatientStatus = (): string => {
+    // Se for do tipo Patient da aplicação
+    if ('status' in patient) {
+      return patient.status;
+    }
+    // Se for do tipo Tables<'patients'> do Supabase
+    return patient.status || 'active';
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -50,7 +60,7 @@ export const PatientInfo = ({ patient }: PatientInfoProps) => {
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500 mb-1">Status</h3>
-            <p className="text-base">{patient.status === 'active' ? 'Ativo' : 'Inativo'}</p>
+            <p className="text-base">{getPatientStatus() === 'active' ? 'Ativo' : 'Inativo'}</p>
           </div>
         </div>
       </CardContent>
