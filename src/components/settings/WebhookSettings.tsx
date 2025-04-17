@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -96,6 +97,29 @@ const WebhookSettings: React.FC = () => {
       toast.error('Erro ao carregar logs de webhook');
     } finally {
       setIsLoadingLogs(false);
+    }
+  };
+
+  const loadWebhookSettings = async () => {
+    setIsLoading(true);
+    try {
+      if (!activeClinic) return;
+      
+      const { data, error } = await supabase
+        .from('clinics')
+        .select('webhook_url, webhook_secret')
+        .eq('id', activeClinic.id)
+        .single();
+
+      if (error) throw error;
+      
+      setWebhookUrl(data.webhook_url || '');
+      setWebhookSecret(data.webhook_secret || '');
+    } catch (error) {
+      console.error('Error loading webhook settings:', error);
+      toast.error('Erro ao carregar configurações de webhook');
+    } finally {
+      setIsLoading(false);
     }
   };
 
