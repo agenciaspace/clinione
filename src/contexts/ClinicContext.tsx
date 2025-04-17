@@ -82,32 +82,57 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     // Cleanup previous channel subscription if exists
     if (webhookChannel) {
-      console.log('Removing previous webhook channel');
+      console.log('[WEBHOOK] Removing previous webhook channel');
       supabase.removeChannel(webhookChannel);
       setWebhookChannel(null);
     }
     
     if (activeClinic?.id) {
-      console.log(`Setting up new webhook channel for clinic ${activeClinic.id}`);
+      console.log(`[WEBHOOK] Setting up new webhook channel for clinic ${activeClinic.id}`);
       const channel = setupWebhookRealtimeListeners(activeClinic.id);
       
       if (channel) {
-        // Subscribe to the channel and log its status
+        // Subscribe to the channel and implement reconnection logic
         channel.subscribe((status) => {
-          console.log(`Webhook channel subscription status for clinic ${activeClinic.id}: ${status}`);
+          console.log(`[WEBHOOK] Channel subscription status for clinic ${activeClinic.id}: ${status}`);
+          
           if (status === 'SUBSCRIBED') {
-            console.log('Successfully subscribed to realtime webhook events');
-            // Force an event to verify the subscription is working
-            console.log('Testing patient webhook by manually triggering an event');
+            console.log('[WEBHOOK] Successfully subscribed to realtime webhook events');
+            toast.success('Conexão de webhooks estabelecida');
           } else if (status === 'CHANNEL_ERROR') {
-            console.error('Error subscribing to webhook channel');
+            console.error('[WEBHOOK] Error subscribing to webhook channel');
+            toast.error('Erro na conexão de webhooks, tentando reconectar...');
             
-            // Retry after a delay in case of error
-            setTimeout(() => {
-              console.log('Retrying webhook channel subscription...');
-              // Attempt to resubscribe
-              channel.subscribe();
-            }, 3000);
+            // Implement exponential backoff for retries
+            let retryAttempt = 0;
+            const maxRetries = 5;
+            
+            const attemptReconnection = () => {
+              if (retryAttempt < maxRetries) {
+                const delay = Math.min(1000 * Math.pow(2, retryAttempt), 30000);
+                retryAttempt++;
+                
+                console.log(`[WEBHOOK] Attempting reconnection ${retryAttempt}/${maxRetries} in ${delay}ms`);
+                
+                setTimeout(() => {
+                  console.log('[WEBHOOK] Attempting to resubscribe...');
+                  channel.subscribe((newStatus) => {
+                    if (newStatus === 'SUBSCRIBED') {
+                      console.log('[WEBHOOK] Reconnection successful');
+                      toast.success('Reconexão de webhooks bem-sucedida');
+                      retryAttempt = 0;
+                    } else if (newStatus === 'CHANNEL_ERROR' && retryAttempt < maxRetries) {
+                      attemptReconnection();
+                    } else {
+                      console.error('[WEBHOOK] Max retry attempts reached');
+                      toast.error('Não foi possível reconectar os webhooks');
+                    }
+                  });
+                }, delay);
+              }
+            };
+            
+            attemptReconnection();
           }
         });
         
@@ -117,7 +142,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     
     return () => {
       if (webhookChannel) {
-        console.log('Cleanup: Removing webhook channel on unmount');
+        console.log('[WEBHOOK] Cleanup: Removing webhook channel on unmount');
         supabase.removeChannel(webhookChannel);
       }
     };

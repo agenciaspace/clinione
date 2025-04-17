@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -311,184 +310,87 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
   
   console.log(`[WEBHOOK] Setting up webhook realtime listeners for clinic ${clinicId}`);
 
-  // Create a channel to listen for changes with correct schema:table format
+  // Create a channel with proper schema:table format
   const channel = supabase
-    .channel(`webhook-events-${clinicId}`)
-    // Listen for appointment changes
+    .channel(`realtime-webhooks-${clinicId}`)
     .on('postgres_changes', 
-      { event: 'INSERT', schema: 'public', table: 'appointments' },
+      { 
+        event: '*', 
+        schema: 'public', 
+        table: 'patients',
+        filter: `clinic_id=eq.${clinicId}`
+      },
       async (payload) => {
-        const newAppointment = payload.new;
-        if (newAppointment && newAppointment.clinic_id === clinicId) {
-          console.log('[WEBHOOK] Appointment created, triggering webhook:', newAppointment);
-          await webhookEvents.appointments.created(newAppointment, clinicId);
-        }
-      }
-    )
-    .on('postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'appointments' },
-      async (payload) => {
-        const updatedAppointment = payload.new;
-        const oldAppointment = payload.old;
+        console.log('[WEBHOOK] Patient change detected:', payload);
         
-        if (updatedAppointment && updatedAppointment.clinic_id === clinicId) {
-          console.log('[WEBHOOK] Appointment updated, triggering webhook:', updatedAppointment);
-          await webhookEvents.appointments.updated(updatedAppointment, clinicId);
-          
-          // If status changed, trigger specific status changed event
-          if (oldAppointment && oldAppointment.status !== updatedAppointment.status) {
-            await webhookEvents.appointments.statusChanged(
-              updatedAppointment, 
-              clinicId,
-              oldAppointment.status,
-              updatedAppointment.status
-            );
-          }
+        switch (payload.eventType) {
+          case 'INSERT':
+            await webhookEvents.patients.created(payload.new, clinicId);
+            break;
+          case 'UPDATE':
+            await webhookEvents.patients.updated(payload.new, clinicId);
+            break;
+          case 'DELETE':
+            await webhookEvents.patients.deleted(payload.old, clinicId);
+            break;
         }
       }
     )
     .on('postgres_changes',
-      { event: 'DELETE', schema: 'public', table: 'appointments' },
+      { 
+        event: '*', 
+        schema: 'public', 
+        table: 'appointments',
+        filter: `clinic_id=eq.${clinicId}`
+      },
       async (payload) => {
-        const deletedAppointment = payload.old;
-        if (deletedAppointment && deletedAppointment.clinic_id === clinicId) {
-          console.log('[WEBHOOK] Appointment deleted, triggering webhook:', deletedAppointment);
-          await webhookEvents.appointments.deleted(deletedAppointment, clinicId);
-        }
-      }
-    )
-    
-    // Listen for patient changes with enhanced logging
-    .on('postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'patients' },
-      async (payload) => {
-        const newPatient = payload.new;
-        console.log('[WEBHOOK] Patient INSERT detected:', newPatient);
+        console.log('[WEBHOOK] Appointment change detected:', payload);
         
-        if (newPatient && newPatient.clinic_id === clinicId) {
-          console.log(`[WEBHOOK] Patient created for clinic ${clinicId}, triggering webhook:`, newPatient);
-          
-          try {
-            const result = await webhookEvents.patients.created(newPatient, clinicId);
-            console.log('[WEBHOOK] Patient created webhook result:', result);
-          } catch (error) {
-            console.error('[WEBHOOK] Error triggering patient.created webhook:', error);
-          }
-        } else {
-          console.log(`[WEBHOOK] Patient clinic_id doesn't match: ${newPatient?.clinic_id} vs ${clinicId}`);
+        switch (payload.eventType) {
+          case 'INSERT':
+            await webhookEvents.appointments.created(payload.new, clinicId);
+            break;
+          case 'UPDATE':
+            await webhookEvents.appointments.updated(payload.new, clinicId);
+            if (payload.old && payload.old.status !== payload.new.status) {
+              await webhookEvents.appointments.statusChanged(
+                payload.new,
+                clinicId,
+                payload.old.status,
+                payload.new.status
+              );
+            }
+            break;
+          case 'DELETE':
+            await webhookEvents.appointments.deleted(payload.old, clinicId);
+            break;
         }
       }
     )
     .on('postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'patients' },
+      { 
+        event: '*', 
+        schema: 'public', 
+        table: 'doctors',
+        filter: `clinic_id=eq.${clinicId}`
+      },
       async (payload) => {
-        const updatedPatient = payload.new;
-        console.log('[WEBHOOK] Patient UPDATE detected:', updatedPatient);
+        console.log('[WEBHOOK] Doctor change detected:', payload);
         
-        if (updatedPatient && updatedPatient.clinic_id === clinicId) {
-          console.log(`[WEBHOOK] Patient updated for clinic ${clinicId}, triggering webhook:`, updatedPatient);
-          
-          try {
-            const result = await webhookEvents.patients.updated(updatedPatient, clinicId);
-            console.log('[WEBHOOK] Patient updated webhook result:', result);
-          } catch (error) {
-            console.error('[WEBHOOK] Error triggering patient.updated webhook:', error);
-          }
-        } else {
-          console.log(`[WEBHOOK] Patient clinic_id doesn't match: ${updatedPatient?.clinic_id} vs ${clinicId}`);
-        }
-      }
-    )
-    .on('postgres_changes',
-      { event: 'DELETE', schema: 'public', table: 'patients' },
-      async (payload) => {
-        const deletedPatient = payload.old;
-        console.log('[WEBHOOK] Patient DELETE detected:', deletedPatient);
-        
-        if (deletedPatient && deletedPatient.clinic_id === clinicId) {
-          console.log(`[WEBHOOK] Patient deleted for clinic ${clinicId}, triggering webhook:`, deletedPatient);
-          
-          try {
-            const result = await webhookEvents.patients.deleted(deletedPatient, clinicId);
-            console.log('[WEBHOOK] Patient deleted webhook result:', result);
-          } catch (error) {
-            console.error('[WEBHOOK] Error triggering patient.deleted webhook:', error);
-          }
-        } else {
-          console.log(`[WEBHOOK] Patient clinic_id doesn't match: ${deletedPatient?.clinic_id} vs ${clinicId}`);
-        }
-      }
-    )
-    
-    // Listen for doctor changes
-    .on('postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'doctors' },
-      async (payload) => {
-        const newDoctor = payload.new;
-        if (newDoctor && newDoctor.clinic_id === clinicId) {
-          console.log('[WEBHOOK] Doctor created, triggering webhook:', newDoctor);
-          await webhookEvents.doctors.created(newDoctor, clinicId);
-        }
-      }
-    )
-    .on('postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'doctors' },
-      async (payload) => {
-        const updatedDoctor = payload.new;
-        if (updatedDoctor && updatedDoctor.clinic_id === clinicId) {
-          console.log('[WEBHOOK] Doctor updated, triggering webhook:', updatedDoctor);
-          await webhookEvents.doctors.updated(updatedDoctor, clinicId);
-        }
-      }
-    )
-    .on('postgres_changes',
-      { event: 'DELETE', schema: 'public', table: 'doctors' },
-      async (payload) => {
-        const deletedDoctor = payload.old;
-        if (deletedDoctor && deletedDoctor.clinic_id === clinicId) {
-          console.log('[WEBHOOK] Doctor deleted, triggering webhook:', deletedDoctor);
-          await webhookEvents.doctors.deleted(deletedDoctor, clinicId);
-        }
-      }
-    )
-    
-    // Listen for clinic changes
-    .on('postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'clinics' },
-      async (payload) => {
-        const updatedClinic = payload.new;
-        if (updatedClinic && updatedClinic.id === clinicId) {
-          console.log('[WEBHOOK] Clinic updated, triggering webhook:', updatedClinic);
-          await webhookEvents.clinics.updated(updatedClinic, clinicId);
-        }
-      }
-    )
-    
-    // Listen for transaction changes
-    .on('postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'transactions' },
-      async (payload) => {
-        const newTransaction = payload.new;
-        if (newTransaction && newTransaction.clinic_id === clinicId) {
-          console.log('[WEBHOOK] Transaction created, triggering webhook:', newTransaction);
-          await webhookEvents.transactions.created(newTransaction, clinicId);
-        }
-      }
-    )
-    .on('postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'transactions' },
-      async (payload) => {
-        const updatedTransaction = payload.new;
-        if (updatedTransaction && updatedTransaction.clinic_id === clinicId) {
-          console.log('[WEBHOOK] Transaction updated, triggering webhook:', updatedTransaction);
-          await webhookEvents.transactions.updated(updatedTransaction, clinicId);
+        switch (payload.eventType) {
+          case 'INSERT':
+            await webhookEvents.doctors.created(payload.new, clinicId);
+            break;
+          case 'UPDATE':
+            await webhookEvents.doctors.updated(payload.new, clinicId);
+            break;
+          case 'DELETE':
+            await webhookEvents.doctors.deleted(payload.old, clinicId);
+            break;
         }
       }
     );
 
-  // Subscribe to the channel to start receiving events with enhanced logging
-  console.log(`[WEBHOOK] Subscribing to webhook channel for clinic ${clinicId}`);
-  
   return channel;
 };
 
