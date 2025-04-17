@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Patient } from '@/types';
 import { toast } from '@/components/ui/sonner';
 import { EditPatientDialog } from './EditPatientDialog';
@@ -28,6 +28,18 @@ export const PatientActions = ({
     birthDate: '',
   });
 
+  // Atualiza o formulário sempre que o paciente ou o estado do diálogo mudar
+  useEffect(() => {
+    if (isEditDialogOpen && patient) {
+      setEditForm({
+        name: patient.name || '',
+        email: patient.email || '',
+        phone: patient.phone || '',
+        birthDate: patient.birthDate || '',
+      });
+    }
+  }, [patient, isEditDialogOpen]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setEditForm(prev => ({
@@ -54,6 +66,7 @@ export const PatientActions = ({
   };
 
   const handleOpenEditDialog = () => {
+    // Inicializa os dados do formulário com os valores atuais do paciente
     setEditForm({
       name: patient.name || '',
       email: patient.email || '',
@@ -65,6 +78,7 @@ export const PatientActions = ({
 
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false);
+    // Limpa o formulário ao fechar
     setEditForm({
       name: '',
       email: '',
@@ -86,7 +100,11 @@ export const PatientActions = ({
       <EditPatientDialog
         open={isEditDialogOpen}
         onOpenChange={(open) => {
-          if (!open) {
+          if (open) {
+            // Se estiver abrindo, atualize os dados do formulário
+            handleOpenEditDialog();
+          } else {
+            // Se estiver fechando, limpe o formulário
             handleCloseEditDialog();
           }
         }}
