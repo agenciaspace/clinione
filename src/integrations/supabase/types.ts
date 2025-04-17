@@ -233,6 +233,53 @@ export type Database = {
           },
         ]
       }
+      patients: {
+        Row: {
+          birth_date: string
+          clinic_id: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          last_visit: string | null
+          name: string
+          phone: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          birth_date: string
+          clinic_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          last_visit?: string | null
+          name: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          birth_date?: string
+          clinic_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          last_visit?: string | null
+          name?: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patients_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number

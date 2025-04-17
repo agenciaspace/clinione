@@ -74,6 +74,7 @@ const Patients = () => {
     queryFn: async () => {
       if (!activeClinic?.id) return [];
       
+      // Aqui estamos usando a tabela 'patients' que acabamos de criar no Supabase
       const { data, error } = await supabase
         .from('patients')
         .select('*')
