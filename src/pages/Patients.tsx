@@ -2,23 +2,20 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { toast } from '@/components/ui/sonner';
 import { useClinic } from '@/contexts/ClinicContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageHeader } from '@/components/patients/PageHeader';
-import { SearchAndAddBar } from '@/components/patients/SearchAndAddBar';
-import { PatientList } from '@/components/patients/PatientList';
 import PatientRecord from '@/components/patients/PatientRecord';
 import { Patient, PatientFormData } from '@/types';
+import { usePatients } from '@/hooks/usePatients';
+import { PatientsFilter } from '@/components/patients/PatientsFilter';
+import { PatientsTabContent } from '@/components/patients/PatientsTabContent';
 
 const Patients = () => {
   const { activeClinic } = useClinic();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -30,139 +27,14 @@ const Patients = () => {
     birthDate: new Date().toISOString().split('T')[0]
   });
 
-  const { data: patients = [], isLoading } = useQuery({
-    queryKey: ['patients', activeClinic?.id],
-    queryFn: async () => {
-      if (!activeClinic?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('clinic_id', activeClinic.id);
-      
-      if (error) {
-        console.error('Erro ao buscar pacientes:', error);
-        toast.error("Erro ao carregar pacientes");
-        return [];
-      }
-      
-      return data.map((patient: any) => ({
-        id: patient.id,
-        name: patient.name,
-        email: patient.email || '',
-        phone: patient.phone || '',
-        birthDate: patient.birth_date,
-        created_at: patient.created_at,
-        updated_at: patient.updated_at,
-        clinic_id: patient.clinic_id,
-        status: patient.status || 'active',
-        lastVisit: patient.last_visit
-      }));
-    },
-    enabled: !!activeClinic?.id
-  });
-
-  const addPatientMutation = useMutation({
-    mutationFn: async (newPatient: { name: string, email: string, phone: string, birth_date: string, clinic_id: string }) => {
-      const { data, error } = await supabase
-        .from('patients')
-        .insert([newPatient])
-        .select();
-      
-      if (error) throw error;
-      return data[0];
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
-      setIsAddPatientOpen(false);
-      setPatientForm({
-        name: '',
-        email: '',
-        phone: '',
-        birthDate: new Date().toISOString().split('T')[0]
-      });
-      
-      toast("Paciente adicionado", {
-        description: "O novo paciente foi cadastrado com sucesso."
-      });
-    },
-    onError: (error) => {
-      console.error("Erro ao adicionar paciente:", error);
-      toast.error("Erro ao adicionar paciente");
-    }
-  });
-
-  const updatePatientMutation = useMutation({
-    mutationFn: async (updatePatient: Patient) => {
-      const { data, error } = await supabase
-        .from('patients')
-        .update({
-          name: updatePatient.name,
-          email: updatePatient.email,
-          phone: updatePatient.phone,
-          birth_date: updatePatient.birthDate,
-        })
-        .eq('id', updatePatient.id)
-        .select();
-      
-      if (error) throw error;
-      return data[0];
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
-      toast.success("Paciente atualizado com sucesso");
-    },
-    onError: (error) => {
-      console.error("Erro ao atualizar paciente:", error);
-      toast.error("Erro ao atualizar paciente");
-    }
-  });
-
-  const deletePatientMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('patients')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      return id;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
-      toast.success("Paciente removido com sucesso");
-    },
-    onError: (error) => {
-      console.error("Erro ao remover paciente:", error);
-      toast.error("Erro ao remover paciente");
-    }
-  });
-
-  const togglePatientStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'inactive' }) => {
-      const { error } = await supabase
-        .from('patients')
-        .update({ status })
-        .eq('id', id);
-      
-      if (error) throw error;
-      return { id, status };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
-      toast.success(`Status do paciente alterado para ${data.status === 'active' ? 'ativo' : 'inativo'}`);
-    },
-    onError: (error) => {
-      console.error("Erro ao alterar status do paciente:", error);
-      toast.error("Erro ao alterar status do paciente");
-    }
-  });
-
-  const filteredPatients = patients.filter(patient => 
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone.includes(searchTerm)
-  );
+  const {
+    patients,
+    isLoading,
+    addPatientMutation,
+    updatePatientMutation,
+    deletePatientMutation,
+    togglePatientStatusMutation
+  } = usePatients(activeClinic?.id);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -187,11 +59,21 @@ const Patients = () => {
       birth_date: patientForm.birthDate,
       clinic_id: activeClinic.id
     });
+
+    setIsAddPatientOpen(false);
+    setPatientForm({
+      name: '',
+      email: '',
+      phone: '',
+      birthDate: new Date().toISOString().split('T')[0]
+    });
   };
 
-  const handleUpdatePatient = (patient: Patient) => {
-    updatePatientMutation.mutate(patient);
-  };
+  const filteredPatients = patients.filter(patient => 
+    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.phone.includes(searchTerm)
+  );
 
   return (
     <DashboardLayout>
@@ -200,79 +82,65 @@ const Patients = () => {
       <Card>
         <CardContent className="p-6">
           <Tabs defaultValue="all" className="w-full">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
-              <TabsList>
-                <TabsTrigger value="all">Todos</TabsTrigger>
-                <TabsTrigger value="active">Ativos</TabsTrigger>
-                <TabsTrigger value="inactive">Inativos</TabsTrigger>
-              </TabsList>
-              
-              <SearchAndAddBar
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                isAddPatientOpen={isAddPatientOpen}
-                setIsAddPatientOpen={setIsAddPatientOpen}
-                patientForm={patientForm}
-                handleInputChange={handleInputChange}
-                handleAddPatient={handleAddPatient}
-              />
-            </div>
+            <PatientsFilter
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              isAddPatientOpen={isAddPatientOpen}
+              setIsAddPatientOpen={setIsAddPatientOpen}
+              patientForm={patientForm}
+              handleInputChange={handleInputChange}
+              handleAddPatient={handleAddPatient}
+            />
             
             <TabsContent value="all">
-              <div className="rounded-md border">
-                <PatientList
-                  patients={filteredPatients}
-                  isLoading={isLoading}
-                  onToggleStatus={(patient) => togglePatientStatusMutation.mutate({
-                    id: patient.id,
-                    status: patient.status === 'active' ? 'inactive' : 'active'
-                  })}
-                  onDelete={(id) => deletePatientMutation.mutate(id)}
-                  onOpenRecord={(patient) => {
-                    setSelectedPatient(patient);
-                    setIsRecordModalOpen(true);
-                  }}
-                  onUpdatePatient={handleUpdatePatient}
-                />
-              </div>
+              <PatientsTabContent
+                patients={filteredPatients}
+                isLoading={isLoading}
+                onToggleStatus={(patient) => togglePatientStatusMutation.mutate({
+                  id: patient.id,
+                  status: patient.status === 'active' ? 'inactive' : 'active'
+                })}
+                onDelete={(id) => deletePatientMutation.mutate(id)}
+                onOpenRecord={(patient) => {
+                  setSelectedPatient(patient);
+                  setIsRecordModalOpen(true);
+                }}
+                onUpdatePatient={(patient) => updatePatientMutation.mutate(patient)}
+              />
             </TabsContent>
             
             <TabsContent value="active">
-              <div className="rounded-md border">
-                <PatientList
-                  patients={filteredPatients.filter(p => p.status === 'active')}
-                  isLoading={isLoading}
-                  onToggleStatus={(patient) => togglePatientStatusMutation.mutate({
-                    id: patient.id,
-                    status: 'inactive'
-                  })}
-                  onDelete={(id) => deletePatientMutation.mutate(id)}
-                  onOpenRecord={(patient) => {
-                    setSelectedPatient(patient);
-                    setIsRecordModalOpen(true);
-                  }}
-                  onUpdatePatient={handleUpdatePatient}
-                />
-              </div>
+              <PatientsTabContent
+                patients={filteredPatients.filter(p => p.status === 'active')}
+                isLoading={isLoading}
+                onToggleStatus={(patient) => togglePatientStatusMutation.mutate({
+                  id: patient.id,
+                  status: 'inactive'
+                })}
+                onDelete={(id) => deletePatientMutation.mutate(id)}
+                onOpenRecord={(patient) => {
+                  setSelectedPatient(patient);
+                  setIsRecordModalOpen(true);
+                }}
+                onUpdatePatient={(patient) => updatePatientMutation.mutate(patient)}
+              />
             </TabsContent>
             
             <TabsContent value="inactive">
-              <div className="rounded-md border">
-                <PatientList
-                  patients={filteredPatients.filter(p => p.status === 'inactive')}
-                  isLoading={isLoading}
-                  onToggleStatus={(patient) => togglePatientStatusMutation.mutate({
-                    id: patient.id,
-                    status: 'active'
-                  })}
-                  onDelete={(id) => deletePatientMutation.mutate(id)}
-                  onOpenRecord={(patient) => {
-                    setSelectedPatient(patient);
-                    setIsRecordModalOpen(true);
-                  }}
-                  onUpdatePatient={handleUpdatePatient}
-                />
-              </div>
+              <PatientsTabContent
+                patients={filteredPatients.filter(p => p.status === 'inactive')}
+                isLoading={isLoading}
+                onToggleStatus={(patient) => togglePatientStatusMutation.mutate({
+                  id: patient.id,
+                  status: 'active'
+                })}
+                onDelete={(id) => deletePatientMutation.mutate(id)}
+                onOpenRecord={(patient) => {
+                  setSelectedPatient(patient);
+                  setIsRecordModalOpen(true);
+                }}
+                onUpdatePatient={(patient) => updatePatientMutation.mutate(patient)}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>
