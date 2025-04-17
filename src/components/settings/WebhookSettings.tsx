@@ -8,8 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useClinic } from '@/contexts/ClinicContext';
-import { WebhookEventType, triggerWebhook, loadWebhookLogs, WebhookLogResponse } from '@/utils/webhook-service';
-import { Loader2, AlertCircle, CheckCircle2, RefreshCw, Send, Plus, Trash2, Code, Copy, Pencil, Eye, EyeOff } from 'lucide-react';
+import { WebhookEventType, triggerWebhook, loadWebhookLogs, WebhookLogResponse, testPatientWebhook, checkRealtimeSubscription } from '@/utils/webhook-service';
+import { Loader2, AlertCircle, CheckCircle2, RefreshCw, Send, Plus, Trash2, Code, Copy, Pencil, Eye, EyeOff, Activity } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -91,6 +91,8 @@ const WebhookSettings: React.FC = () => {
   const [newEndpointDescription, setNewEndpointDescription] = useState('');
   const [newEndpointEvents, setNewEndpointEvents] = useState<Record<string, boolean>>({});
   const [showEndpointSecret, setShowEndpointSecret] = useState(false);
+  const [isTestingRealtimeStatus, setIsTestingRealtimeStatus] = useState(false);
+  const [realtimeStatus, setRealtimeStatus] = useState<any>(null);
 
   const fetchWebhookLogs = async () => {
     if (!activeClinic) return;
@@ -332,6 +334,62 @@ const WebhookSettings: React.FC = () => {
     }
   };
 
+  const testPatientCreatedWebhook = async () => {
+    if (!activeClinic) {
+      toast.error('Nenhuma clínica selecionada');
+      return;
+    }
+    
+    setIsSendingTest(true);
+    try {
+      const { success, message, eventId } = await testPatientWebhook(activeClinic.id);
+      
+      if (success) {
+        toast.success('Webhook de paciente teste enviado com sucesso', {
+          description: `ID do evento: ${eventId}`
+        });
+        
+        setTimeout(() => {
+          loadWebhookEvents();
+          fetchWebhookLogs();
+        }, 1000);
+      } else {
+        toast.error(`Erro ao enviar webhook de paciente teste: ${message}`);
+      }
+    } catch (error) {
+      console.error('Error testing patient webhook:', error);
+      toast.error('Erro ao testar webhook de paciente');
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
+
+  const checkRealtimeStatus = () => {
+    if (!activeClinic) {
+      toast.error('Nenhuma clínica selecionada');
+      return;
+    }
+    
+    setIsTestingRealtimeStatus(true);
+    try {
+      const status = checkRealtimeSubscription(activeClinic.id);
+      setRealtimeStatus(status);
+      
+      if (status.isSubscribed) {
+        toast.success('Conexão realtime está ativa');
+      } else {
+        toast.error('Conexão realtime não está ativa');
+      }
+      
+      console.log('Realtime subscription status:', status);
+    } catch (error) {
+      console.error('Error checking realtime status:', error);
+      toast.error('Erro ao verificar status da conexão realtime');
+    } finally {
+      setIsTestingRealtimeStatus(false);
+    }
+  };
+
   const saveWebhookEndpoint = async () => {
     if (!activeClinic) return;
     
@@ -509,6 +567,65 @@ const WebhookSettings: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Diagnóstico de Webhook</CardTitle>
+          <CardDescription>Ferramentas para diagnosticar problemas com webhooks</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Button onClick={testPatientCreatedWebhook} disabled={isSendingTest || !activeClinic}>
+                {isSendingTest ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Testando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Testar Webhook de Paciente
+                  </>
+                )}
+              </Button>
+              
+              <Button onClick={checkRealtimeStatus} disabled={isTestingRealtimeStatus || !activeClinic} variant="outline">
+                {isTestingRealtimeStatus ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Verificando...
+                  </>
+                ) : (
+                  <>
+                    <Activity className="mr-2 h-4 w-4" />
+                    Verificar Status Realtime
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            {realtimeStatus && (
+              <div className="mt-4 p-4 border rounded bg-gray-50">
+                <h4 className="text-sm font-medium mb-2">Status da Conexão Realtime:</h4>
+                <pre className="text-xs overflow-auto p-2 bg-gray-100 rounded">
+                  {JSON.stringify(realtimeStatus, null, 2)}
+                </pre>
+              </div>
+            )}
+            
+            <div className="p-4 border rounded bg-blue-50 text-blue-800">
+              <h4 className="font-medium mb-1">Dicas para resolução de problemas:</h4>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                <li>Verifique se o webhook está configurado corretamente</li>
+                <li>Verifique se o canal realtime está ativo (deve aparecer "Setting up webhook realtime listeners for clinic [ID]" no console)</li>
+                <li>Verifique se há erros no console quando adiciona um paciente</li>
+                <li>Use o botão "Testar Webhook de Paciente" para verificar se o webhook funciona corretamente</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <div className="flex items-center justify-between mb-4">
           <TabsList>

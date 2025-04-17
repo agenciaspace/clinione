@@ -21,7 +21,7 @@ export const triggerWebhook = async (
       eventId?: string;
     };
 
-    console.log(`Triggering webhook: ${eventType} for clinic ${clinicId}`, payload);
+    console.log(`[WEBHOOK] Triggering webhook: ${eventType} for clinic ${clinicId}`, payload);
 
     const { data, error } = await supabase.functions.invoke<WebhookTriggerResponse>('webhook-trigger', {
       body: {
@@ -33,14 +33,14 @@ export const triggerWebhook = async (
     });
 
     if (error) {
-      console.error('Error triggering webhook:', error);
+      console.error('[WEBHOOK] Error triggering webhook:', error);
       return { success: false, message: error.message };
     }
 
-    console.log('Webhook triggered successfully:', data);
+    console.log('[WEBHOOK] Webhook triggered successfully:', data);
     return data;
   } catch (error) {
-    console.error('Error triggering webhook:', error);
+    console.error('[WEBHOOK] Error triggering webhook:', error);
     return { success: false, message: error.message || 'Unknown error' };
   }
 };
@@ -87,7 +87,7 @@ export const loadWebhookLogs = async (
       return { data, error };
     }
   } catch (error) {
-    console.error('Error loading webhook logs:', error);
+    console.error('[WEBHOOK] Error loading webhook logs:', error);
     return { data: null, error: error as Error };
   }
 };
@@ -170,7 +170,7 @@ export const webhookEvents = {
    */
   patients: {
     created: async (patientData: any, clinicId: string) => {
-      console.log('Patient created, triggering webhook manually:', patientData);
+      console.log('[WEBHOOK] Patient created, triggering webhook manually:', patientData);
       return triggerWebhook(
         WebhookEventType.PATIENT_CREATED,
         patientData,
@@ -178,7 +178,7 @@ export const webhookEvents = {
       );
     },
     updated: async (patientData: any, clinicId: string) => {
-      console.log('Patient updated, triggering webhook manually:', patientData);
+      console.log('[WEBHOOK] Patient updated, triggering webhook manually:', patientData);
       return triggerWebhook(
         WebhookEventType.PATIENT_UPDATED,
         patientData,
@@ -186,7 +186,7 @@ export const webhookEvents = {
       );
     },
     deleted: async (patientData: any, clinicId: string) => {
-      console.log('Patient deleted, triggering webhook manually:', patientData);
+      console.log('[WEBHOOK] Patient deleted, triggering webhook manually:', patientData);
       return triggerWebhook(
         WebhookEventType.PATIENT_DELETED,
         patientData,
@@ -295,13 +295,16 @@ export const webhookEvents = {
  * This can be used to listen for database changes and automatically send webhooks
  */
 export const setupWebhookRealtimeListeners = (clinicId: string) => {
-  if (!clinicId) return null;
+  if (!clinicId) {
+    console.log('[WEBHOOK] No clinic ID provided, cannot setup webhook listeners');
+    return null;
+  }
   
-  console.log(`Setting up webhook realtime listeners for clinic ${clinicId}`);
+  console.log(`[WEBHOOK] Setting up webhook realtime listeners for clinic ${clinicId}`);
 
   // Create a channel to listen for changes
   const channel = supabase
-    .channel('webhook-events')
+    .channel(`webhook-events-${clinicId}`)
     // Listen for appointment changes
     .on('postgres_changes', 
       { event: 'INSERT', schema: 'public', table: 'appointments' },
@@ -351,12 +354,19 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       { event: 'INSERT', schema: 'public', table: 'patients' },
       async (payload) => {
         const newPatient = payload.new;
-        console.log('Patient INSERT detected:', newPatient);
+        console.log('[WEBHOOK] Patient INSERT detected:', newPatient);
+        
         if (newPatient && newPatient.clinic_id === clinicId) {
-          console.log('Patient created, triggering webhook:', newPatient);
-          await webhookEvents.patients.created(newPatient, clinicId);
+          console.log(`[WEBHOOK] Patient created for clinic ${clinicId}, triggering webhook:`, newPatient);
+          
+          try {
+            const result = await webhookEvents.patients.created(newPatient, clinicId);
+            console.log('[WEBHOOK] Patient created webhook result:', result);
+          } catch (error) {
+            console.error('[WEBHOOK] Error triggering patient.created webhook:', error);
+          }
         } else {
-          console.log('Patient not matching clinic_id:', newPatient?.clinic_id, 'expected:', clinicId);
+          console.log(`[WEBHOOK] Patient clinic_id doesn't match: ${newPatient?.clinic_id} vs ${clinicId}`);
         }
       }
     )
@@ -364,12 +374,19 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       { event: 'UPDATE', schema: 'public', table: 'patients' },
       async (payload) => {
         const updatedPatient = payload.new;
-        console.log('Patient UPDATE detected:', updatedPatient);
+        console.log('[WEBHOOK] Patient UPDATE detected:', updatedPatient);
+        
         if (updatedPatient && updatedPatient.clinic_id === clinicId) {
-          console.log('Patient updated, triggering webhook:', updatedPatient);
-          await webhookEvents.patients.updated(updatedPatient, clinicId);
+          console.log(`[WEBHOOK] Patient updated for clinic ${clinicId}, triggering webhook:`, updatedPatient);
+          
+          try {
+            const result = await webhookEvents.patients.updated(updatedPatient, clinicId);
+            console.log('[WEBHOOK] Patient updated webhook result:', result);
+          } catch (error) {
+            console.error('[WEBHOOK] Error triggering patient.updated webhook:', error);
+          }
         } else {
-          console.log('Patient not matching clinic_id:', updatedPatient?.clinic_id, 'expected:', clinicId);
+          console.log(`[WEBHOOK] Patient clinic_id doesn't match: ${updatedPatient?.clinic_id} vs ${clinicId}`);
         }
       }
     )
@@ -377,12 +394,19 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
       { event: 'DELETE', schema: 'public', table: 'patients' },
       async (payload) => {
         const deletedPatient = payload.old;
-        console.log('Patient DELETE detected:', deletedPatient);
+        console.log('[WEBHOOK] Patient DELETE detected:', deletedPatient);
+        
         if (deletedPatient && deletedPatient.clinic_id === clinicId) {
-          console.log('Patient deleted, triggering webhook:', deletedPatient);
-          await webhookEvents.patients.deleted(deletedPatient, clinicId);
+          console.log(`[WEBHOOK] Patient deleted for clinic ${clinicId}, triggering webhook:`, deletedPatient);
+          
+          try {
+            const result = await webhookEvents.patients.deleted(deletedPatient, clinicId);
+            console.log('[WEBHOOK] Patient deleted webhook result:', result);
+          } catch (error) {
+            console.error('[WEBHOOK] Error triggering patient.deleted webhook:', error);
+          }
         } else {
-          console.log('Patient not matching clinic_id:', deletedPatient?.clinic_id, 'expected:', clinicId);
+          console.log(`[WEBHOOK] Patient clinic_id doesn't match: ${deletedPatient?.clinic_id} vs ${clinicId}`);
         }
       }
     )
@@ -454,14 +478,52 @@ export const setupWebhookRealtimeListeners = (clinicId: string) => {
     );
 
   // Subscribe to the channel to start receiving events with enhanced logging
-  channel.subscribe((status) => {
-    console.log(`Webhook realtime subscription status: ${status}`);
-    if (status === 'SUBSCRIBED') {
-      console.log('Successfully subscribed to realtime changes for patients and other tables');
-    } else if (status === 'CHANNEL_ERROR') {
-      console.error('Error subscribing to realtime changes');
-    }
-  });
-
+  console.log(`[WEBHOOK] Subscribing to webhook channel for clinic ${clinicId}`);
+  
   return channel;
+};
+
+/**
+ * Manually test the webhook for patient creation.
+ * This can be used to verify the webhook is working.
+ * @param clinicId The clinic ID to test
+ */
+export const testPatientWebhook = async (clinicId: string) => {
+  if (!clinicId) {
+    console.error('[WEBHOOK] No clinic ID provided for webhook test');
+    return { success: false, message: 'No clinic ID provided' };
+  }
+  
+  console.log(`[WEBHOOK] Testing patient webhook for clinic ${clinicId}`);
+  
+  const testPatient = {
+    id: 'test-' + Date.now(),
+    name: 'Test Patient',
+    email: 'test@example.com',
+    phone: '123456789',
+    clinic_id: clinicId,
+    birth_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  
+  return await webhookEvents.patients.created(testPatient, clinicId);
+};
+
+/**
+ * Manually check if the realtime subscription for the clinic is working.
+ * @param clinicId The clinic ID to check
+ */
+export const checkRealtimeSubscription = (clinicId: string) => {
+  if (!clinicId) return false;
+  
+  const channels = supabase.getChannels();
+  const webhookChannel = channels.find(chan => chan.topic === `realtime:public:patients`);
+  
+  return {
+    hasWebhookChannel: !!webhookChannel,
+    isSubscribed: webhookChannel?.state === 'joined',
+    channelState: webhookChannel?.state,
+    allChannels: channels.map(c => ({ topic: c.topic, state: c.state }))
+  };
 };
