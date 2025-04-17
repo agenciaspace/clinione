@@ -849,35 +849,35 @@ const WebhookSettings: React.FC = () => {
                   <div key={log.id} className="border rounded-md p-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="text-sm">Evento: <span className="font-mono">{log.event_id.substring(0, 8)}</span></div>
-                        <div className="text-sm text-gray-500">{formatTimestamp(log.created_at)}</div>
+                        <div className="text-sm">Evento: <span className="font-mono">{log.id.substring(0, 8)}</span></div>
+                        <div className="text-sm text-gray-500">{formatTimestamp(log.timestamp)}</div>
                       </div>
                       <div className="flex items-center space-x-2">
                         {getStatusBadge(log.status)}
-                        {log.response_code && (
-                          <Badge variant="outline">HTTP {log.response_code}</Badge>
+                        {log.http_status && (
+                          <Badge variant="outline">HTTP {log.http_status}</Badge>
                         )}
                       </div>
                     </div>
                     
-                    {log.retry_count > 0 && (
+                    {log.attempts > 1 && (
                       <div className="mt-2 text-sm">
                         <span className="text-gray-500">Tentativas:</span>{' '}
-                        {log.retry_count}
-                        {log.next_retry_at && (
+                        {log.attempts}
+                        {log.last_attempt && (
                           <span className="ml-2 text-gray-500">
-                            (Próxima: {formatTimestamp(log.next_retry_at)})
+                            (Próxima tentativa em breve)
                           </span>
                         )}
                       </div>
                     )}
                     
-                    {log.response_body && (
+                    {log.last_response && (
                       <div className="mt-2">
                         <Separator className="my-2" />
                         <div className="text-sm font-medium">Resposta:</div>
                         <div className="p-2 bg-gray-50 rounded mt-1 text-xs font-mono overflow-auto max-h-24">
-                          {log.response_body}
+                          {log.last_response}
                         </div>
                       </div>
                     )}
