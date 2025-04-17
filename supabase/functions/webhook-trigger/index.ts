@@ -25,6 +25,8 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
   try {
+    console.log('Webhook trigger function called');
+    
     const { event_type, clinic_id, payload, trigger_source = 'system' } = await req.json() as WebhookPayload;
 
     // Validate required fields
@@ -34,6 +36,8 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log(`Processing webhook: ${event_type} for clinic ${clinic_id}`);
 
     // Create webhook event with a unique event_id
     const event_id = crypto.randomUUID();
@@ -48,12 +52,14 @@ Deno.serve(async (req) => {
       .or(`event_types.is.null,event_types.cs.{${event_type}}`);
 
     if (endpointsError) {
+      console.error(`Failed to fetch webhook endpoints: ${endpointsError.message}`);
       throw new Error(`Failed to fetch webhook endpoints: ${endpointsError.message}`);
     }
 
     // Fall back to clinic's webhook URL if no endpoints are found
     let endpoints = webhookEndpoints;
     if (!webhookEndpoints || webhookEndpoints.length === 0) {
+      console.log('No specific endpoints found, checking for legacy webhook');
       const { data: clinic } = await supabase
         .from('clinics')
         .select('webhook_url, webhook_secret')
@@ -69,7 +75,9 @@ Deno.serve(async (req) => {
           secret: clinic.webhook_secret || null,
           event_types: null
         }];
+        console.log('Using legacy webhook URL:', clinic.webhook_url);
       } else {
+        console.log('No webhook endpoints or legacy URL configured for this clinic');
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -79,6 +87,8 @@ Deno.serve(async (req) => {
         );
       }
     }
+    
+    console.log(`Found ${endpoints.length} webhook endpoints to trigger`);
 
     // Create webhook event record
     const { data: eventRecord, error: eventError } = await supabase
@@ -97,12 +107,16 @@ Deno.serve(async (req) => {
       .single();
 
     if (eventError) {
+      console.error(`Failed to create webhook event: ${eventError.message}`);
       throw new Error(`Failed to create webhook event: ${eventError.message}`);
     }
+    
+    console.log(`Created webhook event with ID ${eventRecord.id}`);
 
     // For each endpoint, trigger immediate processing of the webhook
     const processingPromises = endpoints.map(async (endpoint) => {
       try {
+        console.log(`Triggering webhook processor for endpoint ${endpoint.id}`);
         await fetch(`${supabaseUrl}/functions/v1/webhook-processor`, {
           method: 'POST',
           headers: {
@@ -122,6 +136,8 @@ Deno.serve(async (req) => {
 
     // Wait for all processing attempts to complete
     await Promise.allSettled(processingPromises);
+    
+    console.log('Webhook trigger complete');
 
     return new Response(
       JSON.stringify({ 

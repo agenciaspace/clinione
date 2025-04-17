@@ -1,9 +1,9 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from './AuthContext';
 import { toast } from '@/components/ui/sonner';
 import { Clinic } from '@/types';
+import { setupWebhookRealtimeListeners } from '@/utils/webhook-service';
 
 interface ClinicContextType {
   clinics: Clinic[];
@@ -39,7 +39,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     setIsLoadingClinics(true);
     try {
-      // Buscar clínicas onde o usuário é dono
       const { data, error } = await supabase
         .from('clinics')
         .select('*')
@@ -49,7 +48,6 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       setClinics(data || []);
       
-      // Verificar se há uma clínica ativa salva no localStorage
       const savedClinicId = localStorage.getItem('activeClinicId');
       
       if (savedClinicId && data?.length) {
@@ -57,12 +55,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (savedClinic) {
           setActiveClinicState(savedClinic);
         } else {
-          // Se a clínica salva não estiver disponível, use a primeira
           setActiveClinicState(data[0]);
           localStorage.setItem('activeClinicId', data[0].id);
         }
       } else if (data?.length) {
-        // Se não há clínica salva ou não há clínicas disponíveis, use a primeira
         setActiveClinicState(data[0]);
         localStorage.setItem('activeClinicId', data[0].id);
       } else {
@@ -79,6 +75,20 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     fetchClinics();
   }, [user]);
+
+  useEffect(() => {
+    let webhookChannel: RealtimeChannel | null = null;
+    
+    if (activeClinic?.id) {
+      webhookChannel = setupWebhookRealtimeListeners(activeClinic.id);
+    }
+    
+    return () => {
+      if (webhookChannel) {
+        supabase.removeChannel(webhookChannel);
+      }
+    };
+  }, [activeClinic?.id]);
 
   const setActiveClinic = (clinic: Clinic) => {
     setActiveClinicState(clinic);
