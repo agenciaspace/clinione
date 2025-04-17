@@ -55,6 +55,13 @@ export interface Doctor {
   updated_at?: string;
 }
 
+export interface PatientFormData {
+  name: string;
+  email: string;
+  phone: string;
+  birthDate: string;
+}
+
 export interface Patient {
   id: string;
   userId?: string;
@@ -69,8 +76,8 @@ export interface Patient {
   status: 'active' | 'inactive';
   created_at?: string;
   updated_at?: string;
+  lastVisit?: string;
   last_visit?: string;
-  lastVisit?: string; // Adicionando para compatibilidade com nomes de propriedades em camelCase
 }
 
 export interface Appointment {
