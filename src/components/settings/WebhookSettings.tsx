@@ -163,11 +163,11 @@ const WebhookSettings: React.FC = () => {
     
     setIsLoadingLogs(true);
     try {
-      // Use the imported loadWebhookLogs utility function
-      const { data, error } = await loadWebhookLogs(activeClinic.id, activeTab);
+      // Call the imported loadWebhookLogs utility function
+      const result = await loadWebhookLogs(activeClinic.id, activeTab);
       
-      if (error) throw error;
-      setWebhookLogs(data || []);
+      if (result.error) throw result.error;
+      setWebhookLogs(result.data || []);
     } catch (error) {
       console.error('Error loading webhook logs:', error);
       toast.error('Erro ao carregar logs de webhook');
