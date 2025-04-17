@@ -36,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/sonner';
 import { useClinic } from '@/contexts/ClinicContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface Patient {
   id: string;
@@ -45,6 +46,7 @@ interface Patient {
   birthDate: string;
   lastVisit?: string;
   status: 'active' | 'inactive';
+  clinic_id?: string;
 }
 
 interface PatientFormData {
@@ -56,10 +58,9 @@ interface PatientFormData {
 
 const Patients = () => {
   const { activeClinic } = useClinic();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [patientForm, setPatientForm] = useState<PatientFormData>({
     name: '',
     email: '',
@@ -67,32 +68,89 @@ const Patients = () => {
     birthDate: new Date().toISOString().split('T')[0]
   });
   
-  useEffect(() => {
-    if (activeClinic) {
-      fetchPatients();
-    } else {
-      setPatients([]);
-    }
-  }, [activeClinic]);
+  // Query para buscar pacientes
+  const { data: patients = [], isLoading } = useQuery({
+    queryKey: ['patients', activeClinic?.id],
+    queryFn: async () => {
+      if (!activeClinic?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('clinic_id', activeClinic.id);
+      
+      if (error) {
+        console.error('Erro ao buscar pacientes:', error);
+        toast.error("Erro ao carregar pacientes");
+        return [];
+      }
+      
+      // Converter para o formato esperado pela interface Patient
+      return data.map((patient: any) => ({
+        id: patient.id,
+        name: patient.name,
+        email: patient.email || '',
+        phone: patient.phone || '',
+        birthDate: patient.birth_date,
+        lastVisit: patient.last_visit,
+        status: patient.status || 'active',
+        clinic_id: patient.clinic_id
+      }));
+    },
+    enabled: !!activeClinic?.id
+  });
 
-  const fetchPatients = async () => {
-    if (!activeClinic) return;
-    
-    setIsLoading(true);
-    try {
-      // Simulando uma chamada de API
-      // Em um ambiente real, esta seria uma chamada para o Supabase ou outra API
-      setTimeout(() => {
-        // Array vazia para simular que ainda não há dados
-        setPatients([]);
-        setIsLoading(false);
-      }, 500);
-    } catch (error) {
-      console.error("Erro ao carregar pacientes:", error);
-      toast.error("Erro ao carregar pacientes");
-      setIsLoading(false);
+  // Mutation para adicionar um novo paciente
+  const addPatientMutation = useMutation({
+    mutationFn: async (newPatient: { name: string, email: string, phone: string, birth_date: string, clinic_id: string }) => {
+      const { data, error } = await supabase
+        .from('patients')
+        .insert([newPatient])
+        .select();
+      
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
+      setIsAddPatientOpen(false);
+      setPatientForm({
+        name: '',
+        email: '',
+        phone: '',
+        birthDate: new Date().toISOString().split('T')[0]
+      });
+      
+      toast("Paciente adicionado", {
+        description: "O novo paciente foi cadastrado com sucesso."
+      });
+    },
+    onError: (error) => {
+      console.error("Erro ao adicionar paciente:", error);
+      toast.error("Erro ao adicionar paciente");
     }
-  };
+  });
+
+  // Mutation para excluir um paciente
+  const deletePatientMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('patients')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
+      toast.success("Paciente removido com sucesso");
+    },
+    onError: (error) => {
+      console.error("Erro ao remover paciente:", error);
+      toast.error("Erro ao remover paciente");
+    }
+  });
 
   // Filtrar pacientes com base na pesquisa
   const filteredPatients = patients.filter(patient => 
@@ -117,52 +175,17 @@ const Patients = () => {
       return;
     }
 
-    try {
-      // Simulando uma inserção de dados
-      // Em um ambiente real, esta seria uma inserção no Supabase ou outra API
-      
-      const newPatient: Patient = {
-        id: crypto.randomUUID(),
-        name: patientForm.name,
-        email: patientForm.email,
-        phone: patientForm.phone,
-        birthDate: patientForm.birthDate,
-        status: 'active'
-      };
-      
-      // Adicionando o novo paciente ao array local
-      setPatients([...patients, newPatient]);
-      
-      // Reset do formulário
-      setPatientForm({
-        name: '',
-        email: '',
-        phone: '',
-        birthDate: new Date().toISOString().split('T')[0]
-      });
-      
-      setIsAddPatientOpen(false);
-      
-      toast("Paciente adicionado", {
-        description: "O novo paciente foi cadastrado com sucesso."
-      });
-    } catch (error) {
-      console.error("Erro ao adicionar paciente:", error);
-      toast.error("Erro ao adicionar paciente");
-    }
+    addPatientMutation.mutate({
+      name: patientForm.name,
+      email: patientForm.email,
+      phone: patientForm.phone,
+      birth_date: patientForm.birthDate,
+      clinic_id: activeClinic.id
+    });
   };
 
   const handleDeletePatient = async (id: string) => {
-    try {
-      // Simulando uma deleção
-      // Em um ambiente real, esta seria uma deleção no Supabase ou outra API
-      setPatients(patients.filter(patient => patient.id !== id));
-      
-      toast.success("Paciente removido com sucesso");
-    } catch (error) {
-      console.error("Erro ao remover paciente:", error);
-      toast.error("Erro ao remover paciente");
-    }
+    deletePatientMutation.mutate(id);
   };
 
   return (
