@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useClinic } from '@/contexts/ClinicContext';
-import { WebhookEventType, triggerWebhook } from '@/utils/webhook-service';
+import { WebhookEventType, triggerWebhook, loadWebhookLogs } from '@/utils/webhook-service';
 import { Loader2, AlertCircle, CheckCircle2, RefreshCw, Send, Plus, Trash2, Code, Copy, Pencil, Eye, EyeOff } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -39,7 +39,8 @@ interface WebhookEndpoint {
 interface WebhookLog {
   id: string;
   event_id: string;
-  webhook_id: string;
+  webhook_id: string | null;
+  clinic_id: string;
   status: string;
   response_code: number | null;
   response_body: string | null;
@@ -147,7 +148,6 @@ const WebhookSettings: React.FC = () => {
 
       if (error) throw error;
       
-      // Map the data to match our WebhookEvent interface
       setWebhookEvents(data || []);
     } catch (error) {
       console.error('Error loading webhook events:', error);
@@ -162,15 +162,10 @@ const WebhookSettings: React.FC = () => {
     
     setIsLoadingLogs(true);
     try {
-      const { data, error } = await supabase
-        .from('webhook_logs')
-        .select('*')
-        .eq('webhook_id', activeTab === 'legacy' ? null : activeTab)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
+      // Use the imported loadWebhookLogs utility function
+      const { data, error } = await loadWebhookLogs(activeClinic.id, activeTab);
       
+      if (error) throw error;
       setWebhookLogs(data || []);
     } catch (error) {
       console.error('Error loading webhook logs:', error);
@@ -933,136 +928,3 @@ const WebhookSettings: React.FC = () => {
             <div className="space-y-2">
               <Label className="block mb-2">Filtrar Eventos (opcional)</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {Object.values(WebhookEventType).map((eventType) => (
-                  <div key={eventType} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`event-${eventType}`}
-                      checked={!!newEndpointEvents[eventType]}
-                      onCheckedChange={(checked) => {
-                        setNewEndpointEvents({
-                          ...newEndpointEvents,
-                          [eventType]: checked === true
-                        });
-                      }}
-                    />
-                    <Label
-                      htmlFor={`event-${eventType}`}
-                      className="text-sm cursor-pointer"
-                    >
-                      {eventType}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Se nenhum evento for selecionado, todos os eventos serão enviados.
-              </p>
-            </div>
-          </div>
-          
-          <DialogFooter className="sm:justify-end">
-            <Button
-              variant="outline"
-              onClick={() => {
-                resetEndpointForm();
-                setIsEndpointDialogOpen(false);
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={saveWebhookEndpoint}
-              disabled={isSaving || !newEndpointUrl.trim()}
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                editingEndpoint ? 'Atualizar' : 'Criar'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Exemplo de Implementação</CardTitle>
-          <CardDescription>Como integrar com os webhooks da Clini.One</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-medium mb-2">Formato do Payload</h4>
-              <div className="bg-gray-50 p-3 rounded-md">
-                <pre className="text-xs overflow-auto">
-{`{
-  "event_id": "evt_<uuid>",
-  "event_type": "appointment.created",
-  "event_version": "1.0",
-  "clinic_id": "<clinic_id>",
-  "trigger_source": "ui",
-  "timestamp": "2025-04-16T22:30:45Z",
-  "payload": {
-    // Dados específicos do evento
-  }
-}`}
-                </pre>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium mb-2">Verificação da Assinatura</h4>
-              <div className="bg-gray-50 p-3 rounded-md">
-                <pre className="text-xs overflow-auto">
-{`// Exemplo em Node.js
-const crypto = require('crypto');
-
-function verifySignature(payload, signature, secret) {
-  const hmac = crypto.createHmac('sha256', secret);
-  const digest = hmac.update(JSON.stringify(payload)).digest('hex');
-  return \`sha256=\${digest}\` === signature;
-}
-
-// No seu handler de webhook
-app.post('/webhook', (req, res) => {
-  const signature = req.headers['x-hub-signature'];
-  const isValid = verifySignature(req.body, signature, 'seu_token_secreto');
-  
-  if (!isValid) {
-    return res.status(401).send('Assinatura inválida');
-  }
-  
-  // Processar o webhook...
-  res.status(200).send('OK');
-});`}
-                </pre>
-                <div className="mt-2 flex justify-end">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => {
-                      navigator.clipboard.writeText(document.querySelector('pre')!.innerText);
-                      toast.success('Código copiado');
-                    }}
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copiar
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <p className="text-sm text-gray-500">
-                Para garantir a segurança, valide sempre a assinatura HMAC nos cabeçalhos.
-                Sua aplicação deve responder com um código HTTP 2xx em até 5 segundos para confirmar o recebimento.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-export default WebhookSettings;

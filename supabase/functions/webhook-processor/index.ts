@@ -193,9 +193,10 @@ async function sendWebhook(supabase: any, event: WebhookEvent, endpoint: Webhook
     // Check if we have an existing log entry
     const { data: existingLog } = await supabase
       .from('webhook_logs')
-      .select('id')
+      .select('id, retry_count')
       .eq('event_id', event.id)
       .eq('webhook_id', webhookId)
+      .eq('clinic_id', event.clinic_id)
       .maybeSingle();
       
     if (existingLog) {
@@ -214,6 +215,7 @@ async function sendWebhook(supabase: any, event: WebhookEvent, endpoint: Webhook
         .insert({
           event_id: event.id,
           webhook_id: webhookId,
+          clinic_id: event.clinic_id,
           status: 'sending',
           retry_count: 0
         })
@@ -272,7 +274,7 @@ async function sendWebhook(supabase: any, event: WebhookEvent, endpoint: Webhook
 
     // If failed, schedule a retry
     if (!isSuccess) {
-      await scheduleRetry(supabase, event.id, event.attempts, webhookId);
+      await scheduleRetry(supabase, event.id, event.attempts, webhookId, event.clinic_id);
     }
 
     return new Response(
@@ -295,7 +297,7 @@ async function sendWebhook(supabase: any, event: WebhookEvent, endpoint: Webhook
     
     // Update event status and schedule retry
     await updateEventStatus(supabase, event.id, 'failed', error.message, 0);
-    await scheduleRetry(supabase, event.id, event.attempts, webhookId);
+    await scheduleRetry(supabase, event.id, event.attempts, webhookId, event.clinic_id);
 
     // If all retries have failed, move to dead letter queue
     if (event.attempts >= 7) { // After 7 attempts: 30s, 2m, 8m, 32m, 2h8m, 8h32m, 24h
@@ -325,7 +327,7 @@ async function updateEventStatus(supabase: any, eventId: string, status: string,
   }
 }
 
-async function scheduleRetry(supabase: any, eventId: string, currentAttempts: number, webhookId: string | null = null) {
+async function scheduleRetry(supabase: any, eventId: string, currentAttempts: number, webhookId: string | null = null, clinicId: string) {
   // New progressive retry schedule: 30s, 2m, 10m
   // This is a simplification of the original schedule to match the requirements
   const retryDelays = [30, 120, 600]; // seconds
@@ -338,6 +340,7 @@ async function scheduleRetry(supabase: any, eventId: string, currentAttempts: nu
     .insert({
       event_id: eventId,
       webhook_id: webhookId,
+      clinic_id: clinicId,
       retry_at: retryAt,
       status: 'pending'
     });

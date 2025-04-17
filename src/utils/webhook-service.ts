@@ -38,6 +38,45 @@ export const triggerWebhook = async (
 };
 
 /**
+ * Loads webhook logs for a specific endpoint or legacy webhook
+ * @param clinicId The ID of the clinic
+ * @param webhookId The ID of the webhook endpoint (or null for legacy webhook)
+ * @returns Promise with webhook logs or error
+ */
+export const loadWebhookLogs = async (clinicId: string, webhookId: string | null) => {
+  try {
+    // If it's a legacy webhook (null webhookId), we need a different query
+    if (webhookId === 'legacy' || webhookId === null) {
+      const { data, error } = await supabase
+        .from('webhook_logs')
+        .select('*')
+        .is('webhook_id', null)
+        .eq('clinic_id', clinicId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      return { data, error: null };
+    } else {
+      // For specific webhook endpoints
+      const { data, error } = await supabase
+        .from('webhook_logs')
+        .select('*')
+        .eq('webhook_id', webhookId)
+        .eq('clinic_id', clinicId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      return { data, error: null };
+    }
+  } catch (error) {
+    console.error('Error loading webhook logs:', error);
+    return { data: null, error };
+  }
+};
+
+/**
  * Event types for the webhook system
  */
 export enum WebhookEventType {
