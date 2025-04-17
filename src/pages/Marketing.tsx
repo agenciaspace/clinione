@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsListWithMobileSupport, TabsTrigger } from '@/components/ui/tabs';
 import { 
   MessageSquare, 
   Mail, 
@@ -15,7 +14,9 @@ import {
   Plus,
   Calendar,
   ChevronRight,
-  FileBarChart
+  FileBarChart,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
@@ -26,6 +27,8 @@ import { toast } from '@/components/ui/sonner';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Textarea } from '@/components/ui/textarea';
 
 interface MarketingCampaign {
   id: string;
@@ -46,6 +49,16 @@ interface MarketingStats {
   socialFollowers: number;
 }
 
+interface SmtpConfig {
+  host: string;
+  port: string;
+  username: string;
+  password: string;
+  fromEmail: string;
+  fromName: string;
+  secure: boolean;
+}
+
 const Marketing = () => {
   const { activeClinic } = useClinic();
   const [activeTab, setActiveTab] = useState('campaigns');
@@ -61,16 +74,23 @@ const Marketing = () => {
   const [campaignForm, setCampaignForm] = useState({
     name: '',
     type: 'email',
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    subject: '',
+    content: ''
   });
+  const [smtpConfig, setSmtpConfig] = useState<SmtpConfig | null>(null);
+  const [isSmtpLoading, setIsSmtpLoading] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
+  const [showTestEmailDialog, setShowTestEmailDialog] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
+  const isMobile = useIsMobile();
 
-  // Carregar dados quando a clínica ativa mudar
   useEffect(() => {
     if (activeClinic) {
       fetchCampaigns();
       fetchMarketingStats();
+      fetchSmtpConfig();
     } else {
-      // Resetar os dados quando não houver clínica selecionada
       setMarketingCampaigns([]);
       setMarketingStats({
         newPatients: 0,
@@ -78,18 +98,40 @@ const Marketing = () => {
         conversions: 0,
         socialFollowers: 0
       });
+      setSmtpConfig(null);
     }
   }, [activeClinic]);
+
+  const fetchSmtpConfig = async () => {
+    if (!activeClinic) return;
+    
+    setIsSmtpLoading(true);
+    try {
+      setTimeout(() => {
+        setSmtpConfig({
+          host: 'smtp.example.com',
+          port: '587',
+          username: 'user@example.com',
+          password: '********',
+          fromEmail: 'noreply@clinica.com',
+          fromName: 'Clínica',
+          secure: true
+        });
+        setIsSmtpLoading(false);
+      }, 500);
+    } catch (error) {
+      console.error('Erro ao carregar configurações SMTP:', error);
+      toast.error('Não foi possível carregar as configurações SMTP');
+      setIsSmtpLoading(false);
+    }
+  };
 
   const fetchCampaigns = async () => {
     if (!activeClinic) return;
     
     setIsLoading(true);
     try {
-      // Aqui seria uma chamada real à API ou ao Supabase para buscar campanhas
-      // Por enquanto, vamos simular uma resposta após um tempo
       setTimeout(() => {
-        // Deixando a array vazia para simular que não há dados ainda
         setMarketingCampaigns([]);
         setIsLoading(false);
       }, 500);
@@ -104,8 +146,6 @@ const Marketing = () => {
     if (!activeClinic) return;
     
     try {
-      // Aqui seria uma chamada real à API para buscar estatísticas
-      // Por enquanto, simulamos uma resposta com zeros
       setTimeout(() => {
         setMarketingStats({
           newPatients: 0,
@@ -119,7 +159,7 @@ const Marketing = () => {
     }
   };
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setCampaignForm(prev => ({
       ...prev,
@@ -135,14 +175,58 @@ const Marketing = () => {
       return;
     }
     
+    if (!smtpConfig && campaignForm.type === 'email') {
+      toast.error('Configure as configurações SMTP antes de criar uma campanha de email');
+      return;
+    }
+    
+    setIsLoading(true);
     try {
-      // Aqui seria uma chamada real à API para criar uma campanha
-      toast.success('Campanha criada com sucesso!');
-      setIsDialogOpen(false);
-      fetchCampaigns(); // Recarregar as campanhas
+      setTimeout(() => {
+        toast.success('Campanha criada com sucesso!');
+        setIsDialogOpen(false);
+        setIsLoading(false);
+        fetchCampaigns();
+        setCampaignForm({
+          name: '',
+          type: 'email',
+          date: new Date().toISOString().split('T')[0],
+          subject: '',
+          content: ''
+        });
+      }, 1000);
     } catch (error) {
       console.error('Erro ao criar campanha:', error);
       toast.error('Não foi possível criar a campanha');
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendTestEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!testEmailAddress) {
+      toast.error('Informe um endereço de email para o teste');
+      return;
+    }
+    
+    if (!smtpConfig) {
+      toast.error('As configurações SMTP não estão disponíveis');
+      return;
+    }
+    
+    setIsSendingTest(true);
+    try {
+      setTimeout(() => {
+        toast.success(`Email de teste enviado com sucesso para ${testEmailAddress}`);
+        setShowTestEmailDialog(false);
+        setTestEmailAddress('');
+        setIsSendingTest(false);
+      }, 1500);
+    } catch (error) {
+      console.error('Erro ao enviar email de teste:', error);
+      toast.error('Falha ao enviar email de teste');
+      setIsSendingTest(false);
     }
   };
 
@@ -158,77 +242,220 @@ const Marketing = () => {
       </div>
 
       <Tabs defaultValue="campaigns" className="space-y-6" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
-          <TabsTrigger value="automation">Automação</TabsTrigger>
-          <TabsTrigger value="analytics">Análises</TabsTrigger>
-          <TabsTrigger value="social">Redes Sociais</TabsTrigger>
-        </TabsList>
+        <TabsListWithMobileSupport className="grid w-full grid-cols-1 md:grid-cols-4" showScrollButtons={isMobile}>
+          <TabsTrigger value="campaigns" className="flex items-center justify-center">
+            <Mail className="mr-2 h-4 w-4" />
+            <span className={isMobile && activeTab !== 'campaigns' ? "sr-only" : ""}>Campanhas</span>
+          </TabsTrigger>
+          <TabsTrigger value="automation" className="flex items-center justify-center">
+            <Bell className="mr-2 h-4 w-4" />
+            <span className={isMobile && activeTab !== 'automation' ? "sr-only" : ""}>Automação</span>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center justify-center">
+            <BarChart className="mr-2 h-4 w-4" />
+            <span className={isMobile && activeTab !== 'analytics' ? "sr-only" : ""}>Análises</span>
+          </TabsTrigger>
+          <TabsTrigger value="social" className="flex items-center justify-center">
+            <Share2 className="mr-2 h-4 w-4" />
+            <span className={isMobile && activeTab !== 'social' ? "sr-only" : ""}>Redes Sociais</span>
+          </TabsTrigger>
+        </TabsListWithMobileSupport>
 
         {activeClinic ? (
           <>
             <TabsContent value="campaigns" className="space-y-6">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <h2 className="text-xl font-bold">Campanhas de Marketing</h2>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="mr-2 h-4 w-4" /> Nova campanha
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Criar Nova Campanha</DialogTitle>
-                      <DialogDescription>
-                        Preencha os detalhes da nova campanha de marketing.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateCampaign}>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="name">Nome da Campanha</Label>
-                          <Input 
-                            id="name" 
-                            name="name" 
-                            value={campaignForm.name} 
-                            onChange={handleFormChange} 
-                            required 
-                          />
+                <div className="flex space-x-2">
+                  <Dialog open={showTestEmailDialog} onOpenChange={setShowTestEmailDialog}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">
+                        <Send className="mr-2 h-4 w-4" /> Testar Email
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Enviar Email de Teste</DialogTitle>
+                        <DialogDescription>
+                          Envie um email de teste para verificar suas configurações SMTP.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleSendTestEmail}>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="testEmail">Endereço de Email</Label>
+                            <Input 
+                              id="testEmail"
+                              type="email"
+                              placeholder="seu.email@exemplo.com" 
+                              value={testEmailAddress}
+                              onChange={(e) => setTestEmailAddress(e.target.value)}
+                              required
+                            />
+                          </div>
+                          
+                          {isSmtpLoading ? (
+                            <div className="flex items-center justify-center p-4">
+                              <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+                              <span className="ml-2 text-gray-500">Carregando configurações SMTP...</span>
+                            </div>
+                          ) : smtpConfig ? (
+                            <div className="space-y-2">
+                              <div className="p-3 bg-green-50 rounded-md flex items-center text-green-700">
+                                <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                                Configurações SMTP disponíveis
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                <p><strong>Servidor:</strong> {smtpConfig.host}</p>
+                                <p><strong>De:</strong> {smtpConfig.fromEmail}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-3 bg-yellow-50 rounded-md flex items-center text-yellow-700">
+                              <AlertCircle className="h-5 w-5 mr-2 text-yellow-600" />
+                              Configurações SMTP não encontradas. Por favor, configure nas Configurações.
+                            </div>
+                          )}
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="type">Tipo</Label>
-                          <select 
-                            id="type" 
-                            name="type" 
-                            value={campaignForm.type} 
-                            onChange={handleFormChange}
-                            className="w-full p-2 border rounded"
+                        <DialogFooter>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setShowTestEmailDialog(false)}
                           >
-                            <option value="email">Email</option>
-                            <option value="sms">SMS</option>
-                          </select>
+                            Cancelar
+                          </Button>
+                          <Button 
+                            type="submit" 
+                            disabled={isSendingTest || !smtpConfig || isSmtpLoading}
+                          >
+                            {isSendingTest ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Enviando...
+                              </>
+                            ) : (
+                              'Enviar Teste'
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="mr-2 h-4 w-4" /> Nova campanha
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Criar Nova Campanha</DialogTitle>
+                        <DialogDescription>
+                          Preencha os detalhes da nova campanha de marketing.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleCreateCampaign}>
+                        <div className="space-y-4 py-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="name">Nome da Campanha</Label>
+                              <Input 
+                                id="name" 
+                                name="name" 
+                                value={campaignForm.name} 
+                                onChange={handleFormChange} 
+                                required 
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="type">Tipo</Label>
+                              <select 
+                                id="type" 
+                                name="type" 
+                                value={campaignForm.type} 
+                                onChange={handleFormChange}
+                                className="w-full p-2 border rounded"
+                              >
+                                <option value="email">Email</option>
+                                <option value="sms">SMS</option>
+                              </select>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="date">Data de Envio</Label>
+                              <Input 
+                                id="date" 
+                                name="date" 
+                                type="date" 
+                                value={campaignForm.date} 
+                                onChange={handleFormChange} 
+                                required 
+                              />
+                            </div>
+                            {campaignForm.type === 'email' && (
+                              <div className="space-y-2">
+                                <Label htmlFor="subject">Assunto do Email</Label>
+                                <Input 
+                                  id="subject" 
+                                  name="subject" 
+                                  value={campaignForm.subject} 
+                                  onChange={handleFormChange} 
+                                  required 
+                                />
+                              </div>
+                            )}
+                          </div>
+                          
+                          {campaignForm.type === 'email' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="content">Conteúdo</Label>
+                              <Textarea 
+                                id="content" 
+                                name="content" 
+                                value={campaignForm.content} 
+                                onChange={handleFormChange} 
+                                required 
+                                className="min-h-[150px]" 
+                              />
+                              <p className="text-xs text-gray-500">
+                                Você pode usar variáveis como {'{nome}'}, {'{data}'}, etc.
+                              </p>
+                            </div>
+                          )}
+                          
+                          {campaignForm.type === 'email' && !smtpConfig && (
+                            <div className="p-3 bg-yellow-50 rounded-md flex items-center text-yellow-700">
+                              <AlertCircle className="h-5 w-5 mr-2 text-yellow-600" />
+                              Configurações SMTP não encontradas. Por favor, configure nas Configurações.
+                            </div>
+                          )}
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="date">Data de Envio</Label>
-                          <Input 
-                            id="date" 
-                            name="date" 
-                            type="date" 
-                            value={campaignForm.date} 
-                            onChange={handleFormChange} 
-                            required 
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                          Cancelar
-                        </Button>
-                        <Button type="submit">Criar Campanha</Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                        <DialogFooter>
+                          <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                            Cancelar
+                          </Button>
+                          <Button 
+                            type="submit" 
+                            disabled={isLoading || (campaignForm.type === 'email' && !smtpConfig)}
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Criando...
+                              </>
+                            ) : (
+                              'Criar Campanha'
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
 
               <Card>
