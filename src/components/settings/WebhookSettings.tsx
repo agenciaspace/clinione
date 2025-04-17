@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -163,7 +162,6 @@ const WebhookSettings: React.FC = () => {
     
     setIsLoadingLogs(true);
     try {
-      // Call the imported loadWebhookLogs utility function
       const result = await loadWebhookLogs(activeClinic.id, activeTab);
       
       if (result.error) throw result.error;

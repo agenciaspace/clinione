@@ -38,12 +38,20 @@ export const triggerWebhook = async (
 };
 
 /**
+ * Interface for webhook log responses
+ */
+export interface WebhookLogResponse {
+  data: any[] | null;
+  error: Error | null;
+}
+
+/**
  * Loads webhook logs for a specific endpoint or legacy webhook
  * @param clinicId The ID of the clinic
  * @param webhookId The ID of the webhook endpoint (or 'legacy' for legacy webhook)
  * @returns Promise with webhook logs or error
  */
-export const loadWebhookLogs = async (clinicId: string, webhookId: string | null) => {
+export const loadWebhookLogs = async (clinicId: string, webhookId: string | null): Promise<WebhookLogResponse> => {
   try {
     // If it's a legacy webhook, we need a different query
     if (webhookId === 'legacy') {
@@ -72,7 +80,7 @@ export const loadWebhookLogs = async (clinicId: string, webhookId: string | null
     }
   } catch (error) {
     console.error('Error loading webhook logs:', error);
-    return { data: null, error };
+    return { data: null, error: error as Error };
   }
 };
 
