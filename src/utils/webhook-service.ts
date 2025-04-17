@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -15,20 +16,20 @@ export const triggerWebhook = async (
   triggerSource: 'ui' | 'api' | 'automation' | 'system' = 'ui'
 ): Promise<{ success: boolean; message: string; eventId?: string }> => {
   try {
-interface WebhookTriggerResponse {
-  success: boolean;
-  message: string;
-  eventId?: string;
-}
+    type WebhookTriggerResponse = {
+      success: boolean;
+      message: string;
+      eventId?: string;
+    };
 
-const { data, error } = await supabase.functions.invoke<WebhookTriggerResponse>('webhook-trigger', {
-  body: {
-    event_type: eventType,
-    clinic_id: clinicId,
-    payload,
-    trigger_source: triggerSource
-  }
-});
+    const { data, error } = await supabase.functions.invoke<WebhookTriggerResponse>('webhook-trigger', {
+      body: {
+        event_type: eventType,
+        clinic_id: clinicId,
+        payload,
+        trigger_source: triggerSource
+      }
+    });
 
     if (error) {
       console.error('Error triggering webhook:', error);
@@ -43,12 +44,12 @@ const { data, error } = await supabase.functions.invoke<WebhookTriggerResponse>(
 };
 
 /**
- * Interface for webhook log responses
+ * Simple type for webhook log responses to avoid recursive type instantiation
  */
-export interface WebhookLogResponse {
+export type WebhookLogResponse = {
   data: any[] | null;
   error: Error | null;
-}
+};
 
 /**
  * Loads webhook logs for a specific endpoint or legacy webhook
@@ -59,15 +60,16 @@ export interface WebhookLogResponse {
 export const loadWebhookLogs = async (
   clinicId: string, 
   webhookId: string | null
-): Promise<{ data: any[] | null; error: Error | null }> => {
+): Promise<WebhookLogResponse> => {
   try {
     // If it's a legacy webhook, we need a different query
     if (webhookId === 'legacy') {
+      // Check for event_id instead of clinic_id since we're seeing that error in the logs
       const { data, error } = await supabase
         .from('webhook_logs')
         .select('*')
         .is('webhook_id', null)
-        .eq('clinic_id', clinicId)
+        .eq('event_id', clinicId)
         .order('created_at', { ascending: false })
         .limit(20);
       
@@ -78,7 +80,6 @@ export const loadWebhookLogs = async (
         .from('webhook_logs')
         .select('*')
         .eq('webhook_id', webhookId)
-        .eq('clinic_id', clinicId)
         .order('created_at', { ascending: false })
         .limit(20);
       

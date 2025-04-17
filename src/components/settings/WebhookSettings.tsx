@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,10 +87,27 @@ const WebhookSettings: React.FC = () => {
     
     setIsLoadingLogs(true);
     try {
-      const result = await loadWebhookLogs(activeClinic.id, activeTab);
-      
-      if (result.error) throw result.error;
-      setWebhookLogs(result.data || []);
+      if (activeTab === 'legacy') {
+        const { data, error } = await supabase
+          .from('webhook_events')
+          .select('*')
+          .eq('clinic_id', activeClinic.id)
+          .order('timestamp', { ascending: false })
+          .limit(20);
+        
+        if (error) throw error;
+        setWebhookLogs(data || []);
+      } else {
+        const { data, error } = await supabase
+          .from('webhook_events')
+          .select('*')
+          .eq('clinic_id', activeClinic.id)
+          .order('timestamp', { ascending: false })
+          .limit(20);
+        
+        if (error) throw error;
+        setWebhookLogs(data || []);
+      }
     } catch (error) {
       console.error('Error loading webhook logs:', error);
       toast.error('Erro ao carregar logs de webhook');
