@@ -102,6 +102,46 @@ const ClinicManager: React.FC = () => {
     setIsDeleting(true);
     
     try {
+      // Excluir todos os pacientes relacionados à clínica
+      const { error: patientsError } = await supabase
+        .from('patients')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (patientsError) {
+        console.error('Erro ao excluir pacientes:', patientsError);
+        toast.error('Ocorreu um erro ao excluir os pacientes associados à clínica');
+        setIsDeleting(false);
+        return;
+      }
+      
+      // Excluir todos os médicos relacionados à clínica
+      const { error: doctorsError } = await supabase
+        .from('doctors')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (doctorsError) {
+        console.error('Erro ao excluir médicos:', doctorsError);
+        toast.error('Ocorreu um erro ao excluir os médicos associados à clínica');
+        setIsDeleting(false);
+        return;
+      }
+
+      // Excluir todos os agendamentos relacionados à clínica
+      const { error: appointmentsError } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (appointmentsError) {
+        console.error('Erro ao excluir agendamentos:', appointmentsError);
+        toast.error('Ocorreu um erro ao excluir os agendamentos associados à clínica');
+        setIsDeleting(false);
+        return;
+      }
+      
+      // Agora excluímos todas as tabelas de webhook
       // Primeiro, deletar todas as entradas de webhook_events relacionadas à clínica
       const { error: webhookEventsError } = await supabase
         .from('webhook_events')
@@ -141,6 +181,19 @@ const ClinicManager: React.FC = () => {
         return;
       }
 
+      // Excluir todas as transações relacionadas à clínica
+      const { error: transactionsError } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (transactionsError) {
+        console.error('Erro ao excluir transações:', transactionsError);
+        toast.error('Ocorreu um erro ao excluir as transações associadas à clínica');
+        setIsDeleting(false);
+        return;
+      }
+
       // Finalmente, deletar a clínica
       const { error: clinicError } = await supabase
         .from('clinics')
@@ -148,6 +201,11 @@ const ClinicManager: React.FC = () => {
         .eq('id', id);
         
       if (clinicError) throw clinicError;
+      
+      // Se a clínica era a ativa, precisamos limpar o estado
+      if (activeClinic?.id === id) {
+        setActiveClinic(clinics.find(c => c.id !== id) || null);
+      }
       
       toast.success('Clínica excluída com sucesso');
       refreshClinics();
