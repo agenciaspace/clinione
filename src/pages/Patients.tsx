@@ -12,6 +12,7 @@ import { Patient, PatientFormData } from '@/types';
 import { usePatients } from '@/hooks/usePatients';
 import { PatientsFilter } from '@/components/patients/PatientsFilter';
 import { PatientsTabContent } from '@/components/patients/PatientsTabContent';
+import { toast } from '@/components/ui/sonner';
 
 const Patients = () => {
   const { activeClinic } = useClinic();
