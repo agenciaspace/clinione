@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -75,6 +76,159 @@ const Settings = () => {
 
   const [verificationCode, setVerificationCode] = useState('');
   const [showVerificationInput, setShowVerificationInput] = useState(false);
+
+  // Handler functions for profile form
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      // Here you would update the user profile in your database
+      // Example: await supabase.from('profiles').upsert({ ...profileData, user_id: user.id });
+      
+      toast.success('Perfil atualizado com sucesso');
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error);
+      toast.error('Erro ao atualizar perfil');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler functions for password form
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPassword(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    if (password.new !== password.confirm) {
+      toast.error('As senhas não coincidem');
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      // Here you would update the user's password
+      // Example: await supabase.auth.updateUser({ password: password.new });
+      
+      toast.success('Senha atualizada com sucesso');
+      setPassword({
+        current: '',
+        new: '',
+        confirm: ''
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar senha:', error);
+      toast.error('Erro ao atualizar senha');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler functions for SMTP config
+  const handleSmtpChange = (e) => {
+    const { name, value } = e.target;
+    setSmtpConfig(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSaveSmtpConfig = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      // Save SMTP configuration to your database
+      // Example: await supabase.from('smtp_config').upsert({ ...smtpConfig, user_id: user.id });
+      
+      toast.success('Configurações SMTP salvas com sucesso');
+    } catch (error) {
+      console.error('Erro ao salvar configurações SMTP:', error);
+      toast.error('Erro ao salvar configurações');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTestSmtp = async () => {
+    setLoading(true);
+    try {
+      // Send test email using current SMTP config
+      // Example API call to test SMTP connection
+      
+      toast.success('Email de teste enviado com sucesso');
+    } catch (error) {
+      console.error('Erro ao testar SMTP:', error);
+      toast.error('Falha ao testar conexão SMTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler functions for WhatsApp
+  const handleWhatsAppChange = (e) => {
+    const { name, value } = e.target;
+    setWhatsAppConfig(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleConnectWhatsApp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      // Logic to send verification code to WhatsApp
+      // Example API call to send verification code
+      
+      toast.success('Código enviado para seu WhatsApp');
+      setShowVerificationInput(true);
+    } catch (error) {
+      console.error('Erro ao enviar código:', error);
+      toast.error('Falha ao enviar código de verificação');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyWhatsApp = async () => {
+    setLoading(true);
+    
+    try {
+      // Verify WhatsApp with code
+      // Example API call to verify code
+      
+      if (verificationCode === '123456') { // This is just a placeholder for demo
+        setWhatsAppConfig(prev => ({ ...prev, isVerified: true }));
+        toast.success('WhatsApp verificado com sucesso');
+        setShowVerificationInput(false);
+      } else {
+        toast.error('Código de verificação inválido');
+      }
+    } catch (error) {
+      console.error('Erro ao verificar código:', error);
+      toast.error('Falha ao verificar código');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Definição dos itens de abas para fácil renderização
   const tabItems = [
