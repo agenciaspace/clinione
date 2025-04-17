@@ -1,9 +1,11 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from './AuthContext';
 import { toast } from '@/components/ui/sonner';
 import { Clinic } from '@/types';
 import { setupWebhookRealtimeListeners } from '@/utils/webhook-service';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface ClinicContextType {
   clinics: Clinic[];
