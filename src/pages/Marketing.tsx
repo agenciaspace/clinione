@@ -18,7 +18,11 @@ import {
   FileBarChart,
   AlertCircle,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Instagram,
+  Facebook,
+  Twitter,
+  ArrowUpRight
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
@@ -109,6 +113,7 @@ const Marketing = () => {
     
     setIsSmtpLoading(true);
     try {
+      // Simulating API call for SMTP config
       setTimeout(() => {
         setSmtpConfig({
           host: 'smtp.example.com',
@@ -133,10 +138,47 @@ const Marketing = () => {
     
     setIsLoading(true);
     try {
+      // Simulating API call for campaigns
       setTimeout(() => {
-        setMarketingCampaigns([]);
+        // Mock data for demonstration
+        const mockCampaigns = [
+          {
+            id: '1',
+            name: 'Promoção de Verão',
+            status: 'active' as const,
+            type: 'email' as const,
+            sent: 150,
+            opened: 85,
+            clicked: 42,
+            date: '2025-01-15',
+            clinic_id: activeClinic.id
+          },
+          {
+            id: '2',
+            name: 'Recall de Pacientes',
+            status: 'scheduled' as const,
+            type: 'sms' as const,
+            sent: 0,
+            opened: 0,
+            clicked: 0,
+            date: '2025-05-10',
+            clinic_id: activeClinic.id
+          },
+          {
+            id: '3',
+            name: 'Newsletter Mensal',
+            status: 'completed' as const,
+            type: 'email' as const,
+            sent: 300,
+            opened: 210,
+            clicked: 75,
+            date: '2024-12-01',
+            clinic_id: activeClinic.id
+          }
+        ];
+        setMarketingCampaigns(mockCampaigns);
         setIsLoading(false);
-      }, 500);
+      }, 800);
     } catch (error) {
       console.error('Erro ao carregar campanhas:', error);
       toast.error('Não foi possível carregar as campanhas de marketing');
@@ -148,16 +190,18 @@ const Marketing = () => {
     if (!activeClinic) return;
     
     try {
+      // Simulating API call for marketing stats
       setTimeout(() => {
         setMarketingStats({
-          newPatients: 0,
-          websiteVisits: 0,
-          conversions: 0,
-          socialFollowers: 0
+          newPatients: 42,
+          websiteVisits: 1250,
+          conversions: 18,
+          socialFollowers: 345
         });
-      }, 500);
+      }, 700);
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
+      toast.error('Não foi possível carregar estatísticas de marketing');
     }
   };
 
@@ -184,11 +228,26 @@ const Marketing = () => {
     
     setIsLoading(true);
     try {
+      // Simulating API call for creating campaign
       setTimeout(() => {
+        // Create a new campaign and add it to the list
+        const newCampaign: MarketingCampaign = {
+          id: `new-${Date.now()}`,
+          name: campaignForm.name,
+          type: campaignForm.type as 'email' | 'sms',
+          status: 'scheduled',
+          sent: 0,
+          opened: 0,
+          clicked: 0,
+          date: campaignForm.date,
+          clinic_id: activeClinic.id
+        };
+        
+        setMarketingCampaigns(prev => [newCampaign, ...prev]);
         toast.success('Campanha criada com sucesso!');
         setIsDialogOpen(false);
         setIsLoading(false);
-        fetchCampaigns();
+        
         setCampaignForm({
           name: '',
           type: 'email',
@@ -219,6 +278,7 @@ const Marketing = () => {
     
     setIsSendingTest(true);
     try {
+      // Simulating API call for sending test email
       setTimeout(() => {
         toast.success(`Email de teste enviado com sucesso para ${testEmailAddress}`);
         setShowTestEmailDialog(false);
@@ -230,6 +290,28 @@ const Marketing = () => {
       toast.error('Falha ao enviar email de teste');
       setIsSendingTest(false);
     }
+  };
+
+  const handleActivateAutomation = (id: string) => {
+    toast.success('Automação ativada com sucesso!');
+    // Here you would update the state or make an API call to update the automation status
+  };
+
+  const handleDeactivateAutomation = (id: string) => {
+    toast.success('Automação desativada com sucesso!');
+    // Here you would update the state or make an API call to update the automation status
+  };
+
+  const handleDeleteCampaign = (id: string) => {
+    if (confirm('Tem certeza que deseja excluir esta campanha?')) {
+      setMarketingCampaigns(prev => prev.filter(campaign => campaign.id !== id));
+      toast.success('Campanha excluída com sucesso!');
+    }
+  };
+
+  const handleConnectSocial = (platform: string) => {
+    toast.success(`Conectando ao ${platform}...`);
+    // Here you would redirect to OAuth flow or show a dialog to connect the social account
   };
 
   return (
@@ -478,7 +560,7 @@ const Marketing = () => {
                         <TableRow>
                           <TableCell colSpan={6} className="h-24 text-center">
                             <div className="flex justify-center">
-                              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                             </div>
                           </TableCell>
                         </TableRow>
@@ -528,9 +610,14 @@ const Marketing = () => {
                               )}
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button variant="ghost" size="sm">
-                                Detalhes <ChevronRight className="ml-1 h-4 w-4" />
-                              </Button>
+                              <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="sm">
+                                  Detalhes <ChevronRight className="ml-1 h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600" onClick={() => handleDeleteCampaign(campaign.id)}>
+                                  Excluir
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))
@@ -619,7 +706,7 @@ const Marketing = () => {
                         </div>
                         <div className="flex items-center">
                           <Badge variant="outline" className="mr-2">Ativo</Badge>
-                          <Button variant="ghost" size="sm">Editar</Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeactivateAutomation('reminder')}>Desativar</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -637,7 +724,7 @@ const Marketing = () => {
                         </div>
                         <div className="flex items-center">
                           <Badge variant="outline" className="mr-2">Ativo</Badge>
-                          <Button variant="ghost" size="sm">Editar</Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeactivateAutomation('birthday')}>Desativar</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -655,7 +742,7 @@ const Marketing = () => {
                         </div>
                         <div className="flex items-center">
                           <Badge variant="outline" className="mr-2">Inativo</Badge>
-                          <Button variant="ghost" size="sm">Editar</Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleActivateAutomation('return')}>Ativar</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -673,7 +760,7 @@ const Marketing = () => {
                         </div>
                         <div className="flex items-center">
                           <Badge variant="outline" className="mr-2">Ativo</Badge>
-                          <Button variant="ghost" size="sm">Editar</Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeactivateAutomation('feedback')}>Desativar</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -700,7 +787,7 @@ const Marketing = () => {
                       </div>
                     </div>
                     <p className="text-xs text-green-600 mt-4">
-                      Comece a acompanhar suas estatísticas
+                      +12% em relação ao mês anterior
                     </p>
                   </CardContent>
                 </Card>
@@ -717,7 +804,7 @@ const Marketing = () => {
                       </div>
                     </div>
                     <p className="text-xs text-blue-600 mt-4">
-                      Configure o rastreamento do seu site
+                      +8% em relação ao mês anterior
                     </p>
                   </CardContent>
                 </Card>
@@ -734,7 +821,7 @@ const Marketing = () => {
                       </div>
                     </div>
                     <p className="text-xs text-purple-600 mt-4">
-                      Acompanhe suas conversões
+                      +5% em relação ao mês anterior
                     </p>
                   </CardContent>
                 </Card>
@@ -751,7 +838,7 @@ const Marketing = () => {
                       </div>
                     </div>
                     <p className="text-xs text-orange-600 mt-4">
-                      Conecte suas redes sociais
+                      +20% em relação ao mês anterior
                     </p>
                   </CardContent>
                 </Card>
@@ -781,10 +868,12 @@ const Marketing = () => {
                   <CardDescription>Gerencie a presença da clínica nas redes sociais</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Instagram</CardTitle>
+                        <CardTitle className="text-lg flex items-center">
+                          <Instagram className="mr-2 h-5 w-5" /> Instagram
+                        </CardTitle>
                       </CardHeader>
                       <CardContent className="py-2">
                         <p className="text-sm text-gray-500">
@@ -800,7 +889,7 @@ const Marketing = () => {
                         </p>
                       </CardContent>
                       <CardFooter>
-                        <Button variant="outline" className="w-full">
+                        <Button variant="outline" className="w-full" onClick={() => handleConnectSocial('Instagram')}>
                           {activeClinic.socialMedia?.instagram ? 'Gerenciar' : 'Conectar conta'}
                         </Button>
                       </CardFooter>
@@ -808,7 +897,9 @@ const Marketing = () => {
                     
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Facebook</CardTitle>
+                        <CardTitle className="text-lg flex items-center">
+                          <Facebook className="mr-2 h-5 w-5" /> Facebook
+                        </CardTitle>
                       </CardHeader>
                       <CardContent className="py-2">
                         <p className="text-sm text-gray-500">
@@ -824,8 +915,34 @@ const Marketing = () => {
                         </p>
                       </CardContent>
                       <CardFooter>
-                        <Button variant="outline" className="w-full">
+                        <Button variant="outline" className="w-full" onClick={() => handleConnectSocial('Facebook')}>
                           {activeClinic.socialMedia?.facebook ? 'Gerenciar' : 'Conectar conta'}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg flex items-center">
+                          <Twitter className="mr-2 h-5 w-5" /> Twitter
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="py-2">
+                        <p className="text-sm text-gray-500">
+                          {activeClinic.socialMedia?.twitter ? (
+                            <>
+                              @{activeClinic.socialMedia.twitter}
+                              <br />
+                              <span className="text-gray-400">Conecte para ver estatísticas</span>
+                            </>
+                          ) : (
+                            'Conta não conectada'
+                          )}
+                        </p>
+                      </CardContent>
+                      <CardFooter>
+                        <Button variant="outline" className="w-full" onClick={() => handleConnectSocial('Twitter')}>
+                          {activeClinic.socialMedia?.twitter ? 'Gerenciar' : 'Conectar conta'}
                         </Button>
                       </CardFooter>
                     </Card>
@@ -847,6 +964,35 @@ const Marketing = () => {
                   <Button className="mt-4">
                     <Plus className="h-4 w-4 mr-2" /> Nova publicação
                   </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Links Úteis</CardTitle>
+                  <CardDescription>Recursos para melhorar sua presença nas redes sociais</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    <li className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <span className="font-medium">Guia de marketing para clínicas</span>
+                      <Button variant="ghost" size="sm">
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Button>
+                    </li>
+                    <li className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <span className="font-medium">Templates para Instagram</span>
+                      <Button variant="ghost" size="sm">
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Button>
+                    </li>
+                    <li className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <span className="font-medium">Ideias de conteúdo para saúde</span>
+                      <Button variant="ghost" size="sm">
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  </ul>
                 </CardContent>
               </Card>
             </TabsContent>
