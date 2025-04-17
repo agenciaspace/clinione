@@ -51,7 +51,10 @@ export interface WebhookLogResponse {
  * @param webhookId The ID of the webhook endpoint (or 'legacy' for legacy webhook)
  * @returns Promise with webhook logs or error
  */
-export const loadWebhookLogs = async (clinicId: string, webhookId: string | null): Promise<WebhookLogResponse> => {
+export const loadWebhookLogs = async (
+  clinicId: string, 
+  webhookId: string | null
+): Promise<WebhookLogResponse> => {
   try {
     // If it's a legacy webhook, we need a different query
     if (webhookId === 'legacy') {
@@ -63,8 +66,7 @@ export const loadWebhookLogs = async (clinicId: string, webhookId: string | null
         .order('created_at', { ascending: false })
         .limit(20);
       
-      if (error) throw error;
-      return { data, error: null };
+      return { data, error };
     } else {
       // For specific webhook endpoints
       const { data, error } = await supabase
@@ -75,8 +77,7 @@ export const loadWebhookLogs = async (clinicId: string, webhookId: string | null
         .order('created_at', { ascending: false })
         .limit(20);
       
-      if (error) throw error;
-      return { data, error: null };
+      return { data, error };
     }
   } catch (error) {
     console.error('Error loading webhook logs:', error);
