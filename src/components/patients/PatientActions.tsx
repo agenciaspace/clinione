@@ -46,7 +46,7 @@ export const PatientActions = ({
     birthDate: '',
   });
 
-  // Atualiza o formulário quando o paciente ou o estado do diálogo muda
+  // Atualiza o formulário sempre que o diálogo for aberto
   useEffect(() => {
     if (isEditDialogOpen && patient) {
       setEditForm({
@@ -80,16 +80,30 @@ export const PatientActions = ({
       onUpdatePatient(updatedPatient);
     }
     
-    setIsEditDialogOpen(false);
+    handleCloseEditDialog();
     toast.success("Paciente atualizado com sucesso");
   };
 
   const handleOpenEditDialog = () => {
+    // Primeiro atualizamos o estado do formulário antes de abrir o diálogo
+    setEditForm({
+      name: patient.name || '',
+      email: patient.email || '',
+      phone: patient.phone || '',
+      birthDate: patient.birthDate || '',
+    });
     setIsEditDialogOpen(true);
   };
 
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false);
+    // Limpamos o formulário ao fechar
+    setEditForm({
+      name: '',
+      email: '',
+      phone: '',
+      birthDate: '',
+    });
   };
 
   return (
@@ -147,7 +161,11 @@ export const PatientActions = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={handleCloseEditDialog}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          handleCloseEditDialog();
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Editar paciente</DialogTitle>
