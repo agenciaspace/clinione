@@ -40,13 +40,13 @@ export const triggerWebhook = async (
 /**
  * Loads webhook logs for a specific endpoint or legacy webhook
  * @param clinicId The ID of the clinic
- * @param webhookId The ID of the webhook endpoint (or null for legacy webhook)
+ * @param webhookId The ID of the webhook endpoint (or 'legacy' for legacy webhook)
  * @returns Promise with webhook logs or error
  */
 export const loadWebhookLogs = async (clinicId: string, webhookId: string | null) => {
   try {
-    // If it's a legacy webhook (null webhookId), we need a different query
-    if (webhookId === 'legacy' || webhookId === null) {
+    // If it's a legacy webhook, we need a different query
+    if (webhookId === 'legacy') {
       const { data, error } = await supabase
         .from('webhook_logs')
         .select('*')

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -928,3 +929,45 @@ const WebhookSettings: React.FC = () => {
             <div className="space-y-2">
               <Label className="block mb-2">Filtrar Eventos (opcional)</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {Object.values(WebhookEventType).map(eventType => (
+                  <div key={eventType} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`event-${eventType}`} 
+                      checked={newEndpointEvents[eventType] || false}
+                      onCheckedChange={(checked) => {
+                        setNewEndpointEvents(prev => ({
+                          ...prev,
+                          [eventType]: !!checked
+                        }));
+                      }}
+                    />
+                    <Label 
+                      htmlFor={`event-${eventType}`}
+                      className="text-sm cursor-pointer"
+                    >
+                      {eventType}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEndpointDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={saveWebhookEndpoint} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : editingEndpoint ? 'Atualizar' : 'Criar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default WebhookSettings;
