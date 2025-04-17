@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -838,4 +839,34 @@ const Marketing = () => {
                   <CardDescription>Planeje e agende publicações para suas redes sociais</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                  <Calendar className="h-16
+                  <Calendar className="h-16 w-16 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium">Nenhuma publicação agendada</h3>
+                  <p className="text-gray-500 max-w-md mt-2">
+                    Você ainda não tem publicações agendadas. Clique no botão abaixo para criar sua primeira publicação.
+                  </p>
+                  <Button className="mt-4">
+                    <Plus className="h-4 w-4 mr-2" /> Nova publicação
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </>
+        ) : (
+          <Card className="mt-4">
+            <CardContent className="p-8 text-center">
+              <div className="mb-4">
+                <MessageSquare className="h-12 w-12 mx-auto text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium">Nenhuma clínica selecionada</h3>
+              <p className="text-gray-500 mt-2">
+                Selecione uma clínica para gerenciar as campanhas de marketing.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </Tabs>
+    </DashboardLayout>
+  );
+};
+
+export default Marketing;
