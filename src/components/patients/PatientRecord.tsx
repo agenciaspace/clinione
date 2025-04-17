@@ -12,9 +12,11 @@ import { NewRecordForm } from './records/NewRecordForm';
 import { RecordHistory } from './records/RecordHistory';
 import { RecordsList } from './records/RecordsList';
 import { PatientInfo } from './records/PatientInfo';
+import { Patient } from '@/types';
 
+// Interface que aceita tanto o tipo Patient quanto o tipo Tables<'patients'>
 interface PatientRecordProps {
-  patient: Tables<'patients'>;
+  patient: Patient | Tables<'patients'>;
   onClose: () => void;
   currentUser: any;
 }
@@ -25,14 +27,17 @@ export const PatientRecord: React.FC<PatientRecordProps> = ({ patient, onClose, 
   const [isViewingHistory, setIsViewingHistory] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
+  // Mapear o patient para o formato esperado pelo Supabase
+  const patientId = patient.id;
+
   // Consultar entradas de prontuário
   const { data: recordEntries = [], isLoading: isLoadingRecords } = useQuery({
-    queryKey: ['patientRecords', patient.id],
+    queryKey: ['patientRecords', patientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('patient_records')
         .select('*')
-        .eq('patient_id', patient.id)
+        .eq('patient_id', patientId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -72,7 +77,7 @@ export const PatientRecord: React.FC<PatientRecordProps> = ({ patient, onClose, 
   const createRecordMutation = useMutation({
     mutationFn: async ({ content }: { content: string }) => {
       const newRecord = {
-        patient_id: patient.id,
+        patient_id: patientId,
         content,
         created_by: currentUser?.id || 'sistema',
         created_by_name: currentUser?.email?.split('@')[0] || 'Sistema'
@@ -87,7 +92,7 @@ export const PatientRecord: React.FC<PatientRecordProps> = ({ patient, onClose, 
       return data[0];
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['patientRecords', patient.id] });
+      queryClient.invalidateQueries({ queryKey: ['patientRecords', patientId] });
       toast.success('Prontuário atualizado com sucesso');
     },
     onError: (error) => {
@@ -130,7 +135,7 @@ export const PatientRecord: React.FC<PatientRecordProps> = ({ patient, onClose, 
       return data[0];
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['patientRecords', patient.id] });
+      queryClient.invalidateQueries({ queryKey: ['patientRecords', patientId] });
       queryClient.invalidateQueries({ queryKey: ['patientRecordAudit', activeEntry?.id] });
       toast.success('Prontuário atualizado com sucesso');
       setActiveEntry(null);
@@ -169,7 +174,7 @@ export const PatientRecord: React.FC<PatientRecordProps> = ({ patient, onClose, 
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['patientRecords', patient.id] });
+      queryClient.invalidateQueries({ queryKey: ['patientRecords', patientId] });
       toast.success('Entrada removida com sucesso');
       setActiveEntry(null);
       setIsConfirmDialogOpen(false);
