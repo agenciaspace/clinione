@@ -98,7 +98,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           
           if (status === 'SUBSCRIBED') {
             console.log('[WEBHOOK] Successfully subscribed to realtime webhook events');
-            toast.success('Conexão de webhooks estabelecida');
+            // Removed the success toast to prevent user confusion
           } else if (status === 'CHANNEL_ERROR') {
             console.error('[WEBHOOK] Error subscribing to webhook channel');
             toast.error('Erro na conexão de webhooks, tentando reconectar...');
