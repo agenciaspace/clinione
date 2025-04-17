@@ -24,6 +24,12 @@ interface WebhookEvent {
   http_status: number | null;
   last_response: string | null;
   attempts: number;
+  clinic_id: string;
+  event_version: string;
+  payload: any;
+  trigger_source: string;
+  updated_at: string;
+  created_at: string;
 }
 
 interface WebhookEndpoint {
@@ -38,14 +44,18 @@ interface WebhookEndpoint {
 
 interface WebhookLog {
   id: string;
-  event_id: string;
-  webhook_id: string | null;
-  clinic_id: string;
+  event_type: string;
   status: string;
-  response_code: number | null;
-  response_body: string | null;
-  retry_count: number;
-  next_retry_at: string | null;
+  timestamp: string;
+  last_attempt: string | null;
+  http_status: number | null;
+  last_response: string | null;
+  attempts: number;
+  clinic_id: string;
+  event_version: string;
+  payload: any;
+  trigger_source: string;
+  updated_at: string;
   created_at: string;
 }
 
@@ -96,7 +106,7 @@ const WebhookSettings: React.FC = () => {
           .limit(20);
         
         if (error) throw error;
-        setWebhookLogs(data || []);
+        setWebhookLogs(data as WebhookLog[] || []);
       } else {
         const { data, error } = await supabase
           .from('webhook_events')
@@ -106,7 +116,7 @@ const WebhookSettings: React.FC = () => {
           .limit(20);
         
         if (error) throw error;
-        setWebhookLogs(data || []);
+        setWebhookLogs(data as WebhookLog[] || []);
       }
     } catch (error) {
       console.error('Error loading webhook logs:', error);

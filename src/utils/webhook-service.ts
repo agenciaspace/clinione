@@ -64,23 +64,22 @@ export const loadWebhookLogs = async (
   try {
     // If it's a legacy webhook, we need a different query
     if (webhookId === 'legacy') {
-      // Check for event_id instead of clinic_id since we're seeing that error in the logs
+      // Use webhook_events table instead of webhook_logs for consistency
       const { data, error } = await supabase
-        .from('webhook_logs')
+        .from('webhook_events')
         .select('*')
-        .is('webhook_id', null)
-        .eq('event_id', clinicId)
-        .order('created_at', { ascending: false })
+        .eq('clinic_id', clinicId)
+        .order('timestamp', { ascending: false })
         .limit(20);
       
       return { data, error };
     } else {
-      // For specific webhook endpoints
+      // For specific webhook endpoints, also using webhook_events
       const { data, error } = await supabase
-        .from('webhook_logs')
+        .from('webhook_events')
         .select('*')
-        .eq('webhook_id', webhookId)
-        .order('created_at', { ascending: false })
+        .eq('clinic_id', clinicId)
+        .order('timestamp', { ascending: false })
         .limit(20);
       
       return { data, error };
