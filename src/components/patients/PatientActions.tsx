@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, FileText, Edit, UserX, UserCheck, Trash2, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,11 +40,23 @@ export const PatientActions = ({
 }: PatientActionsProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
-    name: patient.name,
-    email: patient.email || '',
-    phone: patient.phone || '',
-    birthDate: patient.birthDate || '',
+    name: '',
+    email: '',
+    phone: '',
+    birthDate: '',
   });
+
+  // Atualiza o formulário quando o paciente ou o estado do diálogo muda
+  useEffect(() => {
+    if (isEditDialogOpen && patient) {
+      setEditForm({
+        name: patient.name || '',
+        email: patient.email || '',
+        phone: patient.phone || '',
+        birthDate: patient.birthDate || '',
+      });
+    }
+  }, [isEditDialogOpen, patient]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -72,6 +84,14 @@ export const PatientActions = ({
     toast.success("Paciente atualizado com sucesso");
   };
 
+  const handleOpenEditDialog = () => {
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -95,7 +115,7 @@ export const PatientActions = ({
           </DropdownMenuItem>
           <DropdownMenuItem 
             className="cursor-pointer"
-            onClick={() => setIsEditDialogOpen(true)}
+            onClick={handleOpenEditDialog}
           >
             <Edit className="mr-2 h-4 w-4" />
             <span>Editar</span>
@@ -127,7 +147,7 @@ export const PatientActions = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={handleCloseEditDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Editar paciente</DialogTitle>
@@ -180,7 +200,7 @@ export const PatientActions = ({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button variant="outline" onClick={handleCloseEditDialog}>
               Cancelar
             </Button>
             <Button onClick={handleSaveEdit}>Salvar alterações</Button>
