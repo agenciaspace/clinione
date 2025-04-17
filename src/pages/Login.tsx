@@ -89,7 +89,7 @@ const Login = () => {
     <div className="flex min-h-screen bg-healthblue-50">
       <div className="flex-1 hidden lg:block bg-healthblue-600 relative">
         <div className="absolute inset-0 flex flex-col justify-center items-center text-white p-12">
-          <h1 className="text-4xl font-bold mb-6">Clínica Digital Hub</h1>
+          <h1 className="text-4xl font-bold mb-6">CliniOne</h1>
           <p className="text-xl mb-8 max-w-md text-center">
             Uma plataforma completa para gestão da sua clínica e presença online.
           </p>
