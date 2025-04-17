@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useClinic } from '@/contexts/ClinicContext';
-import { WebhookEventType, triggerWebhook, loadWebhookLogs } from '@/utils/webhook-service';
+import { WebhookEventType, triggerWebhook, loadWebhookLogs, WebhookLogResponse } from '@/utils/webhook-service';
 import { Loader2, AlertCircle, CheckCircle2, RefreshCw, Send, Plus, Trash2, Code, Copy, Pencil, Eye, EyeOff } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -162,7 +162,7 @@ const WebhookSettings: React.FC = () => {
     
     setIsLoadingLogs(true);
     try {
-      const result = await loadWebhookLogs(activeClinic.id, activeTab);
+      const result: WebhookLogResponse = await loadWebhookLogs(activeClinic.id, activeTab);
       
       if (result.error) throw result.error;
       setWebhookLogs(result.data || []);
