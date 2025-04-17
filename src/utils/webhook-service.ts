@@ -15,14 +15,20 @@ export const triggerWebhook = async (
   triggerSource: 'ui' | 'api' | 'automation' | 'system' = 'ui'
 ): Promise<{ success: boolean; message: string; eventId?: string }> => {
   try {
-    const { data, error } = await supabase.functions.invoke('webhook-trigger', {
-      body: {
-        event_type: eventType,
-        clinic_id: clinicId,
-        payload,
-        trigger_source: triggerSource
-      }
-    });
+interface WebhookTriggerResponse {
+  success: boolean;
+  message: string;
+  eventId?: string;
+}
+
+const { data, error } = await supabase.functions.invoke<WebhookTriggerResponse>('webhook-trigger', {
+  body: {
+    event_type: eventType,
+    clinic_id: clinicId,
+    payload,
+    trigger_source: triggerSource
+  }
+});
 
     if (error) {
       console.error('Error triggering webhook:', error);
