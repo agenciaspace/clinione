@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ const LandingPage = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <img 
-              src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
+              src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
               alt="CliniOne Logo" 
               className="h-10 w-auto logo-glow"
             />

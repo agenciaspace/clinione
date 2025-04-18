@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -89,7 +90,7 @@ const Login = () => {
         <div className="absolute inset-0 flex flex-col justify-center items-center text-white p-12">
           <div className="flex items-center mb-6">
             <img 
-              src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
+              src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
               alt="CliniOne Logo" 
               className="h-16 w-auto logo-glow"
             />
@@ -123,7 +124,7 @@ const Login = () => {
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <img 
-                src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
+                src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
                 alt="CliniOne Logo" 
                 className="h-16 w-auto logo-glow"
               />
