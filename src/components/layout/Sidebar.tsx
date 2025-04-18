@@ -62,8 +62,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
   return (
     <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm h-full">
       <div className="px-6 py-6">
-        <h2 className="text-2xl font-bold text-healthblue-600">
-          CliniOne
+        <h2 className="text-2xl font-bold text-primary flex items-center gap-2">
+          <img 
+            src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
+            alt="CliniOne Logo" 
+            className="h-8 w-auto logo-glow"
+          />
+          <span>clini.one</span>
         </h2>
       </div>
 

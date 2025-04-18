@@ -47,8 +47,13 @@ export const Header: React.FC = () => {
 
         {/* Mobile Logo */}
         <div className="md:hidden flex items-center">
-          <h2 className="text-xl font-bold text-healthblue-600">
-            CliniOne
+          <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+            <img 
+              src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
+              alt="CliniOne Logo" 
+              className="h-6 w-auto logo-glow"
+            />
+            <span>clini.one</span>
           </h2>
         </div>
 

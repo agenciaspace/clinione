@@ -5,35 +5,35 @@
 
 @layer base {
   :root {
-    --background: 210 50% 99%;
+    --background: 0 0% 100%;
     --foreground: 222 47% 11%;
-
+    
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-
+    
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-
+    
     --primary: 210 100% 50%;
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 160 84% 39%;
+    
+    --secondary: 210 100% 50%;
     --secondary-foreground: 210 40% 98%;
-
+    
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 16% 47%;
-
-    --accent: 230 100% 97%;
+    
+    --accent: 210 100% 97%;
     --accent-foreground: 222 47% 11%;
-
+    
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-
+    
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 222 84% 70%;
-
-    --radius: 0.5rem;
+    --ring: 210 100% 50%;
+    
+    --radius: 0.75rem;
 
     --sidebar-background: 210 100% 50%;
     --sidebar-foreground: 0 0% 100%;
@@ -50,7 +50,7 @@
   * {
     @apply border-border;
   }
-
+  
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -59,10 +59,14 @@
 
 @layer components {
   .btn-menu {
-    @apply flex items-center p-3 my-1 gap-3 rounded-md hover:bg-healthblue-100 transition-colors text-healthblue-950;
+    @apply flex items-center p-3 my-1 gap-3 rounded-md hover:bg-accent transition-colors text-foreground;
   }
 
   .btn-menu.active {
-    @apply bg-healthblue-50 font-medium;
+    @apply bg-accent font-medium text-primary;
+  }
+
+  .logo-glow {
+    filter: drop-shadow(0 0 10px rgba(0, 157, 255, 0.5));
   }
 }
