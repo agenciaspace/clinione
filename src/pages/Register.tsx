@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,12 +32,11 @@ const Register = () => {
     
     try {
       await register(formData.name, formData.email, formData.password, 'patient');
-      // Add the user role to the user_roles table
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         await supabase.from('user_roles').insert({
           user_id: session.user.id,
-          role: 'patient' // Default role for new users
+          role: 'patient'
         });
       }
       navigate('/dashboard');
@@ -59,8 +57,8 @@ const Register = () => {
         <div className="absolute inset-0 bg-[#FFD600]" />
         <div className="relative z-20 flex items-center text-lg font-medium">
           <img 
-            src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
-            alt="Logo" 
+            src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
+            alt="Clini.One Logo" 
             className="h-10 w-auto mr-2"
           />
         </div>
@@ -79,8 +77,8 @@ const Register = () => {
             <CardHeader className="space-y-0.5">
               <div className="flex justify-center mb-2">
                 <img 
-                  src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
-                  alt="Logo" 
+                  src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
+                  alt="Clini.One Logo" 
                   className="h-12 w-auto"
                 />
               </div>

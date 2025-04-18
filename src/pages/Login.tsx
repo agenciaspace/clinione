@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -89,8 +88,8 @@ const Login = () => {
       <div className="flex-1 hidden lg:block bg-[#FFD600] relative">
         <div className="absolute inset-0 flex flex-col justify-center items-center text-black p-12">
           <img 
-            src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
-            alt="Logo" 
+            src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
+            alt="Clini.One Logo" 
             className="h-16 w-auto"
           />
           <p className="text-xl mb-8 max-w-md text-center mt-8">
@@ -122,8 +121,8 @@ const Login = () => {
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <img 
-                src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
-                alt="Logo" 
+                src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
+                alt="Clini.One Logo" 
                 className="h-16 w-auto"
               />
             </div>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -59,8 +60,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
     <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm h-full">
       <div className="px-6 py-6">
         <img 
-          src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
-          alt="Logo" 
+          src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
+          alt="Clini.One Logo" 
           className="h-8 w-auto"
         />
       </div>

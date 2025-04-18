@@ -32,8 +32,8 @@ const LandingPage = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <img 
-              src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
-              alt="Logo" 
+              src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
+              alt="Clini.One Logo" 
               className="h-10 w-auto"
             />
           </div>

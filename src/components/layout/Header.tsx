@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useClinic } from '../../contexts/ClinicContext';
@@ -48,8 +47,8 @@ export const Header: React.FC = () => {
         {/* Mobile Logo */}
         <div className="md:hidden flex items-center">
           <img 
-            src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
-            alt="Logo" 
+            src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
+            alt="Clini.One Logo" 
             className="h-6 w-auto"
           />
         </div>
