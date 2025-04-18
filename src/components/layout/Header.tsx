@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useClinic } from '../../contexts/ClinicContext';
@@ -48,10 +49,11 @@ export const Header: React.FC = () => {
         <div className="md:hidden flex items-center">
           <h2 className="text-xl font-bold text-primary flex items-center gap-2">
             <img 
-              src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
+              src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
               alt="CliniOne Logo" 
               className="h-6 w-auto logo-glow"
             />
+            <span>clini.one</span>
           </h2>
         </div>
 
