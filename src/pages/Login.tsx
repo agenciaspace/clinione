@@ -89,9 +89,9 @@ const Login = () => {
       <div className="flex-1 hidden lg:block bg-[#FFD600] relative">
         <div className="absolute inset-0 flex flex-col justify-center items-center text-black p-12">
           <img 
-            src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
+            src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
             alt="Logo" 
-            className="h-16 w-auto logo-flat"
+            className="h-16 w-auto"
           />
           <p className="text-xl mb-8 max-w-md text-center mt-8">
             Uma plataforma completa para gestão da sua clínica e presença online.
@@ -122,9 +122,9 @@ const Login = () => {
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <img 
-                src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
+                src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
                 alt="Logo" 
-                className="h-16 w-auto logo-flat"
+                className="h-16 w-auto"
               />
             </div>
             <CardTitle className="text-2xl">Acesse sua conta</CardTitle>

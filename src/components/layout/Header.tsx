@@ -48,9 +48,9 @@ export const Header: React.FC = () => {
         {/* Mobile Logo */}
         <div className="md:hidden flex items-center">
           <img 
-            src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
+            src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
             alt="Logo" 
-            className="h-6 w-auto logo-flat"
+            className="h-6 w-auto"
           />
         </div>
 

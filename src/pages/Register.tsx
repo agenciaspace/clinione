@@ -59,9 +59,9 @@ const Register = () => {
         <div className="absolute inset-0 bg-[#FFD600]" />
         <div className="relative z-20 flex items-center text-lg font-medium">
           <img 
-            src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
+            src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
             alt="Logo" 
-            className="h-10 w-auto logo-flat mr-2"
+            className="h-10 w-auto mr-2"
           />
         </div>
         <div className="relative z-20 mt-auto">
@@ -79,9 +79,9 @@ const Register = () => {
             <CardHeader className="space-y-0.5">
               <div className="flex justify-center mb-2">
                 <img 
-                  src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
+                  src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
                   alt="Logo" 
-                  className="h-12 w-auto logo-flat"
+                  className="h-12 w-auto"
                 />
               </div>
               <CardTitle className="text-2xl">Crie sua conta</CardTitle>

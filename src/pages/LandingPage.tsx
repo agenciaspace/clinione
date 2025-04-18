@@ -28,18 +28,16 @@ const LandingPage = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <img 
-              src="/lovable-uploads/6daac9dd-5fbc-4b9f-8c13-0e27e740410c.png" 
+              src="/lovable-uploads/9dfe598d-8f37-47e7-971b-4690dde9766f.png" 
               alt="Logo" 
-              className="h-10 w-auto logo-glow"
+              className="h-10 w-auto"
             />
           </div>
           
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-3 lg:space-x-6">
             <a href="#features" className="text-gray-700 hover:text-healthblue-600 font-medium">Funcionalidades</a>
             <a href="#benefits" className="text-gray-700 hover:text-healthblue-600 font-medium">Benefícios</a>
@@ -50,7 +48,6 @@ const LandingPage = () => {
             </Link>
           </nav>
           
-          {/* Mobile Navigation */}
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
