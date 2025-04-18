@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
@@ -36,7 +35,9 @@ export const usePatients = (clinicId?: string) => {
         lastVisit: patient.last_visit
       }));
     },
-    enabled: !!clinicId
+    enabled: !!clinicId,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 
   const addPatientMutation = useMutation({
@@ -62,7 +63,6 @@ export const usePatients = (clinicId?: string) => {
     mutationFn: async (updatePatient: Patient) => {
       console.log("Dados enviados para atualização:", updatePatient);
       
-      // Preparar os dados para o formato esperado pelo Supabase
       const supabaseFormat = {
         name: updatePatient.name,
         email: updatePatient.email,
@@ -85,7 +85,6 @@ export const usePatients = (clinicId?: string) => {
       return data[0];
     },
     onSuccess: (data, variables) => {
-      // Atualizar o cache otimisticamente
       queryClient.setQueryData(['patients', clinicId], (oldData: Patient[] = []) => {
         return oldData.map(patient => 
           patient.id === variables.id ? 
@@ -106,7 +105,6 @@ export const usePatients = (clinicId?: string) => {
       console.error("Erro ao atualizar paciente:", error);
       toast.error("Erro ao atualizar paciente. Verifique os dados e tente novamente.");
       
-      // Recarregar os dados do servidor em caso de erro
       queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
     }
   });
@@ -122,7 +120,6 @@ export const usePatients = (clinicId?: string) => {
       return id;
     },
     onSuccess: (id) => {
-      // Atualizar o cache removendo o paciente
       queryClient.setQueryData(['patients', clinicId], (oldData: Patient[] = []) => {
         return oldData.filter(patient => patient.id !== id);
       });
@@ -133,7 +130,6 @@ export const usePatients = (clinicId?: string) => {
       console.error("Erro ao remover paciente:", error);
       toast.error("Erro ao remover paciente");
       
-      // Recarregar os dados do servidor em caso de erro
       queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
     }
   });
@@ -149,7 +145,6 @@ export const usePatients = (clinicId?: string) => {
       return { id, status };
     },
     onSuccess: (data) => {
-      // Atualizar o cache otimisticamente
       queryClient.setQueryData(['patients', clinicId], (oldData: Patient[] = []) => {
         return oldData.map(patient => 
           patient.id === data.id ? { ...patient, status: data.status } : patient
@@ -162,7 +157,6 @@ export const usePatients = (clinicId?: string) => {
       console.error("Erro ao alterar status do paciente:", error);
       toast.error("Erro ao alterar status do paciente");
       
-      // Recarregar os dados do servidor em caso de erro
       queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
     }
   });
