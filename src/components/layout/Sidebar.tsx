@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
         <img 
           src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
           alt="Clini.One Logo" 
-          className="h-12 w-auto"  // Aumentei de h-8 para h-12
+          className="h-8 w-auto"
         />
       </div>
 
