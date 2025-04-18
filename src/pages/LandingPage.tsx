@@ -32,6 +32,11 @@ const LandingPage = () => {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
+            <img 
+              src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
+              alt="CliniOne Logo" 
+              className="h-10 w-auto logo-glow mr-3"
+            />
             <div className="text-xl md:text-2xl font-bold text-healthblue-600">CliniOne</div>
           </div>
           
