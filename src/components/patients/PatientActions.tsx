@@ -21,6 +21,7 @@ export const PatientActions = ({
   onUpdatePatient,
 }: PatientActionsProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     email: '',
@@ -28,7 +29,7 @@ export const PatientActions = ({
     birthDate: '',
   });
 
-  // Inicializa o formulário com os dados do paciente sempre que o paciente ou o estado do diálogo mudar
+  // Inicializa o formulário quando o diálogo é aberto
   useEffect(() => {
     if (isEditDialogOpen && patient) {
       setEditForm({
@@ -48,36 +49,50 @@ export const PatientActions = ({
     }));
   };
 
-  const handleSaveEdit = () => {
-    if (!onUpdatePatient) return;
+  const handleSaveEdit = async () => {
+    if (!onUpdatePatient) {
+      toast.error("Função de atualização não disponível");
+      return;
+    }
     
-    const updatedPatient = {
-      ...patient,
-      name: editForm.name,
-      email: editForm.email,
-      phone: editForm.phone,
-      birthDate: editForm.birthDate,
-    };
-    
-    onUpdatePatient(updatedPatient);
-    handleCloseEditDialog();
-    toast.success("Paciente atualizado com sucesso");
+    try {
+      setIsSubmitting(true);
+      
+      const updatedPatient = {
+        ...patient,
+        name: editForm.name,
+        email: editForm.email,
+        phone: editForm.phone,
+        birthDate: editForm.birthDate,
+      };
+      
+      await onUpdatePatient(updatedPatient);
+      toast.success("Paciente atualizado com sucesso");
+      handleCloseEditDialog();
+    } catch (error) {
+      console.error("Erro ao atualizar paciente:", error);
+      toast.error("Erro ao atualizar paciente. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleOpenEditDialog = () => {
-    // Não precisamos inicializar o formulário aqui, pois o useEffect já faz isso
     setIsEditDialogOpen(true);
   };
 
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false);
-    // Limpa o formulário ao fechar para garantir que na próxima abertura ele será reinicializado
-    setEditForm({
-      name: '',
-      email: '',
-      phone: '',
-      birthDate: '',
-    });
+    
+    // Limpamos o formulário apenas ao fechar completamente
+    setTimeout(() => {
+      setEditForm({
+        name: '',
+        email: '',
+        phone: '',
+        birthDate: '',
+      });
+    }, 300); // Aguarda a animação de fechamento terminar
   };
 
   return (
@@ -94,16 +109,15 @@ export const PatientActions = ({
         open={isEditDialogOpen}
         onOpenChange={(open) => {
           if (open) {
-            // Se estiver abrindo, atualize o estado
             setIsEditDialogOpen(true);
           } else {
-            // Se estiver fechando, use a função de fechamento que limpa o formulário
             handleCloseEditDialog();
           }
         }}
         formData={editForm}
         onInputChange={handleInputChange}
         onSave={handleSaveEdit}
+        isLoading={isSubmitting}
       />
     </>
   );
