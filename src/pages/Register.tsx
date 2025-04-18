@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -59,7 +60,7 @@ const Register = () => {
           <img 
             src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
             alt="Clini.One Logo" 
-            className="h-10 w-auto mr-2"
+            className="h-16 w-auto min-h-[64px] min-w-[200px] max-w-[250px] object-contain"
           />
         </div>
         <div className="relative z-20 mt-auto">
@@ -79,7 +80,7 @@ const Register = () => {
                 <img 
                   src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
                   alt="Clini.One Logo" 
-                  className="h-12 w-auto"
+                  className="h-14 w-auto min-h-[56px] min-w-[175px] max-w-[225px] object-contain"
                 />
               </div>
               <CardTitle className="text-2xl">Crie sua conta</CardTitle>

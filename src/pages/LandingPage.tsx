@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,7 @@ const LandingPage = () => {
             <img 
               src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
               alt="Clini.One Logo" 
-              className="h-10 w-auto"
+              className="h-12 w-auto min-h-[48px] min-w-[150px] max-w-[200px] object-contain sm:h-16 sm:min-h-[64px] sm:min-w-[200px]"
             />
           </div>
           
