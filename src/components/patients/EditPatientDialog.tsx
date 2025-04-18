@@ -54,6 +54,8 @@ export const EditPatientDialog = ({
                 placeholder="Nome do paciente" 
                 required
                 disabled={isLoading}
+                className="w-full"
+                autoComplete="off"
               />
             </div>
             <div className="grid gap-2">
@@ -66,6 +68,8 @@ export const EditPatientDialog = ({
                 type="email" 
                 placeholder="email@exemplo.com"
                 disabled={isLoading}
+                className="w-full"
+                autoComplete="off"
               />
             </div>
             <div className="grid gap-2">
@@ -77,6 +81,8 @@ export const EditPatientDialog = ({
                 onChange={onInputChange}
                 placeholder="(00) 00000-0000"
                 disabled={isLoading}
+                className="w-full"
+                autoComplete="off"
               />
             </div>
             <div className="grid gap-2">
@@ -88,6 +94,7 @@ export const EditPatientDialog = ({
                 onChange={onInputChange}
                 type="date"
                 disabled={isLoading}
+                className="w-full"
               />
             </div>
           </div>

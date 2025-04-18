@@ -29,14 +29,19 @@ export const PatientActions = ({
     birthDate: '',
   });
 
-  // Inicializa o formulário quando o diálogo é aberto
+  // Inicializa o formulário quando o diálogo é aberto ou o paciente muda
   useEffect(() => {
     if (isEditDialogOpen && patient) {
+      // Certifique-se de que a data está no formato correto para o input type="date"
+      const formattedDate = patient.birthDate 
+        ? patient.birthDate.split('T')[0] 
+        : '';
+      
       setEditForm({
         name: patient.name || '',
         email: patient.email || '',
         phone: patient.phone || '',
-        birthDate: patient.birthDate ? patient.birthDate.split('T')[0] : '',
+        birthDate: formattedDate,
       });
     }
   }, [patient, isEditDialogOpen]);
@@ -55,6 +60,7 @@ export const PatientActions = ({
       return;
     }
     
+    // Validação
     if (!editForm.name.trim()) {
       toast.error("O nome do paciente é obrigatório");
       return;
@@ -63,14 +69,16 @@ export const PatientActions = ({
     try {
       setIsSubmitting(true);
       
+      // Certifique-se de que todos os campos estão devidamente formatados
       const updatedPatient = {
         ...patient,
         name: editForm.name.trim(),
-        email: editForm.email.trim(),
-        phone: editForm.phone.trim(),
-        birthDate: editForm.birthDate,
+        email: editForm.email?.trim() || '',
+        phone: editForm.phone?.trim() || '',
+        birthDate: editForm.birthDate || patient.birthDate,
       };
       
+      // Enviar para o servidor
       await onUpdatePatient(updatedPatient);
       toast.success("Paciente atualizado com sucesso");
       handleCloseEditDialog();
@@ -89,7 +97,7 @@ export const PatientActions = ({
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false);
     
-    // Limpamos o formulário após um pequeno delay para garantir uma transição suave
+    // Limpamos o formulário após fechar o diálogo
     setTimeout(() => {
       setEditForm({
         name: '',
@@ -98,7 +106,7 @@ export const PatientActions = ({
         birthDate: '',
       });
       setIsSubmitting(false);
-    }, 300);
+    }, 100);
   };
 
   return (
