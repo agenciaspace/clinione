@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useClinic } from '../../contexts/ClinicContext';
@@ -47,9 +48,9 @@ export const Header: React.FC = () => {
         {/* Mobile Logo */}
         <div className="md:hidden flex items-center">
           <img 
-            src="/lovable-uploads/6daac9dd-5fbc-4b9f-8c13-0e27e740410c.png" 
+            src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
             alt="Logo" 
-            className="h-6 w-auto logo-glow"
+            className="h-6 w-auto logo-flat"
           />
         </div>
 
@@ -131,7 +132,7 @@ export const Header: React.FC = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="p-1 flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-healthblue-100 flex items-center justify-center text-healthblue-700 font-medium">
+                <div className="w-8 h-8 rounded-full bg-[#FFFAE6] flex items-center justify-center text-[#FFD600] font-medium">
                   {user?.name?.charAt(0) || 'U'}
                 </div>
                 <span className="hidden md:inline text-sm font-medium">

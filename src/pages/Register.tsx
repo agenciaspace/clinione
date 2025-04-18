@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -50,26 +51,18 @@ const Register = () => {
   };
 
   return (
-    <div className="container relative flex h-screen w-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+    <div className="container relative flex h-screen w-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0 bg-[#FFFAE6]">
       <Link to="/login" className="absolute left-4 top-4 md:left-8 md:top-8 text-sm underline underline-offset-4">
         Já tem uma conta?
       </Link>
-      <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex">
-        <div className="absolute inset-0 bg-zinc-900" />
+      <div className="relative hidden h-full flex-col p-10 text-black lg:flex bg-[#FFD600]">
+        <div className="absolute inset-0 bg-[#FFD600]" />
         <div className="relative z-20 flex items-center text-lg font-medium">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mr-2 h-6 w-6"
-          >
-            <path d="M15 6v12a3 3 0 1 1-6 0V6a3 3 0 1 1 6 0z" />
-          </svg>
-          CliniOne
+          <img 
+            src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
+            alt="Logo" 
+            className="h-10 w-auto logo-flat mr-2"
+          />
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
@@ -77,7 +70,6 @@ const Register = () => {
               &ldquo;Gerencie sua clínica de forma eficiente e ofereça o melhor
               cuidado aos seus pacientes.&rdquo;
             </p>
-            <footer className="text-sm">CliniOne</footer>
           </blockquote>
         </div>
       </div>
@@ -85,6 +77,13 @@ const Register = () => {
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col space-y-2 text-center">
             <CardHeader className="space-y-0.5">
+              <div className="flex justify-center mb-2">
+                <img 
+                  src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
+                  alt="Logo" 
+                  className="h-12 w-auto logo-flat"
+                />
+              </div>
               <CardTitle className="text-2xl">Crie sua conta</CardTitle>
               <CardDescription>
                 Entre com seu email e senha para começar
@@ -131,7 +130,11 @@ const Register = () => {
                   />
                 </div>
               </div>
-              <Button type="submit" disabled={isLoading} className="w-full mt-4">
+              <Button 
+                type="submit" 
+                disabled={isLoading} 
+                className="w-full mt-4 bg-[#FFD600] text-black hover:bg-[#E6C000]"
+              >
                 {isLoading ? 'Criando conta...' : 'Criar conta'}
               </Button>
               {error && <p className="text-red-500 mt-2">{error}</p>}

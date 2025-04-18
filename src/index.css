@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,16 +16,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
     
-    --primary: 210 100% 50%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 52 100% 50%;
+    --primary-foreground: 0 0% 0%;
     
-    --secondary: 210 100% 50%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 52 100% 50%;
+    --secondary-foreground: 0 0% 0%;
     
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 16% 47%;
     
-    --accent: 210 100% 97%;
+    --accent: 53 100% 97%;
     --accent-foreground: 222 47% 11%;
     
     --destructive: 0 84% 60%;
@@ -31,18 +33,18 @@
     
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 210 100% 50%;
+    --ring: 52 100% 50%;
     
     --radius: 0.75rem;
 
-    --sidebar-background: 210 100% 50%;
-    --sidebar-foreground: 0 0% 100%;
+    --sidebar-background: 52 100% 50%;
+    --sidebar-foreground: 0 0% 0%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 210 100% 50%;
-    --sidebar-accent: 208 100% 97%;
-    --sidebar-accent-foreground: 210 100% 50%;
-    --sidebar-border: 213 100% 96%;
-    --sidebar-ring: 222 84% 70%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 53 100% 97%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 53 100% 97%;
+    --sidebar-ring: 52 100% 50%;
   }
 }
 
@@ -52,7 +54,7 @@
   }
   
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
@@ -66,7 +68,8 @@
     @apply bg-accent font-medium text-primary;
   }
 
-  .logo-glow {
-    filter: drop-shadow(0 0 10px rgba(0, 157, 255, 0.5));
+  .logo-flat {
+    /* Remover efeitos anteriores e manter estilo flat */
+    filter: none;
   }
 }

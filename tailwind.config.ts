@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -25,12 +26,12 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))"
+          DEFAULT: "#FFD600",
+          foreground: "#000000"
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))"
+          DEFAULT: "#FFD600",
+          foreground: "#000000"
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -53,40 +54,40 @@ export default {
           foreground: "hsl(var(--card-foreground))"
         },
         sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))"
+          DEFAULT: "#FFD600",
+          foreground: "#000000",
+          primary: "#FFFFFF",
+          "primary-foreground": "#000000",
+          accent: "#FFFAE6",
+          "accent-foreground": "#000000",
+          border: "#FFF9CC",
+          ring: "#FFD600"
         },
         healthblue: {
-          50: "#EDF5FF",
-          100: "#DEEAFF",
-          200: "#C2D9FF",
-          300: "#9DC0FF",
-          400: "#709BF1",
-          500: "#4F79E4",
-          600: "#3A63D0",
-          700: "#2E4EAA",
-          800: "#25418A",
-          900: "#1F3771",
-          950: "#15245C",
+          50: "#FFFAE6",
+          100: "#FFF6CC",
+          200: "#FFEE99",
+          300: "#FFE566",
+          400: "#FFDD33",
+          500: "#FFD600",
+          600: "#CCAB00",
+          700: "#998000",
+          800: "#665600",
+          900: "#332B00",
+          950: "#1A1500",
         },
         healthgreen: {
-          50: "#EEFDF7",
-          100: "#D5F6EA",
-          200: "#AEEAD6",
-          300: "#77D8BC",
-          400: "#49BE9E",
-          500: "#2EA384",
-          600: "#21826D",
-          700: "#1C685A",
-          800: "#195449",
-          900: "#17463E",
-          950: "#0D2D28",
+          50: "#FFFAE6",
+          100: "#FFF6CC",
+          200: "#FFEE99",
+          300: "#FFE566",
+          400: "#FFDD33",
+          500: "#FFD600",
+          600: "#CCAB00",
+          700: "#998000",
+          800: "#665600",
+          900: "#332B00",
+          950: "#1A1500",
         },
       },
       borderRadius: {
@@ -115,7 +116,10 @@ export default {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out'
-      }
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
     }
   },
   plugins: [require("tailwindcss-animate")],

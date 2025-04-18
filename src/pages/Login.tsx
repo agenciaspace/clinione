@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -73,7 +74,7 @@ const Login = () => {
   
   if (needsEmailConfirmation) {
     return (
-      <div className="flex min-h-screen bg-healthblue-50 items-center justify-center p-6">
+      <div className="flex min-h-screen bg-[#FFFAE6] items-center justify-center p-6">
         <EmailConfirmationMessage 
           email={email}
           onResendEmail={handleResendConfirmation}
@@ -84,31 +85,31 @@ const Login = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-healthblue-50">
-      <div className="flex-1 hidden lg:block bg-healthblue-600 relative">
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-white p-12">
+    <div className="flex min-h-screen bg-[#FFFAE6]">
+      <div className="flex-1 hidden lg:block bg-[#FFD600] relative">
+        <div className="absolute inset-0 flex flex-col justify-center items-center text-black p-12">
           <img 
-            src="/lovable-uploads/6daac9dd-5fbc-4b9f-8c13-0e27e740410c.png" 
+            src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
             alt="Logo" 
-            className="h-16 w-auto logo-glow"
+            className="h-16 w-auto logo-flat"
           />
           <p className="text-xl mb-8 max-w-md text-center mt-8">
             Uma plataforma completa para gestão da sua clínica e presença online.
           </p>
           <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
-            <div className="bg-healthblue-500/60 p-4 rounded-lg">
+            <div className="bg-[#FFFAE6]/80 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">Agendamentos</h3>
               <p className="text-sm">Gerencie consultas com facilidade</p>
             </div>
-            <div className="bg-healthblue-500/60 p-4 rounded-lg">
+            <div className="bg-[#FFFAE6]/80 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">Pacientes</h3>
               <p className="text-sm">Mantenha todos os dados organizados</p>
             </div>
-            <div className="bg-healthblue-500/60 p-4 rounded-lg">
+            <div className="bg-[#FFFAE6]/80 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">Presença Online</h3>
               <p className="text-sm">Site profissional para sua clínica</p>
             </div>
-            <div className="bg-healthblue-500/60 p-4 rounded-lg">
+            <div className="bg-[#FFFAE6]/80 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">Relatórios</h3>
               <p className="text-sm">Dados para decisões estratégicas</p>
             </div>
@@ -121,9 +122,9 @@ const Login = () => {
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <img 
-                src="/lovable-uploads/6daac9dd-5fbc-4b9f-8c13-0e27e740410c.png" 
+                src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
                 alt="Logo" 
-                className="h-16 w-auto logo-glow"
+                className="h-16 w-auto logo-flat"
               />
             </div>
             <CardTitle className="text-2xl">Acesse sua conta</CardTitle>
@@ -147,7 +148,7 @@ const Login = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Senha</Label>
-                  <Link to="/forgot-password" className="text-xs text-healthblue-600 hover:underline">
+                  <Link to="/forgot-password" className="text-xs text-[#FFD600] hover:underline">
                     Esqueceu a senha?
                   </Link>
                 </div>
@@ -162,7 +163,7 @@ const Login = () => {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-healthblue-600 hover:bg-healthblue-700"
+                className="w-full bg-[#FFD600] hover:bg-[#E6C000] text-black"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Entrando...' : 'Entrar'}
@@ -172,7 +173,7 @@ const Login = () => {
           <CardFooter className="flex flex-col">
             <div className="text-center text-sm mt-2">
               Não tem uma conta?{" "}
-              <Link to="/register" className="text-healthblue-600 hover:underline">
+              <Link to="/register" className="text-[#FFD600] hover:underline">
                 Crie uma agora
               </Link>
             </div>

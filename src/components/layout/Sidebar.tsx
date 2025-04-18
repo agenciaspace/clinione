@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -59,9 +60,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
     <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm h-full">
       <div className="px-6 py-6">
         <img 
-          src="/lovable-uploads/6daac9dd-5fbc-4b9f-8c13-0e27e740410c.png" 
+          src="/lovable-uploads/f27f17f1-fd78-4724-bd56-ab6c1c419fad.png" 
           alt="Logo" 
-          className="h-8 w-auto logo-glow"
+          className="h-8 w-auto logo-flat"
         />
       </div>
 
@@ -75,14 +76,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
                   "flex items-center px-4 py-2.5 text-sm rounded-md transition-colors",
                   "hover:bg-gray-100",
                   path === item.path 
-                    ? "bg-healthblue-50 text-healthblue-600 font-medium" 
+                    ? "bg-[#FFFAE6] text-black font-medium" 
                     : "text-gray-700"
                 )}
                 onClick={handleNavClick}
               >
                 <item.icon size={20} className={cn(
                   "mr-3",
-                  path === item.path ? "text-healthblue-600" : "text-gray-500"
+                  path === item.path ? "text-[#FFD600]" : "text-gray-500"
                 )} />
                 <span>{item.title}</span>
               </Link>
