@@ -11,7 +11,7 @@ const LandingPage = () => {
             <img 
               src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
               alt="Clini.One Logo" 
-              className="h-16 w-auto"
+              className="h-20 w-auto" /* Aqui aumentei o logo de h-16 para h-20 */
             />
           </div>
           <nav>
