@@ -49,7 +49,7 @@ export const Header: React.FC = () => {
           <img 
             src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
             alt="Clini.One Logo" 
-            className="h-6 w-auto"
+            className="h-10 w-auto"
           />
         </div>
 
