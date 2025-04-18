@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface EditPatientDialogProps {
   open: boolean;
@@ -27,7 +28,6 @@ export const EditPatientDialog = ({
   onSave,
   isLoading = false,
 }: EditPatientDialogProps) => {
-  // Função auxiliar para lidar com a submissão do formulário
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave();
@@ -45,14 +45,15 @@ export const EditPatientDialog = ({
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Nome completo</Label>
+              <Label htmlFor="name">Nome completo <span className="text-red-500">*</span></Label>
               <Input 
                 id="name" 
                 name="name" 
                 value={formData.name}
                 onChange={onInputChange}
                 placeholder="Nome do paciente" 
-                required 
+                required
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -63,7 +64,8 @@ export const EditPatientDialog = ({
                 value={formData.email}
                 onChange={onInputChange}
                 type="email" 
-                placeholder="email@exemplo.com" 
+                placeholder="email@exemplo.com"
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -73,7 +75,8 @@ export const EditPatientDialog = ({
                 name="phone"
                 value={formData.phone}
                 onChange={onInputChange}
-                placeholder="(00) 00000-0000" 
+                placeholder="(00) 00000-0000"
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -81,9 +84,10 @@ export const EditPatientDialog = ({
               <Input 
                 id="birthDate" 
                 name="birthDate"
-                value={formData.birthDate ? formData.birthDate.split('T')[0] : ''}
+                value={formData.birthDate}
                 onChange={onInputChange}
-                type="date" 
+                type="date"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -97,10 +101,15 @@ export const EditPatientDialog = ({
               Cancelar
             </Button>
             <Button 
-              type="submit" 
+              type="submit"
               disabled={isLoading}
             >
-              {isLoading ? 'Salvando...' : 'Salvar alterações'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : 'Salvar alterações'}
             </Button>
           </DialogFooter>
         </form>

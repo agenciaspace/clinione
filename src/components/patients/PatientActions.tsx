@@ -36,7 +36,7 @@ export const PatientActions = ({
         name: patient.name || '',
         email: patient.email || '',
         phone: patient.phone || '',
-        birthDate: patient.birthDate || '',
+        birthDate: patient.birthDate ? patient.birthDate.split('T')[0] : '',
       });
     }
   }, [patient, isEditDialogOpen]);
@@ -55,14 +55,19 @@ export const PatientActions = ({
       return;
     }
     
+    if (!editForm.name.trim()) {
+      toast.error("O nome do paciente é obrigatório");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       
       const updatedPatient = {
         ...patient,
-        name: editForm.name,
-        email: editForm.email,
-        phone: editForm.phone,
+        name: editForm.name.trim(),
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim(),
         birthDate: editForm.birthDate,
       };
       
@@ -84,7 +89,7 @@ export const PatientActions = ({
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false);
     
-    // Limpamos o formulário apenas ao fechar completamente
+    // Limpamos o formulário após um pequeno delay para garantir uma transição suave
     setTimeout(() => {
       setEditForm({
         name: '',
@@ -92,7 +97,8 @@ export const PatientActions = ({
         phone: '',
         birthDate: '',
       });
-    }, 300); // Aguarda a animação de fechamento terminar
+      setIsSubmitting(false);
+    }, 300);
   };
 
   return (
