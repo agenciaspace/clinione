@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -41,7 +40,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
     { title: 'Marketing', path: '/dashboard/marketing', icon: MessageSquare, roles: ['admin'] },
     { title: 'Clínica', path: '/dashboard/clinic', icon: Building2, roles: ['admin'] },
     { title: 'Página Pública', path: '/dashboard/public-page', icon: Globe, roles: ['admin'] },
-    // Make Settings accessible to everyone
     { title: 'Configurações', path: '/dashboard/settings', icon: Settings, roles: ['admin', 'doctor', 'receptionist'] },
   ];
 
@@ -51,10 +49,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
     }
   };
 
-  console.log('Current user roles:', userRoles); // Para depuração
+  console.log('Current user roles:', userRoles);
 
-  // Se o usuário não tem papéis definidos, mostrar todos os itens do menu
-  // Isso evita que a sidebar fique vazia quando os papéis ainda não foram carregados
   const filteredMenuItems = userRoles.length === 0 
     ? menuItems 
     : menuItems.filter(item => userRoles.some(role => item.roles.includes(role)));
@@ -62,14 +58,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
   return (
     <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm h-full">
       <div className="px-6 py-6">
-        <h2 className="text-2xl font-bold text-primary flex items-center gap-2">
-          <img 
-            src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
-            alt="CliniOne Logo" 
-            className="h-8 w-auto logo-glow"
-          />
-          <span>clini.one</span>
-        </h2>
+        <img 
+          src="/lovable-uploads/6daac9dd-5fbc-4b9f-8c13-0e27e740410c.png" 
+          alt="Logo" 
+          className="h-8 w-auto logo-glow"
+        />
       </div>
 
       <nav className="flex-1 px-4 pb-4 overflow-y-auto">
@@ -97,8 +90,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavItemClick }) => {
           ))}
         </ul>
       </nav>
-
-      {/* Removendo o perfil do usuário daqui, já que ele aparece no header */}
     </aside>
   );
 };

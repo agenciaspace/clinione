@@ -87,15 +87,12 @@ const Login = () => {
     <div className="flex min-h-screen bg-healthblue-50">
       <div className="flex-1 hidden lg:block bg-healthblue-600 relative">
         <div className="absolute inset-0 flex flex-col justify-center items-center text-white p-12">
-          <div className="flex items-center mb-6">
-            <img 
-              src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
-              alt="CliniOne Logo" 
-              className="h-16 w-auto logo-glow mr-4"
-            />
-            <h1 className="text-4xl font-bold">CliniOne</h1>
-          </div>
-          <p className="text-xl mb-8 max-w-md text-center">
+          <img 
+            src="/lovable-uploads/6daac9dd-5fbc-4b9f-8c13-0e27e740410c.png" 
+            alt="Logo" 
+            className="h-16 w-auto logo-glow"
+          />
+          <p className="text-xl mb-8 max-w-md text-center mt-8">
             Uma plataforma completa para gestão da sua clínica e presença online.
           </p>
           <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
@@ -124,8 +121,8 @@ const Login = () => {
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <img 
-                src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
-                alt="CliniOne Logo" 
+                src="/lovable-uploads/6daac9dd-5fbc-4b9f-8c13-0e27e740410c.png" 
+                alt="Logo" 
                 className="h-16 w-auto logo-glow"
               />
             </div>

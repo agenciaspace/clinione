@@ -33,11 +33,10 @@ const LandingPage = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <img 
-              src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
-              alt="CliniOne Logo" 
-              className="h-10 w-auto logo-glow mr-3"
+              src="/lovable-uploads/6daac9dd-5fbc-4b9f-8c13-0e27e740410c.png" 
+              alt="Logo" 
+              className="h-10 w-auto logo-glow"
             />
-            <div className="text-xl md:text-2xl font-bold text-healthblue-600">CliniOne</div>
           </div>
           
           {/* Desktop Navigation */}
