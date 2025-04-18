@@ -91,9 +91,8 @@ const Login = () => {
             <img 
               src="/lovable-uploads/97b82a23-27f3-41d3-8ecd-d3370e9022b9.png" 
               alt="CliniOne Logo" 
-              className="h-16 w-auto logo-glow mr-4"
+              className="h-16 w-auto logo-glow"
             />
-            <h1 className="text-4xl font-bold">CliniOne</h1>
           </div>
           <p className="text-xl mb-8 max-w-md text-center">
             Uma plataforma completa para gestão da sua clínica e presença online.
