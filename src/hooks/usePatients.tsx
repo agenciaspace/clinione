@@ -37,13 +37,9 @@ export const usePatients = (clinicId?: string) => {
       }));
     },
     enabled: !!clinicId,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
+    staleTime: 1000, // Considera os dados obsoletos após 1 segundo
   });
-
-  // Função para atualizar manualmente os pacientes
-  const refreshPatients = () => {
-    queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
-  };
 
   const addPatientMutation = useMutation({
     mutationFn: async (newPatient: { name: string, email: string, phone: string, birth_date: string, clinic_id: string }) => {
@@ -56,7 +52,8 @@ export const usePatients = (clinicId?: string) => {
       return data[0];
     },
     onSuccess: () => {
-      refreshPatients();
+      queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
+      toast.success("Paciente adicionado com sucesso");
     },
     onError: (error) => {
       console.error("Erro ao adicionar paciente:", error);
@@ -66,8 +63,6 @@ export const usePatients = (clinicId?: string) => {
 
   const updatePatientMutation = useMutation({
     mutationFn: async (updatePatient: Patient) => {
-      console.log("Dados enviados para atualização:", updatePatient);
-      
       const supabaseFormat = {
         name: updatePatient.name,
         email: updatePatient.email,
@@ -81,37 +76,16 @@ export const usePatients = (clinicId?: string) => {
         .eq('id', updatePatient.id)
         .select();
       
-      if (error) {
-        console.error("Erro na atualização do Supabase:", error);
-        throw error;
-      }
-      
-      console.log("Resposta do Supabase após atualização:", data);
+      if (error) throw error;
       return data[0];
     },
-    onSuccess: (data, variables) => {
-      // Atualizamos o cache e depois forçamos um refresh dos dados
-      queryClient.setQueryData(['patients', clinicId], (oldData: Patient[] = []) => {
-        return oldData.map(patient => 
-          patient.id === variables.id ? 
-          {
-            ...patient,
-            name: variables.name,
-            email: variables.email,
-            phone: variables.phone,
-            birthDate: variables.birthDate,
-          } : 
-          patient
-        );
-      });
-      
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
       toast.success("Paciente atualizado com sucesso");
-      refreshPatients();
     },
     onError: (error) => {
       console.error("Erro ao atualizar paciente:", error);
-      toast.error("Erro ao atualizar paciente. Verifique os dados e tente novamente.");
-      refreshPatients();
+      toast.error("Erro ao atualizar paciente");
     }
   });
 
@@ -125,18 +99,13 @@ export const usePatients = (clinicId?: string) => {
       if (error) throw error;
       return id;
     },
-    onSuccess: (id) => {
-      queryClient.setQueryData(['patients', clinicId], (oldData: Patient[] = []) => {
-        return oldData.filter(patient => patient.id !== id);
-      });
-      
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
       toast.success("Paciente removido com sucesso");
-      refreshPatients();
     },
     onError: (error) => {
       console.error("Erro ao remover paciente:", error);
       toast.error("Erro ao remover paciente");
-      refreshPatients();
     }
   });
 
@@ -150,27 +119,19 @@ export const usePatients = (clinicId?: string) => {
       if (error) throw error;
       return { id, status };
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(['patients', clinicId], (oldData: Patient[] = []) => {
-        return oldData.map(patient => 
-          patient.id === data.id ? { ...patient, status: data.status } : patient
-        );
-      });
-      
-      toast.success(`Status do paciente alterado para ${data.status === 'active' ? 'ativo' : 'inativo'}`);
-      refreshPatients();
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
+      toast.success("Status do paciente atualizado com sucesso");
     },
     onError: (error) => {
       console.error("Erro ao alterar status do paciente:", error);
       toast.error("Erro ao alterar status do paciente");
-      refreshPatients();
     }
   });
 
   return {
     patients,
     isLoading,
-    refreshPatients,
     addPatientMutation,
     updatePatientMutation,
     deletePatientMutation,
