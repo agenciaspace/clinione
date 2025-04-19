@@ -1,6 +1,6 @@
 
-import React, { useState, ReactNode } from 'react';
-import { format } from 'date-fns';
+import React, { useState, ReactNode, useEffect } from 'react';
+import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Loader2 } from 'lucide-react';
 import { useAvailableSlots } from '@/hooks/useAvailableSlots';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,7 +35,7 @@ interface AppointmentFormData {
 }
 
 export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentSchedulerProps) => {
-  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [open, setOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{
     start_time: string;
@@ -55,6 +55,14 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
   const isMobile = useIsMobile();
   
   const { slots, isLoading } = useAvailableSlots(clinicId, selectedDate);
+
+  // Efeito para pré-selecionar a data atual quando o componente for montado
+  useEffect(() => {
+    if (open && !selectedDate) {
+      const today = new Date();
+      setSelectedDate(today);
+    }
+  }, [open, selectedDate]);
 
   const handleSlotSelect = (slot: any) => {
     setSelectedSlot(slot);
@@ -126,6 +134,62 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
     setIsSuccess(false);
   };
 
+  const renderSlots = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center p-4">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+          <span className="ml-2 text-sm text-muted-foreground">Carregando horários disponíveis...</span>
+        </div>
+      );
+    }
+
+    if (!slots || slots.length === 0) {
+      return (
+        <div className="p-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            {selectedDate
+              ? "Não há horários disponíveis para esta data"
+              : "Selecione uma data para ver os horários disponíveis"}
+          </p>
+        </div>
+      );
+    }
+
+    // Agrupar horários por médico
+    const slotsByDoctor = slots.reduce((acc: any, slot) => {
+      if (!acc[slot.doctor_name]) {
+        acc[slot.doctor_name] = [];
+      }
+      acc[slot.doctor_name].push(slot);
+      return acc;
+    }, {});
+
+    return (
+      <div className="space-y-4">
+        {Object.entries(slotsByDoctor).map(([doctorName, doctorSlots]: [string, any]) => (
+          <div key={doctorName} className="space-y-2">
+            <h4 className="text-sm font-medium text-gray-700">Dr(a). {doctorName}</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {doctorSlots.map((slot: any) => (
+                <Button
+                  key={`${slot.doctor_id}-${slot.start_time}`}
+                  variant="outline"
+                  size="sm"
+                  className="justify-center h-9"
+                  onClick={() => handleSlotSelect(slot)}
+                >
+                  <Clock className="mr-1 h-3.5 w-3.5" />
+                  <span>{format(new Date(slot.start_time), 'HH:mm')}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={(value) => {
@@ -143,6 +207,9 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Agendar Consulta</DialogTitle>
+            <DialogDescription>
+              Selecione uma data e horário disponível para a sua consulta
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-6 pt-4">
             <div className="flex flex-col md:flex-row gap-6">
@@ -152,7 +219,8 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   locale={ptBR}
-                  disabled={(date) => date < new Date()}
+                  disabled={(date) => date < new Date() || date > addDays(new Date(), 60)}
+                  initialFocus
                   className="rounded-md border"
                 />
               </div>
@@ -162,29 +230,8 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
                     ? `Horários disponíveis para ${format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}`
                     : 'Selecione uma data para ver os horários disponíveis'}
                 </h3>
-                <div className="space-y-2 max-h-[300px] overflow-auto">
-                  {isLoading ? (
-                    <p className="text-sm text-muted-foreground">Carregando horários...</p>
-                  ) : slots && slots.length > 0 ? (
-                    slots.map((slot) => (
-                      <Button
-                        key={`${slot.doctor_id}-${slot.start_time}`}
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => handleSlotSelect(slot)}
-                      >
-                        <Clock className="mr-2 h-4 w-4" />
-                        <span>{format(new Date(slot.start_time), 'HH:mm')}</span>
-                        <span className="ml-2 text-sm text-muted-foreground">
-                          Dr(a). {slot.doctor_name}
-                        </span>
-                      </Button>
-                    ))
-                  ) : selectedDate ? (
-                    <p className="text-sm text-muted-foreground">
-                      Nenhum horário disponível para esta data
-                    </p>
-                  ) : null}
+                <div className="space-y-2 max-h-[300px] overflow-auto p-1">
+                  {renderSlots()}
                 </div>
               </div>
             </div>
@@ -310,7 +357,9 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
             Cancelar
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Confirmando...' : 'Confirmar Agendamento'}
+            {isSubmitting ? 
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Confirmando...</> : 
+              'Confirmar Agendamento'}
           </Button>
         </DialogFooter>
       </form>

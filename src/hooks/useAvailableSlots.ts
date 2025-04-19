@@ -10,10 +10,12 @@ interface AvailableSlot {
 }
 
 export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
-  const { data: slots, isLoading } = useQuery({
+  const { data: slots, isLoading, error, refetch } = useQuery({
     queryKey: ['available-slots', clinicId, date?.toISOString()],
     queryFn: async () => {
       if (!date) return [];
+      
+      console.log('Buscando slots disponíveis para a clínica:', clinicId, 'na data:', date.toISOString().split('T')[0]);
       
       const { data, error } = await supabase
         .rpc('get_available_slots', {
@@ -21,7 +23,12 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
           p_date: date.toISOString().split('T')[0],
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar slots disponíveis:', error);
+        throw error;
+      }
+      
+      console.log('Slots disponíveis encontrados:', data?.length || 0);
       return data as AvailableSlot[];
     },
     enabled: !!clinicId && !!date,
@@ -30,5 +37,7 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
   return {
     slots: slots || [],
     isLoading,
+    error,
+    refetch
   };
 };
