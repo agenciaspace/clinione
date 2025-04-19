@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,17 +39,20 @@ const Reports = () => {
   const { patients } = usePatients(activeClinic?.id);
   const { doctors, isLoading: isLoadingDoctors } = useDoctors();
 
-  const totalAppointments = allAppointments.length;
-  const confirmedAppointments = allAppointments.filter(app => app.status === 'confirmed').length;
-  const cancelledAppointments = allAppointments.filter(app => app.status === 'cancelled').length;
-
+  // Filtramos os agendamentos com base no período selecionado
   const filteredAppointments = allAppointments.filter(appointment => {
     const appointmentDate = new Date(appointment.date);
-    return isWithinInterval(appointmentDate, {
+    return dateRange.from && dateRange.to && isWithinInterval(appointmentDate, {
       start: dateRange.from,
       end: dateRange.to
     });
   });
+
+  // Calculamos os totais com base nos agendamentos filtrados (não nos agendamentos totais)
+  const totalAppointments = filteredAppointments.length;
+  const confirmedAppointments = filteredAppointments.filter(app => app.status === 'confirmed').length;
+  const cancelledAppointments = filteredAppointments.filter(app => app.status === 'cancelled').length;
+  const pendingAppointments = totalAppointments - (confirmedAppointments + cancelledAppointments);
 
   const appointmentsByDay = filteredAppointments.reduce((acc: any[], appointment) => {
     const date = format(new Date(appointment.date), 'dd/MM');
@@ -66,8 +70,8 @@ const Reports = () => {
   const appointmentsByStatus = [
     { name: 'Confirmados', value: confirmedAppointments },
     { name: 'Cancelados', value: cancelledAppointments },
-    { name: 'Agendados', value: totalAppointments - (confirmedAppointments + cancelledAppointments) }
-  ];
+    { name: 'Agendados', value: pendingAppointments }
+  ].filter(item => item.value > 0); // Filtra para mostrar apenas status com valores > 0
 
   const COLORS = ['#10B981', '#EF4444', '#3B82F6'];
 
