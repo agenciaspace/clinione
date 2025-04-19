@@ -24,18 +24,7 @@ import {
   Cell
 } from 'recharts';
 
-const DateRangePickerDemo = ({ className }: DateRangePickerProps) => {
-  const [date, setDate] = React.useState({
-    from: new Date(),
-    to: new Date(new Date().setDate(new Date().getDate() + 15)),
-  });
-
-  return (
-    <div className={className}>
-      <DatePickerWithRange date={date} setDate={setDate} />
-    </div>
-  )
-}
+// Remove the DateRangePickerDemo component since we're using DatePickerWithRange directly
 
 const Reports = () => {
   const { activeClinic } = useClinic();
