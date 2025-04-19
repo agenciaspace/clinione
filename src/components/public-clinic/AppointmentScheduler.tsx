@@ -1,4 +1,3 @@
-
 import React, { useState, ReactNode, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -149,7 +148,7 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
         <div className="p-4 text-center">
           <p className="text-sm text-muted-foreground">
             {selectedDate
-              ? "Não há horários disponíveis para esta data"
+              ? "Não há horários disponíveis para esta data. Por favor, selecione outra data."
               : "Selecione uma data para ver os horários disponíveis"}
           </p>
         </div>
@@ -189,87 +188,6 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
       </div>
     );
   };
-
-  return (
-    <>
-      <Dialog open={open} onOpenChange={(value) => {
-        setOpen(value);
-        if (!value) resetState();
-      }}>
-        <DialogTrigger asChild>
-          {trigger || (
-            <Button>
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              Agendar Consulta
-            </Button>
-          )}
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Agendar Consulta</DialogTitle>
-            <DialogDescription>
-              Selecione uma data e horário disponível para a sua consulta
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-6 pt-4">
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-1">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  locale={ptBR}
-                  disabled={(date) => date < new Date() || date > addDays(new Date(), 60)}
-                  initialFocus
-                  className="rounded-md border"
-                />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium mb-3">
-                  {selectedDate
-                    ? `Horários disponíveis para ${format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}`
-                    : 'Selecione uma data para ver os horários disponíveis'}
-                </h3>
-                <div className="space-y-2 max-h-[300px] overflow-auto p-1">
-                  {renderSlots()}
-                </div>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {isMobile ? (
-        <Sheet open={formOpen} onOpenChange={setFormOpen}>
-          <SheetContent className="w-full sm:max-w-md">
-            <SheetHeader>
-              <SheetTitle>
-                {isSuccess 
-                  ? 'Agendamento Concluído!'
-                  : 'Complete seu agendamento'}
-              </SheetTitle>
-            </SheetHeader>
-            
-            {renderFormContent()}
-          </SheetContent>
-        </Sheet>
-      ) : (
-        <Dialog open={formOpen} onOpenChange={setFormOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>
-                {isSuccess 
-                  ? 'Agendamento Concluído!'
-                  : 'Complete seu agendamento'}
-              </DialogTitle>
-            </DialogHeader>
-            
-            {renderFormContent()}
-          </DialogContent>
-        </Dialog>
-      )}
-    </>
-  );
 
   function renderFormContent() {
     return isSuccess ? (
@@ -365,4 +283,85 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
       </form>
     );
   }
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={(value) => {
+        setOpen(value);
+        if (!value) resetState();
+      }}>
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button>
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              Agendar Consulta
+            </Button>
+          )}
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Agendar Consulta</DialogTitle>
+            <DialogDescription>
+              Selecione uma data e horário disponível para a sua consulta
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 pt-4">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-1">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  locale={ptBR}
+                  disabled={(date) => date < new Date() || date > addDays(new Date(), 60)}
+                  initialFocus
+                  className="rounded-md border"
+                />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium mb-3">
+                  {selectedDate
+                    ? `Horários disponíveis para ${format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}`
+                    : 'Selecione uma data para ver os horários disponíveis'}
+                </h3>
+                <div className="space-y-2 max-h-[300px] overflow-auto p-1">
+                  {renderSlots()}
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {isMobile ? (
+        <Sheet open={formOpen} onOpenChange={setFormOpen}>
+          <SheetContent className="w-full sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle>
+                {isSuccess 
+                  ? 'Agendamento Concluído!'
+                  : 'Complete seu agendamento'}
+              </SheetTitle>
+            </SheetHeader>
+            
+            {renderFormContent()}
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={formOpen} onOpenChange={setFormOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>
+                {isSuccess 
+                  ? 'Agendamento Concluído!'
+                  : 'Complete seu agendamento'}
+              </DialogTitle>
+            </DialogHeader>
+            
+            {renderFormContent()}
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
 };

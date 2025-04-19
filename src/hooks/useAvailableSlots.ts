@@ -17,10 +17,13 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
       
       console.log('Buscando slots disponíveis para a clínica:', clinicId, 'na data:', date.toISOString().split('T')[0]);
       
+      // Garantir que estamos usando apenas a data sem o horário
+      const formattedDate = date.toISOString().split('T')[0];
+      
       const { data, error } = await supabase
         .rpc('get_available_slots', {
           p_clinic_id: clinicId,
-          p_date: date.toISOString().split('T')[0],
+          p_date: formattedDate,
         });
 
       if (error) {
@@ -28,7 +31,7 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
         throw error;
       }
       
-      console.log('Slots disponíveis encontrados:', data?.length || 0);
+      console.log('Slots disponíveis encontrados:', data?.length || 0, 'slots:', data);
       return data as AvailableSlot[];
     },
     enabled: !!clinicId && !!date,
