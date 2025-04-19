@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,8 +26,6 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ChartContainer, ChartTooltipContent, ChartTooltip } from '@/components/ui/chart';
 
-// Remove the DateRangePickerDemo component since we're using DatePickerWithRange directly
-
 const Reports = () => {
   const { activeClinic } = useClinic();
   const isMobile = useIsMobile();
@@ -42,10 +39,8 @@ const Reports = () => {
   const { patients } = usePatients(activeClinic?.id);
   const { doctors, isLoading: isLoadingDoctors } = useDoctors();
 
-  // Garantindo que temos datas válidas antes de filtrar
   const hasValidDateRange = dateRange?.from && dateRange?.to;
   
-  // Filtramos os agendamentos com base no período selecionado apenas se tivermos datas válidas
   const filteredAppointments = hasValidDateRange 
     ? allAppointments.filter(appointment => {
         const appointmentDate = new Date(appointment.date);
@@ -56,7 +51,6 @@ const Reports = () => {
       })
     : [];
 
-  // Calculamos os totais com base nos agendamentos filtrados
   const totalAppointments = filteredAppointments.length;
   const confirmedAppointments = filteredAppointments.filter(app => app.status === 'confirmed').length;
   const cancelledAppointments = filteredAppointments.filter(app => app.status === 'cancelled').length;
@@ -86,6 +80,15 @@ const Reports = () => {
   const COLORS = ['#10B981', '#EF4444', '#3B82F6'];
 
   const isLoading = isLoadingAppointments || isLoadingDoctors;
+
+  const formatPieLabel = ({ name, percent }: { name: string, percent: number }) => {
+    const label = `${name}: ${(percent * 100).toFixed(0)}%`;
+    const isMobile = window.innerWidth < 768;
+    
+    return isMobile && label.length > 15 
+      ? `${label.substring(0, 12)}...` 
+      : label;
+  };
 
   return (
     <DashboardLayout>
@@ -245,12 +248,7 @@ const Reports = () => {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }) => {
-                            const label = `${name}: ${(percent * 100).toFixed(0)}%`;
-                            return isMobile && label.length > 15 
-                              ? `${label.substring(0, 12)}...` 
-                              : label;
-                          }}
+                          label={formatPieLabel}
                           outerRadius={isMobile ? 80 : 100}
                           fill="#8884d8"
                           dataKey="value"
@@ -275,10 +273,17 @@ const Reports = () => {
                           }}
                         />
                         <Legend 
-                          wrapperStyle={{ fontSize: isMobile ? 10 : 12 }}
-                          layout={isMobile ? "horizontal" : "vertical"}
+                          wrapperStyle={{ 
+                            fontSize: isMobile ? 10 : 12,
+                            display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            gap: isMobile ? '0.5rem' : '1rem'
+                          }}
+                          layout={isMobile ? "vertical" : "horizontal"}
                           verticalAlign={isMobile ? "bottom" : "middle"}
-                          align={isMobile ? "center" : "right"}
+                          align="center"
                         />
                       </PieChart>
                     </ResponsiveContainer>
