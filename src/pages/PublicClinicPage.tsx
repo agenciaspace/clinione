@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,6 @@ const PublicClinicPage: React.FC = () => {
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
   const [isPreview, setIsPreview] = useState(false);
   
-  // Check if in preview mode
   useEffect(() => {
     const isPreviewMode = location.pathname.includes('/dashboard/public-page');
     setIsPreview(isPreviewMode);
@@ -90,6 +88,7 @@ const PublicClinicPage: React.FC = () => {
         <ClinicHeader
           name={clinic.name}
           logo={clinic.logo}
+          photo={clinic.photo}
           address={clinic.address}
         />
         
