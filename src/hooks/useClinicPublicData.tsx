@@ -17,6 +17,7 @@ export interface ClinicData {
   id: string;
   name: string;
   logo: string | null;
+  photo: string | null; // Adicionando a propriedade photo
   description: string | null;
   address: string | null;
   phone: string | null;

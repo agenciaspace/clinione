@@ -86,7 +86,12 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
           variant="outline"
           disabled={isUploading}
           className="relative"
-          onClick={() => document.getElementById('photo-upload')?.click()}
+          type="button" // Definindo o tipo como button para evitar submit indesejado
+          onClick={(e) => {
+            e.preventDefault(); // Evitar propagação de eventos
+            e.stopPropagation(); // Evitar propagação de eventos
+            document.getElementById('photo-upload')?.click();
+          }}
         >
           <Upload className="h-4 w-4 mr-2" />
           {isUploading ? 'Enviando...' : 'Alterar foto'}
@@ -97,6 +102,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
             className="hidden"
             onChange={handleFileUpload}
             disabled={isUploading}
+            onClick={(e) => e.stopPropagation()} // Evitar propagação de eventos
           />
         </Button>
       </div>

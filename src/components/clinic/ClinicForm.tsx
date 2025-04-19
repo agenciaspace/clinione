@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -50,6 +51,7 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
   const [slugError, setSlugError] = useState('');
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -111,6 +113,16 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
   const getPublicUrl = (slug: string) => {
     return slug ? `${baseUrl}/c/${slug}` : '';
   };
+  
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await onSubmit(e, formData);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     if (isEditing && editingClinicId) {
@@ -138,8 +150,18 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
   }, [isEditing, editingClinicId]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Evitar que o modal seja fechado durante o upload ou submissão
+      if (!isSubmitting) {
+        onOpenChange(open);
+      }
+    }}>
+      <DialogContent className="sm:max-w-[500px]" onPointerDownOutside={(e) => {
+        // Impedir o fechamento do modal ao clicar fora durante o upload
+        if (isSubmitting) {
+          e.preventDefault();
+        }
+      }}>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Clínica' : 'Nova Clínica'}</DialogTitle>
           <DialogDescription>
@@ -149,7 +171,7 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
             }
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={(e) => onSubmit(e, formData)}>
+        <form onSubmit={handleFormSubmit}>
           <div className="grid gap-4 py-4">
             {isEditing && editingClinicId && (
               <div className="space-y-2">
@@ -242,11 +264,21 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+            <Button 
+              variant="outline" 
+              type="button" 
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={!!slugError || isCheckingSlug}>
-              {isEditing ? 'Salvar alterações' : 'Criar clínica'}
+            <Button 
+              type="submit" 
+              disabled={!!slugError || isCheckingSlug || isSubmitting}
+            >
+              {isSubmitting 
+                ? 'Processando...' 
+                : (isEditing ? 'Salvar alterações' : 'Criar clínica')}
             </Button>
           </DialogFooter>
         </form>
