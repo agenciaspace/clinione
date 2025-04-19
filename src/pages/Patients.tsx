@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -13,8 +12,11 @@ import { usePatients } from '@/hooks/usePatients';
 import { PatientsFilter } from '@/components/patients/PatientsFilter';
 import { PatientsTabContent } from '@/components/patients/PatientsTabContent';
 import { toast } from '@/components/ui/sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 const Patients = () => {
+  const queryClient = useQueryClient();
   const { activeClinic } = useClinic();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,6 +38,34 @@ const Patients = () => {
     deletePatientMutation,
     togglePatientStatusMutation
   } = usePatients(activeClinic?.id);
+
+  // Configurar escuta em tempo real para atualizações na tabela de pacientes
+  useEffect(() => {
+    if (!activeClinic?.id) return;
+
+    // Inscrever-se em atualizações em tempo real
+    const channel = supabase
+      .channel('patient-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'patients',
+          filter: `clinic_id=eq.${activeClinic.id}`
+        }, 
+        (payload) => {
+          console.log('Alteração em pacientes detectada:', payload);
+          // Recarregar os dados de pacientes
+          queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
+        }
+      )
+      .subscribe();
+
+    // Limpeza ao desmontar
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeClinic?.id, queryClient]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

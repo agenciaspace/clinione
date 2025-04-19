@@ -9,27 +9,25 @@ interface PatientsTabContentProps {
   onToggleStatus: (patient: Patient) => void;
   onDelete: (id: string) => void;
   onOpenRecord: (patient: Patient) => void;
-  onUpdatePatient: (patient: Patient) => void;
+  onUpdatePatient?: (patient: Patient) => void;
 }
 
-export const PatientsTabContent: React.FC<PatientsTabContentProps> = ({
+export const PatientsTabContent = ({
   patients,
   isLoading,
   onToggleStatus,
   onDelete,
   onOpenRecord,
   onUpdatePatient,
-}) => {
+}: PatientsTabContentProps) => {
   return (
-    <div className="rounded-md border">
-      <PatientList
-        patients={patients}
-        isLoading={isLoading}
-        onToggleStatus={onToggleStatus}
-        onDelete={onDelete}
-        onOpenRecord={onOpenRecord}
-        onUpdatePatient={onUpdatePatient}
-      />
-    </div>
+    <PatientList
+      patients={patients}
+      isLoading={isLoading}
+      onToggleStatus={onToggleStatus}
+      onDelete={onDelete}
+      onOpenRecord={onOpenRecord}
+      onUpdatePatient={onUpdatePatient}
+    />
   );
 };
