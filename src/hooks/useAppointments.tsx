@@ -14,6 +14,7 @@ export const useAppointments = (selectedDate?: Date | null, doctorId?: string | 
   const {
     appointments,
     monthAppointments,
+    allAppointments,
     isLoading,
     error,
     refetch
@@ -51,6 +52,7 @@ export const useAppointments = (selectedDate?: Date | null, doctorId?: string | 
   return {
     appointments,
     monthAppointments,
+    allAppointments,
     isLoading,
     error,
     refetch,
