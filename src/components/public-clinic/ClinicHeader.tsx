@@ -23,7 +23,7 @@ export const ClinicHeader = ({ name, logo, photo, address }: ClinicHeaderProps) 
         <div className="flex items-center space-x-4">
           <Avatar className="w-16 h-16">
             {photo ? (
-              <AvatarImage src={photo} alt={name} />
+              <AvatarImage src={photo} alt={`${name} - Foto de perfil`} />
             ) : (
               <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-lg">
                 {name.charAt(0)}
