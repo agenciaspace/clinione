@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 interface ClinicHeaderProps {
   name: string;
@@ -25,21 +26,22 @@ export const ClinicHeader = ({ name, logo, photo, address }: ClinicHeaderProps) 
       )}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center">
         <div className="flex items-center space-x-4">
-          <div className="relative w-16 h-16">
-            <Avatar className="w-full h-full border-2 border-gray-100">
-              {photo ? (
-                <AvatarImage 
+          <div className="relative w-16 h-16 rounded-full overflow-hidden">
+            {photo ? (
+              <AspectRatio ratio={1/1} className="h-full">
+                <img 
                   src={photo} 
                   alt={`${name} - Foto de perfil`}
-                  className="object-cover object-center"
-                  style={{ width: '100%', height: '100%' }}
+                  className="object-cover rounded-full border-2 border-gray-100" 
                 />
-              ) : (
-                <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-lg">
+              </AspectRatio>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-blue-100 rounded-full border-2 border-gray-100">
+                <span className="text-blue-600 font-bold text-lg">
                   {name.charAt(0)}
-                </AvatarFallback>
-              )}
-            </Avatar>
+                </span>
+              </div>
+            )}
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
