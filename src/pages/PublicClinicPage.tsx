@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -91,6 +90,7 @@ const PublicClinicPage: React.FC = () => {
           logo={clinic.logo}
           photo={clinic.photo}
           address={clinic.address}
+          id={clinic.id}
         />
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">

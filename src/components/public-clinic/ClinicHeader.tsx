@@ -1,18 +1,17 @@
-
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Calendar, MapPin } from 'lucide-react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { MapPin } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { AppointmentScheduler } from './AppointmentScheduler';
 
 interface ClinicHeaderProps {
   name: string;
   logo: string | null;
   photo: string | null;
   address: string | null;
+  id: string;
 }
 
-export const ClinicHeader = ({ name, logo, photo, address }: ClinicHeaderProps) => {
+export const ClinicHeader = ({ name, logo, photo, address, id }: ClinicHeaderProps) => {
   return (
     <header className="relative pb-6 border-b">
       {logo && (
@@ -52,10 +51,7 @@ export const ClinicHeader = ({ name, logo, photo, address }: ClinicHeaderProps) 
           </div>
         </div>
         <div className="mt-4 md:mt-0">
-          <Button>
-            <Calendar className="mr-2 h-4 w-4" />
-            Agendar Consulta
-          </Button>
+          <AppointmentScheduler clinicId={id} />
         </div>
       </div>
     </header>
