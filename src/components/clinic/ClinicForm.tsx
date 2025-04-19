@@ -159,13 +159,21 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
           .single();
 
         if (!error && data) {
+          let workingHoursData: WorkingHours;
+          
+          if (data.working_hours && typeof data.working_hours === 'object') {
+            workingHoursData = data.working_hours as WorkingHours;
+          } else {
+            workingHoursData = defaultWorkingHours;
+          }
+          
           setFormData({
             name: data.name,
             address: data.address || '',
             phone: data.phone || '',
             email: data.email || '',
             slug: data.slug || '',
-            workingHours: data.working_hours || defaultWorkingHours
+            workingHours: workingHoursData
           });
           setPhoto(data.photo);
         }
