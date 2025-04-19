@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface ClinicHeaderProps {
   name: string;
@@ -15,18 +16,20 @@ export const ClinicHeader = ({ name, logo, photo, address }: ClinicHeaderProps) 
     <header className="relative pb-6 border-b">
       {photo && (
         <div className="w-full h-48 mb-6 rounded-lg overflow-hidden">
-          <img src={photo} alt={name} className="w-full h-full object-cover" />
+          <img src={photo} alt={`${name} - Foto da clínica`} className="w-full h-full object-cover" />
         </div>
       )}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center">
         <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">
+          <Avatar className="w-16 h-16">
             {logo ? (
-              <img src={logo} alt={name} className="w-full h-full object-cover rounded-full" />
+              <AvatarImage src={logo} alt={name} />
             ) : (
-              name.charAt(0)
+              <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-lg">
+                {name.charAt(0)}
+              </AvatarFallback>
             )}
-          </div>
+          </Avatar>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
             <p className="text-gray-500 flex items-center">

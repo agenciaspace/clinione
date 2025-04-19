@@ -37,7 +37,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${clinicId}-${Date.now()}.${fileExt}`;
+      const fileName = `${clinicId}-photo-${Date.now()}.${fileExt}`;
       const filePath = `${clinicId}/${fileName}`;
 
       // Upload do arquivo
@@ -86,10 +86,10 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
           variant="outline"
           disabled={isUploading}
           className="relative"
-          type="button" // Definindo o tipo como button para evitar submit indesejado
+          type="button"
           onClick={(e) => {
-            e.preventDefault(); // Evitar propagação de eventos
-            e.stopPropagation(); // Evitar propagação de eventos
+            e.preventDefault();
+            e.stopPropagation();
             document.getElementById('photo-upload')?.click();
           }}
         >
@@ -102,7 +102,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
             className="hidden"
             onChange={handleFileUpload}
             disabled={isUploading}
-            onClick={(e) => e.stopPropagation()} // Evitar propagação de eventos
+            onClick={(e) => e.stopPropagation()}
           />
         </Button>
       </div>
