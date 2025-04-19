@@ -22,7 +22,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { activeClinic } = useClinic();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [view, setView] = useState<'day' | 'week'>('day');
+  const [view, setView] = useState<'day' | 'week' | 'all'>('day');
   const [selectedDoctor, setSelectedDoctor] = useState<string | undefined>(undefined);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -32,6 +32,7 @@ const Dashboard = () => {
   const { 
     appointments, 
     monthAppointments,
+    allAppointments,
     isLoading, 
     createAppointment,
     confirmAppointment, 
@@ -249,6 +250,13 @@ const Dashboard = () => {
               <p className="text-sm font-medium">Visualização</p>
               <div className="flex space-x-2">
                 <Button 
+                  variant={view === 'all' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setView('all')}
+                >
+                  Todos
+                </Button>
+                <Button 
                   variant={view === 'day' ? 'default' : 'outline'} 
                   size="sm"
                   onClick={() => setView('day')}
@@ -271,13 +279,18 @@ const Dashboard = () => {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>
-                {selectedDate && format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                {view === 'all' ? 
+                  'Todos os agendamentos' : 
+                  (selectedDate && format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR }))}
               </CardTitle>
               <CardDescription>
                 {isLoading ? 'Carregando agendamentos...' : 
-                  (appointments.length === 0 
-                  ? 'Nenhum agendamento para este dia' 
-                  : `${appointments.length} agendamento(s)`)}
+                  (view === 'all' ? 
+                    `${allAppointments.length} agendamento(s) no total` :
+                    (appointments.length === 0 
+                      ? 'Nenhum agendamento para este dia' 
+                      : `${appointments.length} agendamento(s)`)
+                  )}
               </CardDescription>
             </div>
             <Button onClick={handleOpenForm}>Novo agendamento</Button>
@@ -295,19 +308,19 @@ const Dashboard = () => {
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
-                ) : appointments.length === 0 ? (
+                ) : (view === 'all' ? allAppointments : appointments).length === 0 ? (
                   <div className="text-center py-8">
                     <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-semibold text-gray-900">Sem agendamentos</h3>
                     <p className="mt-1 text-sm text-gray-500">
-                      Não há consultas agendadas para esta data.
+                      Não há consultas agendadas {view === 'all' ? '' : 'para esta data'}.
                     </p>
                     <div className="mt-6">
                       <Button onClick={handleOpenForm}>Agendar consulta</Button>
                     </div>
                   </div>
                 ) : (
-                  sortedAppointments.map(renderAppointmentCard)
+                  (view === 'all' ? allAppointments : sortedAppointments).map(renderAppointmentCard)
                 )}
               </TabsContent>
               
@@ -316,7 +329,7 @@ const Dashboard = () => {
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
-                ) : sortedAppointments
+                ) : (view === 'all' ? allAppointments : sortedAppointments)
                   .filter(a => a.status === 'scheduled')
                   .map(renderAppointmentCard)}
               </TabsContent>
@@ -326,7 +339,7 @@ const Dashboard = () => {
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
-                ) : sortedAppointments
+                ) : (view === 'all' ? allAppointments : sortedAppointments)
                   .filter(a => a.status === 'confirmed')
                   .map(renderAppointmentCard)}
               </TabsContent>

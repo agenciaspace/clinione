@@ -58,6 +58,25 @@ export const useAppointmentQueries = (
     return data as Appointment[];
   };
 
+  const fetchAllAppointments = async () => {
+    if (!clinicId) return [];
+    
+    let query = supabase
+      .from('appointments')
+      .select('*')
+      .eq('clinic_id', clinicId)
+      .order('date', { ascending: true });
+      
+    if (doctorId && doctorId !== 'all') {
+      query = query.eq('doctor_id', doctorId);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    return data as Appointment[];
+  };
+
   const {
     data: appointments = [],
     isLoading,
@@ -77,10 +96,20 @@ export const useAppointmentQueries = (
     enabled: !!clinicId && !!selectedDate,
   });
 
+  const {
+    data: allAppointments = [],
+    isLoading: isLoadingAll
+  } = useQuery({
+    queryKey: ['all-appointments', clinicId, doctorId],
+    queryFn: fetchAllAppointments,
+    enabled: !!clinicId,
+  });
+
   return {
     appointments,
     monthAppointments,
-    isLoading,
+    allAppointments,
+    isLoading: isLoading || isLoadingAll,
     error,
     refetch,
   };
