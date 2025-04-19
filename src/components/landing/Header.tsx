@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 export const Header = () => {
   return (
@@ -13,7 +13,7 @@ export const Header = () => {
           <img 
             src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
             alt="Clini.One Logo" 
-            className="h-12 w-auto min-h-[48px] min-w-[150px] max-w-[200px] object-contain sm:h-16 sm:min-h-[64px] sm:min-w-[200px]"
+            className="h-12 w-auto min-h-[48px] min-w-[120px] max-w-[160px] object-contain aspect-[4/1] sm:h-16 sm:min-h-[64px]"
           />
         </div>
         
