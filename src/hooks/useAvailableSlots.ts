@@ -31,10 +31,21 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
         throw error;
       }
       
-      console.log('Slots disponíveis encontrados:', data?.length || 0, 'slots:', data);
+      // Adicionar mais informações para debugging
+      console.log('Resposta da função get_available_slots:', data);
+      
+      if (!data || data.length === 0) {
+        console.log('Nenhum slot disponível encontrado para a data:', formattedDate);
+      } else {
+        console.log('Slots disponíveis encontrados:', data.length, 'slots:', data);
+      }
+      
       return data as AvailableSlot[];
     },
     enabled: !!clinicId && !!date,
+    // Aumentar o tempo de retry para dar mais tempo ao servidor para responder
+    retry: 2,
+    retryDelay: 1000,
   });
 
   return {

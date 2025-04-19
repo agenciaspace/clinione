@@ -55,13 +55,18 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
   
   const { slots, isLoading } = useAvailableSlots(clinicId, selectedDate);
 
-  // Efeito para pré-selecionar a data atual quando o componente for montado
   useEffect(() => {
     if (open && !selectedDate) {
       const today = new Date();
       setSelectedDate(today);
     }
   }, [open, selectedDate]);
+
+  useEffect(() => {
+    if (selectedDate) {
+      console.log(`Slots carregados para ${selectedDate.toISOString().split('T')[0]}:`, slots?.length || 0);
+    }
+  }, [slots, selectedDate]);
 
   const handleSlotSelect = (slot: any) => {
     setSelectedSlot(slot);
@@ -81,7 +86,6 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
     setIsSubmitting(true);
     
     try {
-      // Converter para Date para garantir formato correto
       const appointmentDate = new Date(selectedSlot.start_time);
       
       const { data, error } = await supabase
@@ -101,7 +105,6 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
         
       if (error) throw error;
       
-      // Limpar formulário e mostrar mensagem de sucesso
       setFormData({
         patient_name: '',
         phone: '',
@@ -112,7 +115,6 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
       setIsSuccess(true);
       toast.success('Agendamento realizado com sucesso!');
       
-      // Fechar o formulário após um breve delay
       setTimeout(() => {
         setFormOpen(false);
         setOpen(false);
@@ -155,7 +157,6 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
       );
     }
 
-    // Agrupar horários por médico
     const slotsByDoctor = slots.reduce((acc: any, slot) => {
       if (!acc[slot.doctor_name]) {
         acc[slot.doctor_name] = [];
@@ -311,7 +312,10 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={setSelectedDate}
+                  onSelect={(date) => {
+                    setSelectedDate(date);
+                    console.log("Nova data selecionada:", date?.toISOString());
+                  }}
                   locale={ptBR}
                   disabled={(date) => date < new Date() || date > addDays(new Date(), 60)}
                   initialFocus
