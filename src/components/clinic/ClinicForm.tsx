@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -12,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ExternalLink } from 'lucide-react';
+import PhotoUpload from './PhotoUpload';
 import { Clinic } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -49,12 +49,12 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
   });
   const [slugError, setSlugError] = useState('');
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+  const [photo, setPhoto] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
     if (name === 'slug') {
-      // Format slug: lowercase, replace spaces and special chars with hyphens
       const formattedValue = value
         .toLowerCase()
         .replace(/[^a-z0-9-]/g, '-')
@@ -112,6 +112,31 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
     return slug ? `${baseUrl}/c/${slug}` : '';
   };
 
+  useEffect(() => {
+    if (isEditing && editingClinicId) {
+      const fetchClinicData = async () => {
+        const { data, error } = await supabase
+          .from('clinics')
+          .select('*')
+          .eq('id', editingClinicId)
+          .single();
+
+        if (!error && data) {
+          setFormData({
+            name: data.name,
+            address: data.address || '',
+            phone: data.phone || '',
+            email: data.email || '',
+            slug: data.slug || ''
+          });
+          setPhoto(data.photo);
+        }
+      };
+
+      fetchClinicData();
+    }
+  }, [isEditing, editingClinicId]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -126,6 +151,17 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
         </DialogHeader>
         <form onSubmit={(e) => onSubmit(e, formData)}>
           <div className="grid gap-4 py-4">
+            {isEditing && editingClinicId && (
+              <div className="space-y-2">
+                <Label>Foto da Clínica</Label>
+                <PhotoUpload
+                  clinicId={editingClinicId}
+                  currentPhoto={photo}
+                  onPhotoUpdate={setPhoto}
+                />
+              </div>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="name">Nome da Clínica</Label>
               <Input 

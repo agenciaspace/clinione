@@ -82,6 +82,7 @@ export type Database = {
           name: string
           owner_id: string
           phone: string | null
+          photo: string | null
           slug: string | null
           specialties: string[] | null
           state: string | null
@@ -108,6 +109,7 @@ export type Database = {
           name: string
           owner_id: string
           phone?: string | null
+          photo?: string | null
           slug?: string | null
           specialties?: string[] | null
           state?: string | null
@@ -134,6 +136,7 @@ export type Database = {
           name?: string
           owner_id?: string
           phone?: string | null
+          photo?: string | null
           slug?: string | null
           specialties?: string[] | null
           state?: string | null
