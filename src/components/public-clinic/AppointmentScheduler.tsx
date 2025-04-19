@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, ReactNode } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
@@ -16,9 +16,10 @@ import { useAvailableSlots } from '@/hooks/useAvailableSlots';
 
 interface AppointmentSchedulerProps {
   clinicId: string;
+  trigger?: ReactNode;
 }
 
-export const AppointmentScheduler = ({ clinicId }: AppointmentSchedulerProps) => {
+export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentSchedulerProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [open, setOpen] = useState(false);
   const { slots, isLoading } = useAvailableSlots(clinicId, selectedDate);
@@ -26,10 +27,12 @@ export const AppointmentScheduler = ({ clinicId }: AppointmentSchedulerProps) =>
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          Agendar Consulta
-        </Button>
+        {trigger || (
+          <Button>
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            Agendar Consulta
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>

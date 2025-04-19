@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -121,7 +122,7 @@ const PublicClinicPage: React.FC = () => {
           </div>
           
           <div className="space-y-6">
-            <WorkingHoursComponent workingHours={clinic.working_hours} />
+            <WorkingHoursComponent workingHours={clinic.working_hours} clinicId={clinic.id} />
           </div>
         </div>
       </div>

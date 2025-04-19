@@ -3,9 +3,11 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock } from 'lucide-react';
 import { WorkingHours as WorkingHoursType } from '@/types';
+import { AppointmentScheduler } from './AppointmentScheduler';
 
 interface WorkingHoursProps {
   workingHours: WorkingHoursType | null;
+  clinicId: string;
 }
 
 const weekdayNames = {
@@ -18,7 +20,9 @@ const weekdayNames = {
   sunday: "Domingo"
 };
 
-export const WorkingHoursComponent = ({ workingHours }: WorkingHoursProps) => {
+export const WorkingHoursComponent = ({ workingHours, clinicId }: WorkingHoursProps) => {
+  const [open, setOpen] = React.useState(false);
+  
   if (!workingHours) {
     return <p className="text-gray-500">Horários não disponíveis</p>;
   }
@@ -48,10 +52,15 @@ export const WorkingHoursComponent = ({ workingHours }: WorkingHoursProps) => {
       </div>
       
       <div className="mt-6">
-        <Button variant="outline" className="w-full">
-          <Calendar className="mr-2 h-4 w-4" />
-          Agendar Consulta
-        </Button>
+        <AppointmentScheduler 
+          clinicId={clinicId}
+          trigger={
+            <Button variant="outline" className="w-full">
+              <Calendar className="mr-2 h-4 w-4" />
+              Agendar Consulta
+            </Button>
+          } 
+        />
       </div>
     </div>
   );
