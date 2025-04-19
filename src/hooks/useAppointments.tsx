@@ -5,13 +5,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
 import { Appointment } from '@/types';
 import { useClinic } from '@/contexts/ClinicContext';
+import { endOfMonth, startOfMonth } from 'date-fns';
 
 export const useAppointments = (selectedDate?: Date | null, doctorId?: string | null) => {
   const { activeClinic } = useClinic();
   const queryClient = useQueryClient();
   const clinicId = activeClinic?.id;
 
-  // Função para buscar agendamentos
+  // Função para buscar agendamentos de um dia específico
   const fetchAppointments = async () => {
     if (!clinicId || !selectedDate) return [];
 
@@ -42,7 +43,35 @@ export const useAppointments = (selectedDate?: Date | null, doctorId?: string | 
     return data as Appointment[];
   };
 
-  // Configurar a query para buscar agendamentos
+  // Função para buscar todos os agendamentos do mês
+  const fetchMonthAppointments = async (date: Date) => {
+    if (!clinicId || !date) return [];
+
+    const monthStart = startOfMonth(date);
+    const monthEnd = endOfMonth(date);
+    
+    let query = supabase
+      .from('appointments')
+      .select('*')
+      .eq('clinic_id', clinicId)
+      .gte('date', monthStart.toISOString())
+      .lte('date', monthEnd.toISOString());
+      
+    if (doctorId && doctorId !== 'all') {
+      query = query.eq('doctor_id', doctorId);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error('Error fetching month appointments:', error);
+      throw error;
+    }
+    
+    return data as Appointment[];
+  };
+
+  // Query para buscar agendamentos do dia
   const {
     data: appointments = [],
     isLoading,
@@ -51,6 +80,15 @@ export const useAppointments = (selectedDate?: Date | null, doctorId?: string | 
   } = useQuery({
     queryKey: ['appointments', clinicId, selectedDate?.toISOString(), doctorId],
     queryFn: fetchAppointments,
+    enabled: !!clinicId && !!selectedDate,
+  });
+
+  // Query para buscar agendamentos do mês
+  const {
+    data: monthAppointments = [],
+  } = useQuery({
+    queryKey: ['month-appointments', clinicId, selectedDate ? startOfMonth(selectedDate).toISOString() : null, doctorId],
+    queryFn: () => selectedDate ? fetchMonthAppointments(selectedDate) : Promise.resolve([]),
     enabled: !!clinicId && !!selectedDate,
   });
 
@@ -208,6 +246,7 @@ export const useAppointments = (selectedDate?: Date | null, doctorId?: string | 
 
   return {
     appointments,
+    monthAppointments,
     isLoading,
     error,
     refetch,

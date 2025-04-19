@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -32,13 +31,14 @@ const Dashboard = () => {
   
   const { 
     appointments, 
+    monthAppointments,
     isLoading, 
     createAppointment,
     confirmAppointment, 
     cancelAppointment, 
     updateAppointmentNotes 
   } = useAppointments(selectedDate, selectedDoctor);
-  
+
   useEffect(() => {
     if (activeClinic) {
       fetchDoctors();
@@ -92,7 +92,6 @@ const Dashboard = () => {
   };
   
   const handleCreateAppointment = async (formData: any) => {
-    // If doctor_id is provided, fetch doctor's name
     let doctorName;
     if (formData.doctor_id) {
       const selectedDoctor = doctors.find(d => d.id === formData.doctor_id);
@@ -106,12 +105,22 @@ const Dashboard = () => {
     
     setIsFormOpen(false);
   };
-  
+
+  const hasAppointmentsOnDate = (date: Date) => {
+    return monthAppointments.some(appointment => {
+      const appointmentDate = new Date(appointment.date);
+      return (
+        appointmentDate.getDate() === date.getDate() &&
+        appointmentDate.getMonth() === date.getMonth() &&
+        appointmentDate.getFullYear() === date.getFullYear()
+      );
+    });
+  };
+
   const sortedAppointments = [...appointments].sort((a, b) => 
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  // Renderiza um cartão de agendamento
   const renderAppointmentCard = (appointment: Appointment) => {
     return (
       <div 
@@ -158,7 +167,7 @@ const Dashboard = () => {
               variant="outline" 
               className="text-healthgreen-600 border-healthgreen-200 hover:border-healthgreen-600"
               onClick={(e) => {
-                e.stopPropagation(); // Previne que o clique abra os detalhes
+                e.stopPropagation();
                 confirmAppointment(appointment.id);
               }}
             >
@@ -171,7 +180,7 @@ const Dashboard = () => {
             variant="outline" 
             className="text-gray-500 hover:text-gray-700"
             onClick={(e) => {
-              e.stopPropagation(); // Previne que o clique abra os detalhes
+              e.stopPropagation();
               cancelAppointment(appointment.id);
             }}
           >
@@ -209,6 +218,15 @@ const Dashboard = () => {
                 onSelect={setSelectedDate}
                 locale={ptBR}
                 className="border rounded-md"
+                modifiers={{
+                  hasAppointment: (date) => hasAppointmentsOnDate(date),
+                }}
+                modifiersStyles={{
+                  hasAppointment: {
+                    backgroundColor: '#FFFAE6',
+                    fontWeight: 'bold'
+                  }
+                }}
               />
             </div>
             
@@ -317,7 +335,6 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Modal de detalhes do agendamento */}
       <AppointmentDetails
         appointment={selectedAppointment}
         isOpen={isDetailsOpen}
@@ -327,7 +344,6 @@ const Dashboard = () => {
         onUpdateNotes={handleUpdateNotes}
       />
 
-      {/* Modal de novo agendamento */}
       <AppointmentForm
         isOpen={isFormOpen}
         onClose={handleCloseForm}
