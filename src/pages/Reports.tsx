@@ -2,20 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileBarChart, Users, Calendar, DollarSign, Download, Plus } from 'lucide-react';
+import { FileBarChart, Users, Calendar, DollarSign, Download } from 'lucide-react';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useAppointments } from '@/hooks/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
+import { useDoctors } from '@/hooks/useDoctors';
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Legend,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -24,11 +23,6 @@ import {
   YAxis,
   Cell
 } from 'recharts';
-
-// Componente para date-range picker
-interface DateRangePickerProps {
-  className?: string;
-}
 
 const DateRangePickerDemo = ({ className }: DateRangePickerProps) => {
   const [date, setDate] = React.useState({
@@ -46,7 +40,6 @@ const DateRangePickerDemo = ({ className }: DateRangePickerProps) => {
 const Reports = () => {
   const { activeClinic } = useClinic();
   const [selectedDoctor, setSelectedDoctor] = useState<string | undefined>(undefined);
-  const [selectedReport, setSelectedReport] = useState('appointments');
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
@@ -54,13 +47,12 @@ const Reports = () => {
 
   const { allAppointments, isLoading: isLoadingAppointments } = useAppointments(null, selectedDoctor);
   const { patients } = usePatients(activeClinic?.id);
+  const { doctors, isLoading: isLoadingDoctors } = useDoctors();
 
-  // Cálculo de estatísticas
   const totalAppointments = allAppointments.length;
   const confirmedAppointments = allAppointments.filter(app => app.status === 'confirmed').length;
   const cancelledAppointments = allAppointments.filter(app => app.status === 'cancelled').length;
 
-  // Filtra agendamentos dentro do intervalo de datas selecionado
   const filteredAppointments = allAppointments.filter(appointment => {
     const appointmentDate = new Date(appointment.date);
     return isWithinInterval(appointmentDate, {
@@ -69,7 +61,6 @@ const Reports = () => {
     });
   });
 
-  // Dados para o gráfico de agendamentos por dia
   const appointmentsByDay = filteredAppointments.reduce((acc: any[], appointment) => {
     const date = format(new Date(appointment.date), 'dd/MM');
     const existingDay = acc.find(item => item.date === date);
@@ -83,17 +74,15 @@ const Reports = () => {
     return acc;
   }, []);
 
-  // Dados para o gráfico de pizza por status
   const appointmentsByStatus = [
     { name: 'Confirmados', value: confirmedAppointments },
     { name: 'Cancelados', value: cancelledAppointments },
     { name: 'Agendados', value: totalAppointments - (confirmedAppointments + cancelledAppointments) }
   ];
 
-  // Cores para o gráfico de pizza
   const COLORS = ['#10B981', '#EF4444', '#3B82F6'];
 
-  const isLoading = isLoadingAppointments;
+  const isLoading = isLoadingAppointments || isLoadingDoctors;
 
   return (
     <DashboardLayout>
@@ -108,7 +97,6 @@ const Reports = () => {
 
       {activeClinic ? (
         <>
-          {/* Cards de resumo */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card>
               <CardContent className="flex flex-col items-center justify-center p-6">
@@ -139,19 +127,26 @@ const Reports = () => {
             </Card>
           </div>
 
-          {/* Filtros */}
           <Card className="mb-6">
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-4">
                 <div className="flex-1">
                   <DatePickerWithRange date={dateRange} setDate={setDateRange} />
                 </div>
-                <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
+                <Select 
+                  value={selectedDoctor} 
+                  onValueChange={setSelectedDoctor}
+                >
                   <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Todos os profissionais" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os profissionais</SelectItem>
+                    {doctors.map((doctor) => (
+                      <SelectItem key={doctor.id} value={doctor.id}>
+                        {doctor.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Button variant="outline" disabled={isLoading}>
@@ -162,9 +157,7 @@ const Reports = () => {
             </CardContent>
           </Card>
 
-          {/* Gráficos */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Gráfico de barras - Agendamentos por dia */}
             <Card>
               <CardHeader>
                 <CardTitle>Agendamentos por dia</CardTitle>
@@ -199,7 +192,6 @@ const Reports = () => {
               </CardContent>
             </Card>
 
-            {/* Gráfico de pizza - Status dos agendamentos */}
             <Card>
               <CardHeader>
                 <CardTitle>Status dos agendamentos</CardTitle>
