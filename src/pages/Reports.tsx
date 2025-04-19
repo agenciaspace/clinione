@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,14 +82,8 @@ const Reports = () => {
 
   const isLoading = isLoadingAppointments || isLoadingDoctors;
 
-  const formatPieLabel = ({ name, percent }: { name: string, percent: number }) => {
-    const label = `${name}: ${(percent * 100).toFixed(0)}%`;
-    const isMobile = window.innerWidth < 768;
-    
-    return isMobile && label.length > 15 
-      ? `${label.substring(0, 12)}...` 
-      : label;
-  };
+  // Remova o formatPieLabel e use renderizações de legenda personalizadas
+  // para melhorar a responsividade
 
   return (
     <DashboardLayout>
@@ -248,8 +243,9 @@ const Reports = () => {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={formatPieLabel}
-                          outerRadius={isMobile ? 80 : 100}
+                          // Removendo o label que estava dentro do gráfico
+                          label={false}
+                          outerRadius={isMobile ? 70 : 90}
                           fill="#8884d8"
                           dataKey="value"
                         >
@@ -273,17 +269,42 @@ const Reports = () => {
                           }}
                         />
                         <Legend 
-                          wrapperStyle={{ 
-                            fontSize: isMobile ? 10 : 12,
-                            display: 'flex',
-                            flexDirection: isMobile ? 'column' : 'row',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            gap: isMobile ? '0.5rem' : '1rem'
+                          content={(props) => {
+                            const { payload = [] } = props;
+                            
+                            if (!payload || payload.length === 0) return null;
+                            
+                            return (
+                              <div className="flex flex-col gap-2 p-2 mt-4">
+                                <div className="flex flex-wrap gap-4 justify-center">
+                                  {payload.map((entry, index) => (
+                                    <div 
+                                      key={`legend-${index}`} 
+                                      className="flex items-center gap-2 text-xs md:text-sm"
+                                    >
+                                      <div 
+                                        className="w-3 h-3 rounded" 
+                                        style={{ backgroundColor: entry.color }}
+                                      />
+                                      <span>{entry.value}</span>
+                                      <span className="font-bold ml-1">
+                                        {((entry.payload.value / totalAppointments) * 100).toFixed(0)}%
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="flex flex-wrap gap-2 justify-center text-xs text-gray-500">
+                                  {appointmentsByStatus.map((status, i) => (
+                                    <div key={`status-count-${i}`} className="flex items-center">
+                                      <span className="font-medium" style={{ color: COLORS[i % COLORS.length] }}>
+                                        {status.name}: {status.value}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
                           }}
-                          layout={isMobile ? "vertical" : "horizontal"}
-                          verticalAlign={isMobile ? "bottom" : "middle"}
-                          align="center"
                         />
                       </PieChart>
                     </ResponsiveContainer>
