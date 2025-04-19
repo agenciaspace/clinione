@@ -54,6 +54,63 @@ export const useAppointments = (selectedDate?: Date | null, doctorId?: string | 
     enabled: !!clinicId && !!selectedDate,
   });
 
+  // Mutation para criar um novo agendamento
+  const createAppointment = useMutation({
+    mutationFn: async ({
+      patient_name,
+      doctor_id,
+      doctor_name,
+      date,
+      time,
+      type,
+      notes
+    }: {
+      patient_name: string;
+      doctor_id?: string;
+      doctor_name?: string;
+      date: Date;
+      time: string;
+      type: 'in-person' | 'online';
+      notes?: string;
+    }) => {
+      if (!clinicId) throw new Error('Nenhuma clínica selecionada');
+      
+      // Combine date and time
+      const [hours, minutes] = time.split(':').map(Number);
+      const appointmentDate = new Date(date);
+      appointmentDate.setHours(hours, minutes, 0, 0);
+      
+      const { data, error } = await supabase
+        .from('appointments')
+        .insert({
+          clinic_id: clinicId,
+          patient_name,
+          doctor_id,
+          doctor_name,
+          date: appointmentDate.toISOString(),
+          type,
+          notes,
+          status: 'scheduled'
+        })
+        .select('*')
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Agendamento criado com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+    },
+    onError: (error) => {
+      console.error('Error creating appointment:', error);
+      toast.error('Erro ao criar agendamento');
+    },
+  });
+
   // Mutation para confirmar agendamento
   const confirmAppointment = useMutation({
     mutationFn: async (id: string) => {
@@ -154,6 +211,15 @@ export const useAppointments = (selectedDate?: Date | null, doctorId?: string | 
     isLoading,
     error,
     refetch,
+    createAppointment: (data: {
+      patient_name: string;
+      doctor_id?: string;
+      doctor_name?: string;
+      date: Date;
+      time: string;
+      type: 'in-person' | 'online';
+      notes?: string;
+    }) => createAppointment.mutate(data),
     confirmAppointment: (id: string) => confirmAppointment.mutate(id),
     cancelAppointment: (id: string) => cancelAppointment.mutate(id),
     updateAppointmentNotes: (id: string, notes: string) => 

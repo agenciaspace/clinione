@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useClinic } from '@/contexts/ClinicContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppointmentDetails } from '@/components/appointments/AppointmentDetails';
+import { AppointmentForm } from '@/components/appointments/AppointmentForm';
 import { useAppointments } from '@/hooks/useAppointments';
 
 const Dashboard = () => {
@@ -27,10 +28,12 @@ const Dashboard = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   
   const { 
     appointments, 
     isLoading, 
+    createAppointment,
     confirmAppointment, 
     cancelAppointment, 
     updateAppointmentNotes 
@@ -78,6 +81,30 @@ const Dashboard = () => {
   
   const handleUpdateNotes = (id: string, notes: string) => {
     updateAppointmentNotes(id, notes);
+  };
+  
+  const handleOpenForm = () => {
+    setIsFormOpen(true);
+  };
+  
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+  };
+  
+  const handleCreateAppointment = async (formData: any) => {
+    // If doctor_id is provided, fetch doctor's name
+    let doctorName;
+    if (formData.doctor_id) {
+      const selectedDoctor = doctors.find(d => d.id === formData.doctor_id);
+      doctorName = selectedDoctor?.name;
+    }
+    
+    await createAppointment({
+      ...formData,
+      doctor_name: doctorName
+    });
+    
+    setIsFormOpen(false);
   };
   
   const sortedAppointments = [...appointments].sort((a, b) => 
@@ -235,7 +262,7 @@ const Dashboard = () => {
                   : `${appointments.length} agendamento(s)`)}
               </CardDescription>
             </div>
-            <Button>Novo agendamento</Button>
+            <Button onClick={handleOpenForm}>Novo agendamento</Button>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="all">
@@ -258,7 +285,7 @@ const Dashboard = () => {
                       Não há consultas agendadas para esta data.
                     </p>
                     <div className="mt-6">
-                      <Button>Agendar consulta</Button>
+                      <Button onClick={handleOpenForm}>Agendar consulta</Button>
                     </div>
                   </div>
                 ) : (
@@ -290,6 +317,7 @@ const Dashboard = () => {
         </Card>
       </div>
 
+      {/* Modal de detalhes do agendamento */}
       <AppointmentDetails
         appointment={selectedAppointment}
         isOpen={isDetailsOpen}
@@ -297,6 +325,15 @@ const Dashboard = () => {
         onConfirm={confirmAppointment}
         onCancel={cancelAppointment}
         onUpdateNotes={handleUpdateNotes}
+      />
+
+      {/* Modal de novo agendamento */}
+      <AppointmentForm
+        isOpen={isFormOpen}
+        onClose={handleCloseForm}
+        onSubmit={handleCreateAppointment}
+        doctors={doctors}
+        selectedDate={selectedDate}
       />
     </DashboardLayout>
   );
