@@ -15,15 +15,23 @@ export const ClinicHeader = ({ name, logo, photo, address }: ClinicHeaderProps) 
   return (
     <header className="relative pb-6 border-b">
       {logo && (
-        <div className="w-full h-48 mb-6 rounded-lg overflow-hidden">
-          <img src={logo} alt={`${name} - Banner da clínica`} className="w-full h-full object-cover" />
+        <div className="w-full h-48 mb-6 rounded-lg overflow-hidden bg-gray-100">
+          <img 
+            src={logo} 
+            alt={`${name} - Banner da clínica`} 
+            className="w-full h-full object-cover object-center"
+          />
         </div>
       )}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center">
         <div className="flex items-center space-x-4">
-          <Avatar className="w-16 h-16">
+          <Avatar className="w-16 h-16 border-2 border-gray-100">
             {photo ? (
-              <AvatarImage src={photo} alt={`${name} - Foto de perfil`} />
+              <AvatarImage 
+                src={photo} 
+                alt={`${name} - Foto de perfil`}
+                className="object-cover object-center"
+              />
             ) : (
               <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-lg">
                 {name.charAt(0)}
