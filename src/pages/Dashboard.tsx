@@ -1,19 +1,22 @@
+
 import React, { useState, useEffect } from 'react';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar as CalendarIcon, Clock, User, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar } from '@/components/ui/calendar';
+import { DashboardLayout } from '../components/layout/DashboardLayout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar as CalendarIcon, Clock, User, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Appointment, Doctor } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClinic } from '@/contexts/ClinicContext';
+import { supabase } from '@/integrations/supabase/client';
+import { AppointmentDetails } from '@/components/appointments/AppointmentDetails';
+import { useAppointments } from '@/hooks/useAppointments';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -21,9 +24,17 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [view, setView] = useState<'day' | 'week'>('day');
   const [selectedDoctor, setSelectedDoctor] = useState<string | undefined>(undefined);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  
+  const { 
+    appointments, 
+    isLoading, 
+    confirmAppointment, 
+    cancelAppointment, 
+    updateAppointmentNotes 
+  } = useAppointments(selectedDate, selectedDoctor);
   
   useEffect(() => {
     if (activeClinic) {
@@ -55,122 +66,94 @@ const Dashboard = () => {
     }
   };
   
-  useEffect(() => {
-    if (selectedDate && activeClinic) {
-      fetchAppointments();
-    } else {
-      setAppointments([]);
-      setLoading(false);
-    }
-  }, [selectedDate, selectedDoctor, activeClinic]);
-  
-  const fetchAppointments = async () => {
-    if (!selectedDate || !activeClinic) return;
-    
-    setLoading(true);
-    try {
-      // Format the date to match the database format
-      const dateStart = new Date(selectedDate);
-      dateStart.setHours(0, 0, 0, 0);
-      
-      const dateEnd = new Date(selectedDate);
-      dateEnd.setHours(23, 59, 59, 999);
-      
-      let query = supabase
-        .from('appointments')
-        .select('*')
-        .eq('clinic_id', activeClinic.id)
-        .gte('date', dateStart.toISOString())
-        .lte('date', dateEnd.toISOString());
-        
-      if (selectedDoctor) {
-        query = query.eq('doctor_id', selectedDoctor);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching appointments:', error);
-        setLoading(false);
-        return;
-      }
-      
-      if (data) {
-        setAppointments(data as Appointment[]);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleOpenDetails = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsDetailsOpen(true);
   };
   
-  const filteredAppointments = appointments.filter(appointment => {
-    const appointmentDate = new Date(appointment.date);
-    const sameDate = selectedDate && 
-      appointmentDate.getDate() === selectedDate.getDate() &&
-      appointmentDate.getMonth() === selectedDate.getMonth() &&
-      appointmentDate.getFullYear() === selectedDate.getFullYear();
-      
-    if (selectedDoctor) {
-      return sameDate && appointment.doctor_id === selectedDoctor;
-    }
-    
-    return sameDate;
-  });
+  const handleCloseDetails = () => {
+    setIsDetailsOpen(false);
+    setSelectedAppointment(null);
+  };
   
-  const sortedAppointments = [...filteredAppointments].sort((a, b) => 
+  const handleUpdateNotes = (id: string, notes: string) => {
+    updateAppointmentNotes(id, notes);
+  };
+  
+  const sortedAppointments = [...appointments].sort((a, b) => 
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  const handleConfirmAppointment = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status: 'confirmed' })
-        .eq('id', id);
+  // Renderiza um cartão de agendamento
+  const renderAppointmentCard = (appointment: Appointment) => {
+    return (
+      <div 
+        key={appointment.id} 
+        className="flex items-start p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+        onClick={() => handleOpenDetails(appointment)}
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-gray-900">
+              {format(new Date(appointment.date), 'HH:mm')}
+            </p>
+            <Badge 
+              variant={appointment.status === 'confirmed' ? 'default' : 'outline'}
+              className={appointment.status === 'confirmed' ? 'bg-healthgreen-600' : ''}
+            >
+              {appointment.status === 'confirmed' ? 'Confirmado' : 'Agendado'}
+            </Badge>
+          </div>
+          <div className="mt-1">
+            <p className="text-sm text-gray-500 flex items-center">
+              <User className="mr-1 h-4 w-4" />
+              <span className="font-medium">{appointment.patient_name}</span>
+            </p>
+            <p className="text-sm text-gray-500 flex items-center mt-1">
+              <Clock className="mr-1 h-4 w-4" />
+              <span>{appointment.doctor_name || 'Sem médico atribuído'}</span>
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {appointment.type === 'online' ? 'Teleconsulta' : 'Presencial'}
+            </p>
+            {appointment.notes && (
+              <p className="text-xs text-gray-500 mt-1 italic">
+                Obs: {appointment.notes.length > 30 ? `${appointment.notes.substring(0, 30)}...` : appointment.notes}
+              </p>
+            )}
+          </div>
+        </div>
         
-      if (error) {
-        toast.error('Erro ao confirmar agendamento');
-        console.error('Error confirming appointment:', error);
-        return;
-      }
-      
-      // Update the local state
-      setAppointments(appointments.map(appt => 
-        appt.id === id ? { ...appt, status: 'confirmed' } : appt
-      ));
-      
-      toast.success('Agendamento confirmado com sucesso');
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Ocorreu um erro ao confirmar o agendamento');
-    }
-  };
-  
-  const handleCancelAppointment = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status: 'cancelled' })
-        .eq('id', id);
-        
-      if (error) {
-        toast.error('Erro ao cancelar agendamento');
-        console.error('Error canceling appointment:', error);
-        return;
-      }
-      
-      // Update the local state
-      setAppointments(appointments.map(appt => 
-        appt.id === id ? { ...appt, status: 'cancelled' } : appt
-      ));
-      
-      toast.success('Agendamento cancelado com sucesso');
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Ocorreu um erro ao cancelar o agendamento');
-    }
+        <div className="ml-4 flex flex-shrink-0 space-x-2">
+          {appointment.status !== 'confirmed' && (
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-healthgreen-600 border-healthgreen-200 hover:border-healthgreen-600"
+              onClick={(e) => {
+                e.stopPropagation(); // Previne que o clique abra os detalhes
+                confirmAppointment(appointment.id);
+              }}
+            >
+              <CheckCircle className="h-4 w-4 mr-1" />
+              Confirmar
+            </Button>
+          )}
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="text-gray-500 hover:text-gray-700"
+            onClick={(e) => {
+              e.stopPropagation(); // Previne que o clique abra os detalhes
+              cancelAppointment(appointment.id);
+            }}
+          >
+            <XCircle className="h-4 w-4 mr-1" />
+            Cancelar
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -193,7 +176,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-center">
-              <Calendar
+              <CalendarComponent
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
@@ -246,7 +229,7 @@ const Dashboard = () => {
                 {selectedDate && format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
               </CardTitle>
               <CardDescription>
-                {loading ? 'Carregando agendamentos...' : 
+                {isLoading ? 'Carregando agendamentos...' : 
                   (appointments.length === 0 
                   ? 'Nenhum agendamento para este dia' 
                   : `${appointments.length} agendamento(s)`)}
@@ -263,7 +246,7 @@ const Dashboard = () => {
               </TabsList>
               
               <TabsContent value="all" className="space-y-4">
-                {loading ? (
+                {isLoading ? (
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
@@ -279,166 +262,42 @@ const Dashboard = () => {
                     </div>
                   </div>
                 ) : (
-                  appointments.map((appointment) => (
-                    <div key={appointment.id} className="flex items-start p-4 border rounded-lg hover:bg-gray-50">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900">
-                            {format(new Date(appointment.date), 'HH:mm')}
-                          </p>
-                          <Badge 
-                            variant={appointment.status === 'confirmed' ? 'default' : 'outline'}
-                            className={appointment.status === 'confirmed' ? 'bg-healthgreen-600' : ''}
-                          >
-                            {appointment.status === 'confirmed' ? 'Confirmado' : 'Agendado'}
-                          </Badge>
-                        </div>
-                        <div className="mt-1">
-                          <p className="text-sm text-gray-500 flex items-center">
-                            <User className="mr-1 h-4 w-4" />
-                            <span className="font-medium">{appointment.patient_name}</span>
-                          </p>
-                          <p className="text-sm text-gray-500 flex items-center mt-1">
-                            <Clock className="mr-1 h-4 w-4" />
-                            <span>{appointment.doctor_name}</span>
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {appointment.type === 'online' ? 'Teleconsulta' : 'Presencial'}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="ml-4 flex flex-shrink-0 space-x-2">
-                        {appointment.status !== 'confirmed' && (
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-healthgreen-600 border-healthgreen-200 hover:border-healthgreen-600"
-                            onClick={() => handleConfirmAppointment(appointment.id)}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Confirmar
-                          </Button>
-                        )}
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-gray-500 hover:text-gray-700"
-                          onClick={() => handleCancelAppointment(appointment.id)}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
-                  ))
+                  sortedAppointments.map(renderAppointmentCard)
                 )}
               </TabsContent>
               
               <TabsContent value="scheduled" className="space-y-4">
-                {loading ? (
+                {isLoading ? (
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
                 ) : sortedAppointments
                   .filter(a => a.status === 'scheduled')
-                  .map((appointment) => (
-                    <div key={appointment.id} className="flex items-start p-4 border rounded-lg hover:bg-gray-50">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900">
-                            {format(new Date(appointment.date), 'HH:mm')}
-                          </p>
-                          <Badge variant="outline">Agendado</Badge>
-                        </div>
-                        <div className="mt-1">
-                          <p className="text-sm text-gray-500 flex items-center">
-                            <User className="mr-1 h-4 w-4" />
-                            <span className="font-medium">{appointment.patient_name}</span>
-                          </p>
-                          <p className="text-sm text-gray-500 flex items-center mt-1">
-                            <Clock className="mr-1 h-4 w-4" />
-                            <span>{appointment.doctor_name}</span>
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {appointment.type === 'online' ? 'Teleconsulta' : 'Presencial'}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="ml-4 flex flex-shrink-0 space-x-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-healthgreen-600 border-healthgreen-200 hover:border-healthgreen-600"
-                          onClick={() => handleConfirmAppointment(appointment.id)}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Confirmar
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-gray-500 hover:text-gray-700"
-                          onClick={() => handleCancelAppointment(appointment.id)}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                  .map(renderAppointmentCard)}
               </TabsContent>
               
               <TabsContent value="confirmed" className="space-y-4">
-                {loading ? (
+                {isLoading ? (
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
                 ) : sortedAppointments
                   .filter(a => a.status === 'confirmed')
-                  .map((appointment) => (
-                    <div key={appointment.id} className="flex items-start p-4 border rounded-lg hover:bg-gray-50">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900">
-                            {format(new Date(appointment.date), 'HH:mm')}
-                          </p>
-                          <Badge className="bg-healthgreen-600">Confirmado</Badge>
-                        </div>
-                        <div className="mt-1">
-                          <p className="text-sm text-gray-500 flex items-center">
-                            <User className="mr-1 h-4 w-4" />
-                            <span className="font-medium">{appointment.patient_name}</span>
-                          </p>
-                          <p className="text-sm text-gray-500 flex items-center mt-1">
-                            <Clock className="mr-1 h-4 w-4" />
-                            <span>{appointment.doctor_name}</span>
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {appointment.type === 'online' ? 'Teleconsulta' : 'Presencial'}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="ml-4 flex flex-shrink-0">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-gray-500 hover:text-gray-700"
-                          onClick={() => handleCancelAppointment(appointment.id)}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                  .map(renderAppointmentCard)}
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
       </div>
+
+      <AppointmentDetails
+        appointment={selectedAppointment}
+        isOpen={isDetailsOpen}
+        onClose={handleCloseDetails}
+        onConfirm={confirmAppointment}
+        onCancel={cancelAppointment}
+        onUpdateNotes={handleUpdateNotes}
+      />
     </DashboardLayout>
   );
 };
