@@ -1,3 +1,4 @@
+
 import React, { useState, ReactNode, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -53,7 +54,7 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
   const [isSuccess, setIsSuccess] = useState(false);
   const isMobile = useIsMobile();
   
-  const { slots, isLoading } = useAvailableSlots(clinicId, selectedDate);
+  const { slots, isLoading, error, refetch } = useAvailableSlots(clinicId, selectedDate);
 
   useEffect(() => {
     if (open && !selectedDate) {
@@ -65,8 +66,10 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
   useEffect(() => {
     if (selectedDate) {
       console.log(`Slots carregados para ${selectedDate.toISOString().split('T')[0]}:`, slots?.length || 0);
+      // Forçar refetch quando a data mudar
+      refetch();
     }
-  }, [slots, selectedDate]);
+  }, [selectedDate, refetch]);
 
   const handleSlotSelect = (slot: any) => {
     setSelectedSlot(slot);
@@ -141,6 +144,16 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
         <div className="flex items-center justify-center p-4">
           <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
           <span className="ml-2 text-sm text-muted-foreground">Carregando horários disponíveis...</span>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="p-4 text-center">
+          <p className="text-sm text-red-500">
+            Erro ao carregar horários. Por favor, tente novamente.
+          </p>
         </div>
       );
     }

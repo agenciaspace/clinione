@@ -43,9 +43,10 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
       return data as AvailableSlot[];
     },
     enabled: !!clinicId && !!date,
-    // Aumentar o tempo de retry para dar mais tempo ao servidor para responder
-    retry: 2,
+    retry: 3,
     retryDelay: 1000,
+    staleTime: 0, // Não guardar cache dos horários
+    cacheTime: 0, // Não armazenar em cache
   });
 
   return {
