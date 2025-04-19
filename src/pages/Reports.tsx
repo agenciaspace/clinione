@@ -24,11 +24,14 @@ import {
   YAxis,
   Cell
 } from 'recharts';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ChartContainer, ChartTooltipContent, ChartTooltip } from '@/components/ui/chart';
 
 // Remove the DateRangePickerDemo component since we're using DatePickerWithRange directly
 
 const Reports = () => {
   const { activeClinic } = useClinic();
+  const isMobile = useIsMobile();
   const [selectedDoctor, setSelectedDoctor] = useState<string | undefined>(undefined);
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
@@ -39,20 +42,27 @@ const Reports = () => {
   const { patients } = usePatients(activeClinic?.id);
   const { doctors, isLoading: isLoadingDoctors } = useDoctors();
 
-  // Filtramos os agendamentos com base no período selecionado
-  const filteredAppointments = allAppointments.filter(appointment => {
-    const appointmentDate = new Date(appointment.date);
-    return dateRange.from && dateRange.to && isWithinInterval(appointmentDate, {
-      start: dateRange.from,
-      end: dateRange.to
-    });
-  });
+  // Garantindo que temos datas válidas antes de filtrar
+  const hasValidDateRange = dateRange?.from && dateRange?.to;
+  
+  // Filtramos os agendamentos com base no período selecionado apenas se tivermos datas válidas
+  const filteredAppointments = hasValidDateRange 
+    ? allAppointments.filter(appointment => {
+        const appointmentDate = new Date(appointment.date);
+        return isWithinInterval(appointmentDate, {
+          start: dateRange.from!,
+          end: dateRange.to!
+        });
+      })
+    : [];
 
-  // Calculamos os totais com base nos agendamentos filtrados (não nos agendamentos totais)
+  // Calculamos os totais com base nos agendamentos filtrados
   const totalAppointments = filteredAppointments.length;
   const confirmedAppointments = filteredAppointments.filter(app => app.status === 'confirmed').length;
   const cancelledAppointments = filteredAppointments.filter(app => app.status === 'cancelled').length;
-  const pendingAppointments = totalAppointments - (confirmedAppointments + cancelledAppointments);
+  const pendingAppointments = filteredAppointments.filter(app => 
+    app.status !== 'confirmed' && app.status !== 'cancelled'
+  ).length;
 
   const appointmentsByDay = filteredAppointments.reduce((acc: any[], appointment) => {
     const date = format(new Date(appointment.date), 'dd/MM');
@@ -71,7 +81,7 @@ const Reports = () => {
     { name: 'Confirmados', value: confirmedAppointments },
     { name: 'Cancelados', value: cancelledAppointments },
     { name: 'Agendados', value: pendingAppointments }
-  ].filter(item => item.value > 0); // Filtra para mostrar apenas status com valores > 0
+  ].filter(item => item.value > 0);
 
   const COLORS = ['#10B981', '#EF4444', '#3B82F6'];
 
@@ -123,14 +133,14 @@ const Reports = () => {
           <Card className="mb-6">
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-4">
-                <div className="flex-1">
+                <div className="flex-1 min-w-[250px]">
                   <DatePickerWithRange date={dateRange} setDate={setDateRange} />
                 </div>
                 <Select 
                   value={selectedDoctor} 
                   onValueChange={setSelectedDoctor}
                 >
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger className="w-full md:w-[200px]">
                     <SelectValue placeholder="Todos os profissionais" />
                   </SelectTrigger>
                   <SelectContent>
@@ -153,7 +163,7 @@ const Reports = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Agendamentos por dia</CardTitle>
+                <CardTitle className="text-lg md:text-xl">Agendamentos por dia</CardTitle>
                 <CardDescription>
                   Distribuição de agendamentos no período selecionado
                 </CardDescription>
@@ -166,12 +176,41 @@ const Reports = () => {
                 ) : appointmentsByDay.length > 0 ? (
                   <div className="h-[300px] w-full">
                     <ResponsiveContainer>
-                      <BarChart data={appointmentsByDay}>
+                      <BarChart 
+                        data={appointmentsByDay}
+                        margin={{ 
+                          top: 5, 
+                          right: isMobile ? 10 : 30, 
+                          left: isMobile ? 0 : 20, 
+                          bottom: 5 
+                        }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
+                        <XAxis 
+                          dataKey="date" 
+                          tick={{ fontSize: isMobile ? 10 : 12 }}
+                          height={50}
+                        />
+                        <YAxis
+                          tick={{ fontSize: isMobile ? 10 : 12 }}
+                          width={isMobile ? 30 : 40}
+                        />
+                        <Tooltip 
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              return (
+                                <div className="bg-white p-2 border rounded shadow text-xs md:text-sm">
+                                  <p>Data: {payload[0].payload.date}</p>
+                                  <p>Total: {payload[0].value} agendamentos</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Legend 
+                          wrapperStyle={{ fontSize: isMobile ? 10 : 12 }}
+                        />
                         <Bar dataKey="total" fill="#3B82F6" name="Agendamentos" />
                       </BarChart>
                     </ResponsiveContainer>
@@ -179,7 +218,7 @@ const Reports = () => {
                 ) : (
                   <div className="h-[300px] flex flex-col items-center justify-center">
                     <FileBarChart className="h-16 w-16 text-gray-300 mb-4" />
-                    <p className="text-gray-500">Sem dados para o período selecionado</p>
+                    <p className="text-gray-500 text-center">Sem dados para o período selecionado</p>
                   </div>
                 )}
               </CardContent>
@@ -187,7 +226,7 @@ const Reports = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Status dos agendamentos</CardTitle>
+                <CardTitle className="text-lg md:text-xl">Status dos agendamentos</CardTitle>
                 <CardDescription>
                   Distribuição dos agendamentos por status
                 </CardDescription>
@@ -197,7 +236,7 @@ const Reports = () => {
                   <div className="h-[300px] flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary"></div>
                   </div>
-                ) : totalAppointments > 0 ? (
+                ) : totalAppointments > 0 && appointmentsByStatus.length > 0 ? (
                   <div className="h-[300px] w-full">
                     <ResponsiveContainer>
                       <PieChart>
@@ -206,8 +245,13 @@ const Reports = () => {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={100}
+                          label={({ name, percent }) => {
+                            const label = `${name}: ${(percent * 100).toFixed(0)}%`;
+                            return isMobile && label.length > 15 
+                              ? `${label.substring(0, 12)}...` 
+                              : label;
+                          }}
+                          outerRadius={isMobile ? 80 : 100}
                           fill="#8884d8"
                           dataKey="value"
                         >
@@ -215,15 +259,34 @@ const Reports = () => {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
-                        <Legend />
+                        <Tooltip 
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const item = payload[0].payload;
+                              return (
+                                <div className="bg-white p-2 border rounded shadow text-xs md:text-sm">
+                                  <p>Status: {item.name}</p>
+                                  <p>Quantidade: {item.value}</p>
+                                  <p>Porcentagem: {((item.value / totalAppointments) * 100).toFixed(1)}%</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Legend 
+                          wrapperStyle={{ fontSize: isMobile ? 10 : 12 }}
+                          layout={isMobile ? "horizontal" : "vertical"}
+                          verticalAlign={isMobile ? "bottom" : "middle"}
+                          align={isMobile ? "center" : "right"}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                 ) : (
                   <div className="h-[300px] flex flex-col items-center justify-center">
                     <FileBarChart className="h-16 w-16 text-gray-300 mb-4" />
-                    <p className="text-gray-500">Sem dados para o período selecionado</p>
+                    <p className="text-gray-500 text-center">Sem dados para o período selecionado</p>
                   </div>
                 )}
               </CardContent>
