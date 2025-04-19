@@ -46,7 +46,7 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
     retry: 3,
     retryDelay: 1000,
     staleTime: 0, // Não guardar cache dos horários
-    cacheTime: 0, // Não armazenar em cache
+    gcTime: 0, // No @tanstack/react-query v5, cacheTime foi substituído por gcTime
   });
 
   return {
