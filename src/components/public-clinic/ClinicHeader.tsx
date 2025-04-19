@@ -26,14 +26,12 @@ export const ClinicHeader = ({ name, logo, photo, address, id }: ClinicHeaderPro
       <div className="flex flex-col md:flex-row md:justify-between md:items-center">
         <div className="flex items-center space-x-4">
           <div className="relative w-16 h-16 rounded-full overflow-hidden">
-            {photo ? (
-              <AspectRatio ratio={1/1} className="h-full">
-                <img 
-                  src={photo} 
-                  alt={`${name} - Foto de perfil`}
-                  className="object-cover rounded-full border-2 border-gray-100" 
-                />
-              </AspectRatio>
+            {logo ? (
+              <img 
+                src={logo} 
+                alt={`${name} - Logo`}
+                className="w-16 h-16 object-contain aspect-[4/1]"
+              /> 
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-blue-100 rounded-full border-2 border-gray-100">
                 <span className="text-blue-600 font-bold text-lg">

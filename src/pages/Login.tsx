@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -123,7 +124,7 @@ const Login = () => {
               <img 
                 src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
                 alt="Clini.One Logo" 
-                className="h-16 w-auto"
+                className="h-16 w-auto min-h-[64px] min-w-[200px] max-w-[250px] object-contain aspect-[4/1]"
               />
             </div>
             <CardTitle className="text-2xl">Acesse sua conta</CardTitle>

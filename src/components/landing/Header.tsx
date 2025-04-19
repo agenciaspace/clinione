@@ -13,7 +13,7 @@ export const Header = () => {
           <img 
             src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
             alt="Clini.One Logo" 
-            className="h-12 w-auto min-h-[48px] min-w-[120px] max-w-[160px] object-contain aspect-[4/1] sm:h-16 sm:min-h-[64px]"
+            className="h-16 w-auto min-h-[64px] min-w-[200px] max-w-[250px] object-contain aspect-[4/1]"
           />
         </div>
         

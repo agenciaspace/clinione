@@ -60,7 +60,7 @@ const Register = () => {
           <img 
             src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
             alt="Clini.One Logo" 
-            className="h-16 w-auto min-h-[64px] min-w-[200px] max-w-[250px] object-contain"
+            className="h-16 w-auto min-h-[64px] min-w-[200px] max-w-[250px] object-contain aspect-[4/1]"
           />
         </div>
         <div className="relative z-20 mt-auto">
@@ -80,7 +80,7 @@ const Register = () => {
                 <img 
                   src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
                   alt="Clini.One Logo" 
-                  className="h-14 w-auto min-h-[56px] min-w-[175px] max-w-[225px] object-contain"
+                  className="h-16 w-auto min-h-[64px] min-w-[200px] max-w-[250px] object-contain aspect-[4/1]"
                 />
               </div>
               <CardTitle className="text-2xl">Crie sua conta</CardTitle>
