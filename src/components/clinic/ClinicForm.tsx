@@ -8,12 +8,20 @@ import {
   DialogHeader, 
   DialogTitle 
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle
+} from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ExternalLink } from 'lucide-react';
 import PhotoUpload from './PhotoUpload';
-import { Clinic } from '@/types';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ClinicFormData {
@@ -52,6 +60,7 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -149,18 +158,150 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
     }
   }, [isEditing, editingClinicId]);
 
+  const formContent = (
+    <form onSubmit={handleFormSubmit}>
+      <div className="grid gap-4 py-4">
+        {isEditing && editingClinicId && (
+          <div className="space-y-2">
+            <Label>Foto da Clínica</Label>
+            <PhotoUpload
+              clinicId={editingClinicId}
+              currentPhoto={photo}
+              onPhotoUpdate={setPhoto}
+            />
+          </div>
+        )}
+        
+        <div className="space-y-2">
+          <Label htmlFor="name">Nome da Clínica</Label>
+          <Input 
+            id="name" 
+            name="name" 
+            value={formData.name} 
+            onChange={handleInputChange} 
+            required 
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="slug">Endereço público da sua clínica</Label>
+          <div className="flex">
+            <span className="bg-gray-100 px-3 flex items-center border border-r-0 border-input rounded-l-md text-sm text-gray-500">
+              {baseUrl}/c/
+            </span>
+            <Input
+              id="slug"
+              name="slug"
+              className={`rounded-l-none ${slugError ? 'border-red-500' : ''}`}
+              value={formData.slug}
+              onChange={handleInputChange}
+              onBlur={handleSlugBlur}
+              placeholder="ex: vila-mariana-clinica"
+            />
+          </div>
+          {slugError ? (
+            <p className="text-sm text-red-500">{slugError}</p>
+          ) : (
+            <p className="text-sm text-gray-500">
+              Este será o link usado para divulgar sua clínica online. Ele deve ser único e fácil de lembrar.
+            </p>
+          )}
+          {formData.slug && !slugError && (
+            <div className="text-sm flex items-center mt-1">
+              <span className="mr-1">Ver página pública:</span>
+              <a 
+                href={getPublicUrl(formData.slug)} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline flex items-center"
+              >
+                {getPublicUrl(formData.slug)}
+                <ExternalLink className="h-3 w-3 ml-1" />
+              </a>
+            </div>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="address">Endereço</Label>
+          <Input 
+            id="address" 
+            name="address" 
+            value={formData.address} 
+            onChange={handleInputChange} 
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="phone">Telefone</Label>
+            <Input 
+              id="phone" 
+              name="phone" 
+              value={formData.phone} 
+              onChange={handleInputChange} 
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input 
+              id="email" 
+              name="email" 
+              type="email" 
+              value={formData.email} 
+              onChange={handleInputChange} 
+            />
+          </div>
+        </div>
+      </div>
+      <div className={isMobile ? "mt-6" : ""}>
+        <Button 
+          variant="outline" 
+          type="button" 
+          onClick={() => onOpenChange(false)}
+          disabled={isSubmitting}
+          className="mr-2"
+        >
+          Cancelar
+        </Button>
+        <Button 
+          type="submit" 
+          disabled={!!slugError || isCheckingSlug || isSubmitting}
+        >
+          {isSubmitting 
+            ? 'Processando...' 
+            : (isEditing ? 'Salvar alterações' : 'Criar clínica')}
+        </Button>
+      </div>
+    </form>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={isOpen} onOpenChange={(open) => {
+        if (!isSubmitting) onOpenChange(open);
+      }}>
+        <DrawerContent>
+          <div className="px-4 py-4 max-h-[85vh] overflow-y-auto">
+            <DrawerHeader className="text-center p-0">
+              <DrawerTitle>{isEditing ? 'Editar Clínica' : 'Nova Clínica'}</DrawerTitle>
+              <DrawerDescription>
+                {isEditing 
+                  ? 'Atualize as informações da sua clínica'
+                  : 'Preencha as informações para criar uma nova clínica'
+                }
+              </DrawerDescription>
+            </DrawerHeader>
+            {formContent}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      // Evitar que o modal seja fechado durante o upload ou submissão
-      if (!isSubmitting) {
-        onOpenChange(open);
-      }
+      if (!isSubmitting) onOpenChange(open);
     }}>
       <DialogContent className="sm:max-w-[500px]" onPointerDownOutside={(e) => {
-        // Impedir o fechamento do modal ao clicar fora durante o upload
-        if (isSubmitting) {
-          e.preventDefault();
-        }
+        if (isSubmitting) e.preventDefault();
       }}>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Clínica' : 'Nova Clínica'}</DialogTitle>
@@ -171,117 +312,7 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
             }
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleFormSubmit}>
-          <div className="grid gap-4 py-4">
-            {isEditing && editingClinicId && (
-              <div className="space-y-2">
-                <Label>Foto da Clínica</Label>
-                <PhotoUpload
-                  clinicId={editingClinicId}
-                  currentPhoto={photo}
-                  onPhotoUpdate={setPhoto}
-                />
-              </div>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome da Clínica</Label>
-              <Input 
-                id="name" 
-                name="name" 
-                value={formData.name} 
-                onChange={handleInputChange} 
-                required 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="slug">Endereço público da sua clínica</Label>
-              <div className="flex">
-                <span className="bg-gray-100 px-3 flex items-center border border-r-0 border-input rounded-l-md text-sm text-gray-500">
-                  {baseUrl}/c/
-                </span>
-                <Input
-                  id="slug"
-                  name="slug"
-                  className={`rounded-l-none ${slugError ? 'border-red-500' : ''}`}
-                  value={formData.slug}
-                  onChange={handleInputChange}
-                  onBlur={handleSlugBlur}
-                  placeholder="ex: vila-mariana-clinica"
-                />
-              </div>
-              {slugError ? (
-                <p className="text-sm text-red-500">{slugError}</p>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  Este será o link usado para divulgar sua clínica online. Ele deve ser único e fácil de lembrar.
-                </p>
-              )}
-              {formData.slug && !slugError && (
-                <div className="text-sm flex items-center mt-1">
-                  <span className="mr-1">Ver página pública:</span>
-                  <a 
-                    href={getPublicUrl(formData.slug)} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline flex items-center"
-                  >
-                    {getPublicUrl(formData.slug)}
-                    <ExternalLink className="h-3 w-3 ml-1" />
-                  </a>
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address">Endereço</Label>
-              <Input 
-                id="address" 
-                name="address" 
-                value={formData.address} 
-                onChange={handleInputChange} 
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefone</Label>
-                <Input 
-                  id="phone" 
-                  name="phone" 
-                  value={formData.phone} 
-                  onChange={handleInputChange} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  name="email" 
-                  type="email" 
-                  value={formData.email} 
-                  onChange={handleInputChange} 
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              type="button" 
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={!!slugError || isCheckingSlug || isSubmitting}
-            >
-              {isSubmitting 
-                ? 'Processando...' 
-                : (isEditing ? 'Salvar alterações' : 'Criar clínica')}
-            </Button>
-          </DialogFooter>
-        </form>
+        {formContent}
       </DialogContent>
     </Dialog>
   );

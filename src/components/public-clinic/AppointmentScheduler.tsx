@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AppointmentSchedulerProps {
   clinicId: string;
@@ -51,6 +52,7 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
     notes: '',
   });
   const [isSuccess, setIsSuccess] = useState(false);
+  const isMobile = useIsMobile();
   
   const { slots, isLoading } = useAvailableSlots(clinicId, selectedDate);
 
@@ -190,108 +192,128 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
         </DialogContent>
       </Dialog>
 
-      <Sheet open={formOpen} onOpenChange={setFormOpen}>
-        <SheetContent className="w-full sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>
-              {isSuccess 
-                ? 'Agendamento Concluído!'
-                : 'Complete seu agendamento'}
-            </SheetTitle>
-          </SheetHeader>
-          
-          {isSuccess ? (
-            <div className="mt-6 space-y-4">
-              <div className="rounded-md bg-green-50 p-4">
-                <p className="text-green-700">Sua consulta foi agendada com sucesso!</p>
-                <p className="mt-2 text-sm text-green-600">
-                  Agendamento com Dr(a). {selectedSlot?.doctor_name} para{' '}
-                  {selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}{' '}
-                  às {selectedSlot && format(new Date(selectedSlot.start_time), 'HH:mm')}
-                </p>
-              </div>
-              <Button onClick={() => {
-                setFormOpen(false);
-                setOpen(false);
-                resetState();
-              }} className="w-full">
-                Fechar
-              </Button>
-            </div>
-          ) : (
-            <form onSubmit={handleFormSubmit} className="mt-6 space-y-4">
-              <div className="rounded-md bg-blue-50 p-4 mb-6">
-                <p className="text-blue-700">
-                  Consulta com Dr(a). {selectedSlot?.doctor_name}
-                </p>
-                <p className="text-sm text-blue-600">
-                  {selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })} às{' '}
-                  {selectedSlot && format(new Date(selectedSlot.start_time), 'HH:mm')}
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="patient_name">Nome completo</Label>
-                <Input
-                  id="patient_name"
-                  name="patient_name"
-                  value={formData.patient_name}
-                  onChange={handleFormChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handleFormChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleFormChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="notes">Observações (opcional)</Label>
-                <Input
-                  id="notes"
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleFormChange}
-                />
-              </div>
-              
-              <DialogFooter className="mt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setFormOpen(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Confirmando...' : 'Confirmar Agendamento'}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
-        </SheetContent>
-      </Sheet>
+      {isMobile ? (
+        <Sheet open={formOpen} onOpenChange={setFormOpen}>
+          <SheetContent className="w-full sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle>
+                {isSuccess 
+                  ? 'Agendamento Concluído!'
+                  : 'Complete seu agendamento'}
+              </SheetTitle>
+            </SheetHeader>
+            
+            {renderFormContent()}
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={formOpen} onOpenChange={setFormOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>
+                {isSuccess 
+                  ? 'Agendamento Concluído!'
+                  : 'Complete seu agendamento'}
+              </DialogTitle>
+            </DialogHeader>
+            
+            {renderFormContent()}
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
+
+  function renderFormContent() {
+    return isSuccess ? (
+      <div className="mt-6 space-y-4">
+        <div className="rounded-md bg-green-50 p-4">
+          <p className="text-green-700">Sua consulta foi agendada com sucesso!</p>
+          <p className="mt-2 text-sm text-green-600">
+            Agendamento com Dr(a). {selectedSlot?.doctor_name} para{' '}
+            {selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}{' '}
+            às {selectedSlot && format(new Date(selectedSlot.start_time), 'HH:mm')}
+          </p>
+        </div>
+        <Button onClick={() => {
+          setFormOpen(false);
+          setOpen(false);
+          resetState();
+        }} className="w-full">
+          Fechar
+        </Button>
+      </div>
+    ) : (
+      <form onSubmit={handleFormSubmit} className="mt-6 space-y-4">
+        <div className="rounded-md bg-blue-50 p-4 mb-6">
+          <p className="text-blue-700">
+            Consulta com Dr(a). {selectedSlot?.doctor_name}
+          </p>
+          <p className="text-sm text-blue-600">
+            {selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })} às{' '}
+            {selectedSlot && format(new Date(selectedSlot.start_time), 'HH:mm')}
+          </p>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="patient_name">Nome completo</Label>
+          <Input
+            id="patient_name"
+            name="patient_name"
+            value={formData.patient_name}
+            onChange={handleFormChange}
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="phone">Telefone</Label>
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handleFormChange}
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="email">E-mail</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleFormChange}
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="notes">Observações (opcional)</Label>
+          <Input
+            id="notes"
+            name="notes"
+            value={formData.notes}
+            onChange={handleFormChange}
+          />
+        </div>
+        
+        <DialogFooter className="mt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setFormOpen(false)}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Confirmando...' : 'Confirmar Agendamento'}
+          </Button>
+        </DialogFooter>
+      </form>
+    );
+  }
 };
