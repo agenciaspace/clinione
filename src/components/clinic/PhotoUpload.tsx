@@ -37,7 +37,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${clinicId}-photo-${Date.now()}.${fileExt}`;
+      const fileName = `${clinicId}-avatar-${Date.now()}.${fileExt}`;
       const filePath = `${clinicId}/${fileName}`;
 
       // Upload do arquivo
@@ -52,7 +52,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
         .from('clinic-photos')
         .getPublicUrl(filePath);
 
-      // Atualizar a clínica com a nova foto
+      // Atualizar a clínica com a nova foto como avatar/logo
       const { error: updateError } = await supabase
         .from('clinics')
         .update({ photo: publicUrl })
@@ -61,11 +61,11 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
       if (updateError) throw updateError;
 
       onPhotoUpdate(publicUrl);
-      toast.success('Foto atualizada com sucesso');
+      toast.success('Foto de perfil atualizada com sucesso');
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
       toast.error('Erro ao fazer upload', {
-        description: 'Não foi possível atualizar a foto.',
+        description: 'Não foi possível atualizar a foto de perfil.',
       });
     } finally {
       setIsUploading(false);
@@ -75,11 +75,13 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
   return (
     <div className="flex flex-col items-center gap-4">
       {currentPhoto && (
-        <img
-          src={currentPhoto}
-          alt="Foto da clínica"
-          className="w-full h-48 object-cover rounded-lg"
-        />
+        <div className="w-24 h-24 rounded-full overflow-hidden">
+          <img
+            src={currentPhoto}
+            alt="Foto de perfil da clínica"
+            className="w-full h-full object-cover"
+          />
+        </div>
       )}
       <div className="flex justify-center">
         <Button
@@ -94,7 +96,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
           }}
         >
           <Upload className="h-4 w-4 mr-2" />
-          {isUploading ? 'Enviando...' : 'Alterar foto'}
+          {isUploading ? 'Enviando...' : 'Alterar foto de perfil'}
           <input
             id="photo-upload"
             type="file"

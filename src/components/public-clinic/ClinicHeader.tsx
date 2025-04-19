@@ -14,16 +14,16 @@ interface ClinicHeaderProps {
 export const ClinicHeader = ({ name, logo, photo, address }: ClinicHeaderProps) => {
   return (
     <header className="relative pb-6 border-b">
-      {photo && (
+      {logo && (
         <div className="w-full h-48 mb-6 rounded-lg overflow-hidden">
-          <img src={photo} alt={`${name} - Foto da clínica`} className="w-full h-full object-cover" />
+          <img src={logo} alt={`${name} - Banner da clínica`} className="w-full h-full object-cover" />
         </div>
       )}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center">
         <div className="flex items-center space-x-4">
           <Avatar className="w-16 h-16">
-            {logo ? (
-              <AvatarImage src={logo} alt={name} />
+            {photo ? (
+              <AvatarImage src={photo} alt={name} />
             ) : (
               <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-lg">
                 {name.charAt(0)}
