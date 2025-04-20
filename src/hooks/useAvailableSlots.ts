@@ -1,6 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface AvailableSlot {
   start_time: string;
@@ -21,7 +22,19 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
       const formattedDate = date.toISOString().split('T')[0];
       
       try {
-        // Buscar os horários disponíveis diretamente da base
+        // Buscar os working_hours da clínica para debug
+        const { data: clinicData } = await supabase
+          .from('clinics')
+          .select('working_hours')
+          .eq('id', clinicId)
+          .single();
+          
+        if (clinicData?.working_hours) {
+          const dayOfWeek = new Date(formattedDate).toLocaleDateString('en-US', { weekday: 'lowercase' });
+          console.log(`Working hours para ${dayOfWeek}:`, clinicData.working_hours[dayOfWeek]);
+        }
+        
+        // Buscar os horários disponíveis usando a função get_available_slots
         const { data, error } = await supabase.rpc('get_available_slots', {
           p_clinic_id: clinicId,
           p_date: formattedDate,
@@ -29,13 +42,14 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
 
         if (error) {
           console.error('Erro ao buscar slots disponíveis:', error);
+          toast.error(`Erro ao carregar horários: ${error.message}`);
           throw error;
         }
         
         if (!data || data.length === 0) {
           console.log('Nenhum slot disponível encontrado para a data:', formattedDate);
           
-          // Buscar médicos da clínica para debug
+          // Buscar médicos da clínica para verificar se existem médicos cadastrados
           const { data: doctorsData } = await supabase
             .from('doctors')
             .select('id, name')
@@ -73,6 +87,7 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
         return data as AvailableSlot[];
       } catch (err) {
         console.error('Erro ao buscar horários disponíveis:', err);
+        toast.error('Não foi possível carregar os horários disponíveis');
         throw err;
       }
     },
