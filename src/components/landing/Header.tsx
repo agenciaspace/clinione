@@ -1,13 +1,20 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
+
 export const Header = () => {
-  return <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+  return (
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
-          <img src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" alt="Clini.One Logo" className="h-16 w-auto min-h-[150px] min-w-[200px] max-w-[250px] object-contain aspect-[4/1]" />
+          <img 
+            src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
+            alt="Clini.One Logo" 
+            className="h-16 w-auto min-h-[64px] min-w-[200px] max-w-[250px] object-contain aspect-[4/1]"
+          />
         </div>
         
         <nav className="hidden md:flex items-center space-x-3 lg:space-x-6">
@@ -61,5 +68,6 @@ export const Header = () => {
           </Sheet>
         </div>
       </div>
-    </header>;
+    </header>
+  );
 };
