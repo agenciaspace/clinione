@@ -74,7 +74,7 @@ const Login = () => {
   return <div className="flex min-h-screen bg-[#FFFAE6]">
       <div className="flex-1 hidden lg:block bg-[#FFD600] relative">
         <div className="absolute inset-0 flex flex-col justify-center items-center text-black p-12">
-          <img src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" alt="Clini.One Logo" className="h-16 w-auto" />
+          
           <p className="text-xl mb-8 max-w-md text-center mt-8">
             Uma plataforma completa para gestão da sua clínica e presença online.
           </p>
