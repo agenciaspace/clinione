@@ -17,7 +17,7 @@ export interface ClinicData {
   id: string;
   name: string;
   logo: string | null;
-  photo: string | null; // Adicionando a propriedade photo
+  photo: string | null;
   description: string | null;
   address: string | null;
   phone: string | null;
@@ -130,7 +130,7 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
         if (clinicData.id) {
           const { data: doctorsData, error: doctorsError } = await supabase
             .from('doctors')
-            .select('id, name, speciality, bio')
+            .select('id, name, speciality, bio, photo_url')
             .eq('clinic_id', clinicData.id);
             
           if (doctorsError) {
