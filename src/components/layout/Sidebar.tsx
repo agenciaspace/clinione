@@ -75,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   console.log('Current user roles:', userRoles);
   const filteredMenuItems = userRoles.length === 0 ? menuItems : menuItems.filter(item => userRoles.some(role => item.roles.includes(role)));
   return <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm h-full">
-      <div className="px-6 py-6">
+      <div className="px-0 py-0">
         <img src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" alt="Clini.One Logo" className="h-16 w-auto min-h-[150px] min-w-[200px] max-w-[250px] object-contain aspect-[4/1]" />
       </div>
 
