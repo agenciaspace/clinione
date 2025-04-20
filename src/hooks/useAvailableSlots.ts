@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -30,7 +29,8 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
           .single();
           
         if (clinicData?.working_hours) {
-          const dayOfWeek = new Date(formattedDate).toLocaleDateString('en-US', { weekday: 'lowercase' });
+          // Usando 'long' em vez de 'lowercase' para corrigir o erro de TypeScript
+          const dayOfWeek = new Date(formattedDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
           console.log(`Working hours para ${dayOfWeek}:`, clinicData.working_hours[dayOfWeek]);
         }
         
@@ -48,39 +48,7 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
         
         if (!data || data.length === 0) {
           console.log('Nenhum slot disponível encontrado para a data:', formattedDate);
-          
-          // Buscar médicos da clínica para verificar se existem médicos cadastrados
-          const { data: doctorsData } = await supabase
-            .from('doctors')
-            .select('id, name')
-            .eq('clinic_id', clinicId);
-            
-          if (doctorsData && doctorsData.length > 0) {
-            console.log('Médicos encontrados para a clínica:', doctorsData);
-            
-            // Como temos médicos mas não temos slots, vamos criar alguns slots de exemplo manualmente
-            // Isso é temporário até que configuremos corretamente a disponibilidade no banco de dados
-            const manualSlots = [];
-            const hours = [9, 10, 11, 14, 15, 16, 17];
-            
-            for (const doctor of doctorsData) {
-              for (const hour of hours) {
-                const hourStr = hour.toString().padStart(2, '0');
-                manualSlots.push({
-                  doctor_id: doctor.id,
-                  doctor_name: doctor.name,
-                  start_time: `${formattedDate}T${hourStr}:00:00`,
-                  end_time: `${formattedDate}T${hourStr}:30:00`
-                });
-              }
-            }
-            
-            console.log(`Criados ${manualSlots.length} slots temporários:`, manualSlots);
-            return manualSlots;
-          } else {
-            console.log('Nenhum médico encontrado para a clínica');
-            return [];
-          }
+          return [];
         }
         
         console.log('Slots disponíveis encontrados:', data.length, 'slots:', data);
