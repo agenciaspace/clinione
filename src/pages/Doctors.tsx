@@ -334,17 +334,17 @@ const Doctors = () => {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="w-[95vw] max-w-[600px] h-[90vh] max-h-[800px] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Editar Profissional' : 'Adicionar Novo Profissional'}</DialogTitle>
             <DialogDescription>
               Preencha os dados do profissional abaixo.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-6 py-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid gap-4">
               {formData.id && (
-                <div className="flex justify-center mb-4">
+                <div className="flex justify-center">
                   <DoctorPhotoUpload
                     doctorId={formData.id}
                     currentPhotoUrl={formData.photo_url}
@@ -359,7 +359,7 @@ const Doctors = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome completo</Label>
                   <div className="relative">
@@ -389,7 +389,7 @@ const Doctors = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
@@ -441,13 +441,13 @@ const Doctors = () => {
                   name="bio"
                   value={formData.bio}
                   onChange={handleInputChange}
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="w-full min-h-[100px] rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   rows={4}
                 />
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="mt-6">
               <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
                 Cancelar
               </Button>
