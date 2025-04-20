@@ -1,3 +1,4 @@
+
 import React, { useState, ReactNode, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -12,7 +13,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Calendar as CalendarIcon, Clock, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Loader2, User } from 'lucide-react';
 import { useAvailableSlots } from '@/hooks/useAvailableSlots';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { webhookEvents } from '@/utils/webhook-service';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AppointmentSchedulerProps {
   clinicId: string;
@@ -32,6 +40,12 @@ interface AppointmentFormData {
   phone: string;
   email: string;
   notes: string;
+}
+
+interface Doctor {
+  id: string;
+  name: string;
+  speciality?: string;
 }
 
 export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentSchedulerProps) => {
@@ -52,6 +66,8 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
     notes: '',
   });
   const [isSuccess, setIsSuccess] = useState(false);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
   const isMobile = useIsMobile();
   
   const { slots, isLoading, error, refetch } = useAvailableSlots(clinicId, selectedDate);
@@ -61,11 +77,39 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
       const today = new Date();
       setSelectedDate(today);
     }
-  }, [open, selectedDate]);
+    
+    // Carregar médicos
+    const loadDoctors = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('doctors')
+          .select('id, name, speciality')
+          .eq('clinic_id', clinicId);
+          
+        if (error) {
+          console.error('Erro ao carregar médicos:', error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          setDoctors(data);
+          console.log('Médicos carregados:', data);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar médicos:', err);
+      }
+    };
+    
+    if (open && clinicId) {
+      loadDoctors();
+    }
+  }, [open, selectedDate, clinicId]);
 
   useEffect(() => {
     if (selectedDate) {
       console.log(`Slots carregados para ${selectedDate.toISOString().split('T')[0]}:`, slots?.length || 0);
+      // Resetar médico selecionado quando a data muda
+      setSelectedDoctor(null);
       // Forçar refetch quando a data mudar
       refetch();
     }
@@ -162,6 +206,7 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
       setTimeout(() => {
         setFormOpen(false);
         setOpen(false);
+        resetState();
       }, 3000);
       
     } catch (error: any) {
@@ -177,7 +222,22 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
     setSelectedSlot(null);
     setFormOpen(false);
     setIsSuccess(false);
+    setSelectedDoctor(null);
   };
+
+  // Filtrar slots pelo médico selecionado
+  const filteredSlots = selectedDoctor 
+    ? slots.filter(slot => slot.doctor_id === selectedDoctor) 
+    : slots;
+
+  // Agrupar slots por médico
+  const slotsByDoctor = filteredSlots.reduce((acc: any, slot) => {
+    if (!acc[slot.doctor_name]) {
+      acc[slot.doctor_name] = [];
+    }
+    acc[slot.doctor_name].push(slot);
+    return acc;
+  }, {});
 
   const renderSlots = () => {
     if (isLoading) {
@@ -195,11 +255,38 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
           <p className="text-sm text-red-500">
             Erro ao carregar horários. Por favor, tente novamente.
           </p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => refetch()} 
+            className="mt-2"
+          >
+            Tentar novamente
+          </Button>
         </div>
       );
     }
 
-    if (!slots || slots.length === 0) {
+    if (!filteredSlots || filteredSlots.length === 0) {
+      // Mostrar mensagem diferente se houver médico selecionado
+      if (selectedDoctor) {
+        return (
+          <div className="p-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              Não há horários disponíveis para o profissional selecionado nesta data.
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setSelectedDoctor(null)} 
+              className="mt-2"
+            >
+              Ver todos os profissionais
+            </Button>
+          </div>
+        );
+      }
+
       return (
         <div className="p-4 text-center">
           <p className="text-sm text-muted-foreground">
@@ -210,14 +297,6 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
         </div>
       );
     }
-
-    const slotsByDoctor = slots.reduce((acc: any, slot) => {
-      if (!acc[slot.doctor_name]) {
-        acc[slot.doctor_name] = [];
-      }
-      acc[slot.doctor_name].push(slot);
-      return acc;
-    }, {});
 
     return (
       <div className="space-y-4">
@@ -377,11 +456,37 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
                 />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium mb-3">
-                  {selectedDate
-                    ? `Horários disponíveis para ${format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}`
-                    : 'Selecione uma data para ver os horários disponíveis'}
-                </h3>
+                <div className="mb-4">
+                  <h3 className="font-medium mb-3">
+                    {selectedDate
+                      ? `Horários disponíveis para ${format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}`
+                      : 'Selecione uma data para ver os horários disponíveis'}
+                  </h3>
+                  
+                  {selectedDate && doctors.length > 0 && (
+                    <div className="mb-4">
+                      <Label htmlFor="doctor-select" className="mb-2 block">Selecione um profissional (opcional)</Label>
+                      <Select
+                        value={selectedDoctor || ""}
+                        onValueChange={(value) => setSelectedDoctor(value === "all" ? null : value)}
+                      >
+                        <SelectTrigger id="doctor-select" className="w-full">
+                          <SelectValue placeholder="Todos os profissionais" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos os profissionais</SelectItem>
+                          {doctors.map((doctor) => (
+                            <SelectItem key={doctor.id} value={doctor.id}>
+                              Dr(a). {doctor.name} 
+                              {doctor.speciality ? ` - ${doctor.speciality}` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                
                 <div className="space-y-2 max-h-[300px] overflow-auto p-1">
                   {renderSlots()}
                 </div>
