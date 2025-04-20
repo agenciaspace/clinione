@@ -22,7 +22,8 @@ export const useDoctors = () => {
   const {
     data: doctors = [],
     isLoading,
-    error
+    error,
+    refetch
   } = useQuery({
     queryKey: ['doctors', activeClinic?.id],
     queryFn: fetchDoctors,
@@ -32,6 +33,7 @@ export const useDoctors = () => {
   return {
     doctors,
     isLoading,
-    error
+    error,
+    refetch
   };
 };

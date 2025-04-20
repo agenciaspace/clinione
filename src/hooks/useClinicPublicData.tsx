@@ -136,6 +136,7 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
           if (doctorsError) {
             console.error("Erro ao buscar médicos:", doctorsError);
           } else {
+            console.log("Dados dos médicos recuperados:", doctorsData);
             setDoctors(doctorsData || []);
           }
         }

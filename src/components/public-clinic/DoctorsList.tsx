@@ -27,23 +27,25 @@ export const DoctorsList = ({ doctors }: DoctorsListProps) => {
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {doctors.map((doctor) => {
         const initials = doctor.name
-          .split(' ')
-          .map(n => n[0])
-          .join('')
-          .toUpperCase()
-          .slice(0, 2);
+          ? doctor.name
+              .split(' ')
+              .map(n => n[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 2)
+          : 'DR';
 
         return (
-          <div key={doctor.id} className="flex items-center p-4 border rounded-lg">
-            <Avatar className="h-12 w-12">
+          <div key={doctor.id} className="flex items-start p-4 border rounded-lg">
+            <Avatar className="h-16 w-16 mr-3">
               <AvatarImage src={doctor.photo_url || undefined} alt={doctor.name} />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <div className="ml-3">
-              <p className="font-medium">{doctor.name}</p>
+            <div className="flex flex-col">
+              <p className="font-medium text-base">{doctor.name}</p>
               <p className="text-sm text-gray-500">{doctor.speciality}</p>
               {doctor.bio && (
-                <p className="text-sm text-gray-600 mt-1">{doctor.bio}</p>
+                <p className="text-sm text-gray-600 mt-1 line-clamp-3">{doctor.bio}</p>
               )}
             </div>
           </div>
