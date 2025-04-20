@@ -37,7 +37,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${clinicId}-avatar-${Date.now()}.${fileExt}`;
+      const fileName = `${clinicId}-clinic-photo-${Date.now()}.${fileExt}`;
       const filePath = `${clinicId}/${fileName}`;
 
       // Upload do arquivo
@@ -52,7 +52,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ clinicId, currentPhoto, onPho
         .from('clinic-photos')
         .getPublicUrl(filePath);
 
-      // Atualizar a clínica com a nova foto como avatar/logo
+      // Atualizar a clínica com a nova foto
       const { error: updateError } = await supabase
         .from('clinics')
         .update({ photo: publicUrl })

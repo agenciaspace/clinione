@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MapPin } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -12,12 +13,16 @@ interface ClinicHeaderProps {
 }
 
 export const ClinicHeader = ({ name, logo, photo, address, id }: ClinicHeaderProps) => {
+  // Determinar qual imagem usar para o banner e logo
+  const bannerImage = photo || logo;
+  const logoImage = logo || photo;
+
   return (
     <header className="relative pb-6 border-b">
-      {logo && (
+      {bannerImage && (
         <div className="w-full h-48 mb-6 rounded-lg overflow-hidden bg-gray-100">
           <img 
-            src={logo} 
+            src={bannerImage} 
             alt={`${name} - Banner da clínica`} 
             className="w-full h-full object-cover object-center"
           />
@@ -26,11 +31,11 @@ export const ClinicHeader = ({ name, logo, photo, address, id }: ClinicHeaderPro
       <div className="flex flex-col md:flex-row md:justify-between md:items-center">
         <div className="flex items-center space-x-4">
           <div className="relative w-16 h-16 rounded-full overflow-hidden">
-            {logo ? (
+            {logoImage ? (
               <img 
-                src={logo} 
+                src={logoImage} 
                 alt={`${name} - Logo`}
-                className="w-16 h-16 object-contain aspect-[4/1]"
+                className="w-16 h-16 object-cover aspect-square"
               /> 
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-blue-100 rounded-full border-2 border-gray-100">

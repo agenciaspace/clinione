@@ -115,6 +115,7 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
         }
         
         const clinicData = clinicQuery.data;
+        console.log("Dados da clínica recuperados:", clinicData);
         
         let workingHoursData = defaultWorkingHours;
         if (clinicData.working_hours && typeof clinicData.working_hours === 'object') {
