@@ -21,7 +21,8 @@ const PublicClinicPage: React.FC = () => {
   useEffect(() => {
     const isPreviewMode = location.pathname.includes('/dashboard/public-page');
     setIsPreview(isPreviewMode);
-  }, [location.pathname]);
+    console.log("Modo de preview:", isPreviewMode, "Slug:", slug);
+  }, [location.pathname, slug]);
 
   const { 
     clinic, 
@@ -30,6 +31,16 @@ const PublicClinicPage: React.FC = () => {
     error, 
     availableClinics 
   } = useClinicPublicData(slug, selectedClinicId, isPreview);
+
+  // Log para debug
+  useEffect(() => {
+    if (clinic) {
+      console.log("Clínica carregada:", clinic);
+      console.log("Logo:", clinic.logo);
+      console.log("Photo:", clinic.photo);
+      console.log("Médicos:", doctors);
+    }
+  }, [clinic, doctors]);
 
   if (isLoading) {
     return (

@@ -48,7 +48,7 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
             .order('name');
             
           if (error) {
-            console.error("Error fetching clinics:", error);
+            console.error("Erro ao buscar clínicas:", error);
             return;
           }
           
@@ -56,7 +56,7 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
             setAvailableClinics(data);
           }
         } catch (error) {
-          console.error("Error:", error);
+          console.error("Erro:", error);
         }
       };
       
@@ -75,12 +75,14 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
         
         if (isPreview) {
           if (selectedClinicId) {
+            console.log("Buscando clínica por ID no modo preview:", selectedClinicId);
             clinicQuery = await supabase
               .from('clinics')
               .select('*')
               .eq('id', selectedClinicId)
               .single();
           } else {
+            console.log("Buscando primeira clínica no modo preview");
             clinicQuery = await supabase
               .from('clinics')
               .select('*')
@@ -96,12 +98,13 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
             throw new Error("Nenhuma clínica encontrada. Por favor, crie uma clínica primeiro.");
           }
         } else if (slug) {
+          console.log("Buscando clínica pelo slug na URL pública:", slug);
           clinicQuery = await supabase
             .from('clinics')
             .select('*')
             .eq('slug', slug)
             .eq('is_published', true)
-            .single();
+            .maybeSingle();
             
           if (clinicQuery.error) {
             throw new Error("Página da clínica não encontrada ou não publicada");
@@ -129,9 +132,10 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
 
         // Fetch doctors for the clinic
         if (clinicData.id) {
+          console.log("Buscando médicos para a clínica:", clinicData.id);
           const { data: doctorsData, error: doctorsError } = await supabase
             .from('doctors')
-            .select('id, name, speciality, bio, photo_url')
+            .select('id, name, speciality, bio, phone, email, photo_url')
             .eq('clinic_id', clinicData.id);
             
           if (doctorsError) {
