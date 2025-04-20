@@ -1,4 +1,3 @@
-
 import React, { useState, ReactNode, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -115,13 +114,6 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
       await webhookEvents.appointments.created(data, clinicId);
       
       // Também criar um paciente se ele não existir
-      const patientData = {
-        clinic_id: clinicId,
-        name: formData.patient_name,
-        phone: formData.phone,
-        email: formData.email
-      };
-      
       // Verificar se paciente já existe por email ou telefone
       const { data: existingPatient } = await supabase
         .from('patients')
@@ -131,6 +123,18 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
         .maybeSingle();
       
       if (!existingPatient) {
+        // Definimos uma data de nascimento padrão para satisfazer a restrição NOT NULL
+        // No caso de um agendamento online onde não coletamos esse dado
+        const currentDate = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+        
+        const patientData = {
+          clinic_id: clinicId,
+          name: formData.patient_name,
+          phone: formData.phone,
+          email: formData.email,
+          birth_date: currentDate // Campo obrigatório adicionado
+        };
+        
         const { data: newPatient, error: patientError } = await supabase
           .from('patients')
           .insert(patientData)
@@ -140,6 +144,8 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
         if (!patientError && newPatient) {
           // Disparar evento de webhook para criação de paciente
           await webhookEvents.patients.created(newPatient, clinicId);
+        } else if (patientError) {
+          console.error('Erro ao criar paciente:', patientError);
         }
       }
       
