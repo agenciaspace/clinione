@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClinic } from '@/contexts/ClinicContext';
+import { DoctorPhotoUpload } from '@/components/doctors/DoctorPhotoUpload';
 
 interface DoctorFormData {
   id?: string;
@@ -22,6 +23,7 @@ interface DoctorFormData {
   bio: string;
   email: string;
   phone: string;
+  photo_url?: string;
 }
 
 const specialities = [
@@ -178,7 +180,8 @@ const Doctors = () => {
             licensenumber: formData.licensenumber,
             bio: formData.bio,
             email: formData.email,
-            phone: formData.phone
+            phone: formData.phone,
+            photo_url: formData.photo_url
           })
           .eq('id', formData.id);
           
@@ -197,7 +200,8 @@ const Doctors = () => {
             licensenumber: formData.licensenumber,
             bio: formData.bio,
             email: formData.email,
-            phone: formData.phone
+            phone: formData.phone,
+            photo_url: formData.photo_url
           } : doctor
         ));
         toast.success('Profissional atualizado com sucesso');
@@ -211,6 +215,7 @@ const Doctors = () => {
             bio: formData.bio,
             email: formData.email,
             phone: formData.phone,
+            photo_url: formData.photo_url,
             clinic_id: activeClinic.id
           })
           .select();
@@ -338,6 +343,22 @@ const Doctors = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-6 py-4">
+              {formData.id && (
+                <div className="flex justify-center mb-4">
+                  <DoctorPhotoUpload
+                    doctorId={formData.id}
+                    currentPhotoUrl={formData.photo_url}
+                    doctorName={formData.name}
+                    onPhotoUpdated={(url) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        photo_url: url
+                      }));
+                    }}
+                  />
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome completo</Label>

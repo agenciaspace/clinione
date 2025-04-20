@@ -241,6 +241,7 @@ export type Database = {
           licensenumber: string | null
           name: string
           phone: string | null
+          photo_url: string | null
           speciality: string | null
           updated_at: string | null
         }
@@ -253,6 +254,7 @@ export type Database = {
           licensenumber?: string | null
           name: string
           phone?: string | null
+          photo_url?: string | null
           speciality?: string | null
           updated_at?: string | null
         }
@@ -265,6 +267,7 @@ export type Database = {
           licensenumber?: string | null
           name?: string
           phone?: string | null
+          photo_url?: string | null
           speciality?: string | null
           updated_at?: string | null
         }
