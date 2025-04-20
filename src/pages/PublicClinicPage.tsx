@@ -10,6 +10,7 @@ import { ContactInfo } from '@/components/public-clinic/ContactInfo';
 import { DoctorsList } from '@/components/public-clinic/DoctorsList';
 import { WorkingHoursComponent } from '@/components/public-clinic/WorkingHours';
 import { useClinicPublicData } from '@/hooks/useClinicPublicData';
+import { webhookEvents } from '@/utils/webhook-service';
 
 const PublicClinicPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -32,6 +33,20 @@ const PublicClinicPage: React.FC = () => {
     availableClinics 
   } = useClinicPublicData(slug, selectedClinicId, isPreview);
 
+  // Disparar evento de visualização da página quando a clínica for carregada
+  useEffect(() => {
+    if (clinic && !isPreview) {
+      // Disparar evento de visualização da página pública
+      webhookEvents.clinics.updated({
+        event: 'public_page_viewed',
+        clinic_id: clinic.id,
+        clinic_name: clinic.name,
+        timestamp: new Date().toISOString(),
+        slug: clinic.slug
+      }, clinic.id);
+    }
+  }, [clinic, isPreview]);
+
   // Log para debug
   useEffect(() => {
     if (clinic) {
@@ -39,6 +54,7 @@ const PublicClinicPage: React.FC = () => {
       console.log("Logo:", clinic.logo);
       console.log("Photo:", clinic.photo);
       console.log("Médicos:", doctors);
+      console.log("Horários de funcionamento:", clinic.working_hours);
     }
   }, [clinic, doctors]);
 

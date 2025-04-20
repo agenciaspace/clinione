@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { webhookEvents } from '@/utils/webhook-service';
 
 interface AppointmentSchedulerProps {
   clinicId: string;
@@ -101,12 +102,46 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
           date: appointmentDate.toISOString(),
           notes: formData.notes,
           type: 'in-person',
-          status: 'scheduled'
+          status: 'scheduled',
+          phone: formData.phone,
+          email: formData.email
         })
         .select('*')
         .single();
         
       if (error) throw error;
+      
+      // Disparar evento de webhook para a criação de agendamento
+      await webhookEvents.appointments.created(data, clinicId);
+      
+      // Também criar um paciente se ele não existir
+      const patientData = {
+        clinic_id: clinicId,
+        name: formData.patient_name,
+        phone: formData.phone,
+        email: formData.email
+      };
+      
+      // Verificar se paciente já existe por email ou telefone
+      const { data: existingPatient } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('clinic_id', clinicId)
+        .or(`email.eq.${formData.email},phone.eq.${formData.phone}`)
+        .maybeSingle();
+      
+      if (!existingPatient) {
+        const { data: newPatient, error: patientError } = await supabase
+          .from('patients')
+          .insert(patientData)
+          .select('*')
+          .single();
+          
+        if (!patientError && newPatient) {
+          // Disparar evento de webhook para criação de paciente
+          await webhookEvents.patients.created(newPatient, clinicId);
+        }
+      }
       
       setFormData({
         patient_name: '',
