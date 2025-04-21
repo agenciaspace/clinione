@@ -170,6 +170,12 @@ const Doctors = () => {
       return;
     }
     
+    const crmRegex = /^\d{6}-\d{2}\/[A-Z]{2}$/;
+    if (!crmRegex.test(formData.licensenumber)) {
+      toast.error('CRM inválido. Use o formato: 123456-78/SP');
+      return;
+    }
+    
     try {
       if (isEditing && formData.id) {
         const { error } = await supabase
@@ -430,8 +436,12 @@ const Doctors = () => {
                     onChange={handleInputChange} 
                     className="pl-10" 
                     required
+                    placeholder="123456-78/SP"
                   />
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  Formato: 123456-78/SP (6 dígitos, hífen, 2 dígitos, barra, sigla do estado em maiúsculo)
+                </p>
               </div>
 
               <div className="space-y-2">
