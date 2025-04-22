@@ -120,6 +120,19 @@ export enum WebhookEventType {
   TRANSACTION_CREATED = 'transaction.created',
   TRANSACTION_UPDATED = 'transaction.updated',
   
+  // Financial forecast events
+  FINANCIAL_FORECAST_CREATED = 'financial.forecast.created',
+  FINANCIAL_FORECAST_UPDATED = 'financial.forecast.updated',
+  FINANCIAL_FORECAST_CANCELLED = 'financial.forecast.cancelled',
+  
+  // Payment events
+  FINANCIAL_PAYMENT_RECEIVED = 'financial.payment.received',
+  FINANCIAL_GLOSA_DETECTED = 'financial.glosa.detected',
+  
+  // TISS events
+  TISS_BATCH_SENT = 'tiss.batch.sent',
+  TISS_RESPONSE_RECEIVED = 'tiss.response.received',
+  
   // User events
   USER_CREATED = 'user.created',
   USER_UPDATED = 'user.updated',
@@ -247,15 +260,56 @@ export const webhookEvents = {
   transactions: {
     created: async (transactionData: any, clinicId: string) => {
       return triggerWebhook(
-        WebhookEventType.TRANSACTION_CREATED,
+        WebhookEventType.FINANCIAL_FORECAST_CREATED,
         transactionData,
         clinicId
       );
     },
     updated: async (transactionData: any, clinicId: string) => {
       return triggerWebhook(
-        WebhookEventType.TRANSACTION_UPDATED,
+        WebhookEventType.FINANCIAL_FORECAST_UPDATED,
         transactionData,
+        clinicId
+      );
+    },
+    cancelled: async (transactionData: any, clinicId: string) => {
+      return triggerWebhook(
+        WebhookEventType.FINANCIAL_FORECAST_CANCELLED,
+        transactionData,
+        clinicId
+      );
+    },
+    paymentReceived: async (transactionData: any, clinicId: string) => {
+      return triggerWebhook(
+        WebhookEventType.FINANCIAL_PAYMENT_RECEIVED,
+        transactionData,
+        clinicId
+      );
+    },
+    glosaDetected: async (glosaData: any, clinicId: string) => {
+      return triggerWebhook(
+        WebhookEventType.FINANCIAL_GLOSA_DETECTED,
+        glosaData,
+        clinicId
+      );
+    }
+  },
+  
+  /**
+   * TISS related webhook triggers
+   */
+  tiss: {
+    batchSent: async (batchData: any, clinicId: string) => {
+      return triggerWebhook(
+        WebhookEventType.TISS_BATCH_SENT,
+        batchData,
+        clinicId
+      );
+    },
+    responseReceived: async (responseData: any, clinicId: string) => {
+      return triggerWebhook(
+        WebhookEventType.TISS_RESPONSE_RECEIVED,
+        responseData,
         clinicId
       );
     }

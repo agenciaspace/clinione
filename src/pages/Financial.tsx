@@ -39,6 +39,9 @@ import { useClinic } from '@/contexts/ClinicContext';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { Transaction } from '@/types';
+import { FinancialForecastDashboard } from '@/components/financial/FinancialForecastDashboard';
+import { TissLotManager } from '@/components/financial/TissLotManager';
+import { webhookEvents } from '@/utils/webhook-service';
 
 const Financial = () => {
   const { activeClinic } = useClinic();
@@ -123,6 +126,9 @@ const Financial = () => {
       // Update local state with the new transaction
       if (data) {
         setTransactions([...data as Transaction[], ...transactions]);
+        
+        // Disparar webhook para integração
+        webhookEvents.transactions.created(data[0], activeClinic.id);
       }
       
       // Reset form
@@ -166,7 +172,8 @@ const Financial = () => {
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="transactions">Transações</TabsTrigger>
-          <TabsTrigger value="invoices">Faturas</TabsTrigger>
+          <TabsTrigger value="forecasts">Previsibilidade</TabsTrigger>
+          <TabsTrigger value="tiss">Lotes TISS</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
         </TabsList>
 
@@ -238,6 +245,9 @@ const Financial = () => {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Nova seção de previsibilidade financeira */}
+              <FinancialForecastDashboard />
 
               {/* Gráfico e últimas transações */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -493,25 +503,12 @@ const Financial = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="invoices" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Faturas</CardTitle>
-                  <CardDescription>Gerencie faturas e recebimentos</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Receipt className="h-16 w-16 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-medium">Nenhuma fatura encontrada</h3>
-                    <p className="text-gray-500 max-w-md mt-2">
-                      Você ainda não tem faturas registradas. Clique no botão abaixo para criar sua primeira fatura.
-                    </p>
-                    <Button className="mt-4">
-                      <Plus className="h-4 w-4 mr-2" /> Criar fatura
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+            <TabsContent value="forecasts" className="space-y-4">
+              <FinancialForecastDashboard />
+            </TabsContent>
+
+            <TabsContent value="tiss" className="space-y-4">
+              <TissLotManager />
             </TabsContent>
 
             <TabsContent value="reports" className="space-y-4">

@@ -17,11 +17,15 @@ export type Database = {
           doctor_id: string | null
           doctor_name: string | null
           id: string
+          insurance_company_id: string | null
           notes: string | null
           patient_name: string
+          payment_type: string | null
+          procedure_id: string | null
           status: string | null
           type: string | null
           updated_at: string | null
+          value: number | null
         }
         Insert: {
           clinic_id?: string | null
@@ -30,11 +34,15 @@ export type Database = {
           doctor_id?: string | null
           doctor_name?: string | null
           id?: string
+          insurance_company_id?: string | null
           notes?: string | null
           patient_name: string
+          payment_type?: string | null
+          procedure_id?: string | null
           status?: string | null
           type?: string | null
           updated_at?: string | null
+          value?: number | null
         }
         Update: {
           clinic_id?: string | null
@@ -43,11 +51,15 @@ export type Database = {
           doctor_id?: string | null
           doctor_name?: string | null
           id?: string
+          insurance_company_id?: string | null
           notes?: string | null
           patient_name?: string
+          payment_type?: string | null
+          procedure_id?: string | null
           status?: string | null
           type?: string | null
           updated_at?: string | null
+          value?: number | null
         }
         Relationships: [
           {
@@ -62,6 +74,20 @@ export type Database = {
             columns: ["doctor_id"]
             isOneToOne: false
             referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_insurance_company_id_fkey"
+            columns: ["insurance_company_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
             referencedColumns: ["id"]
           },
         ]
@@ -281,6 +307,191 @@ export type Database = {
           },
         ]
       }
+      financial_forecasts: {
+        Row: {
+          appointment_id: string | null
+          clinic_id: string
+          created_at: string
+          description: string
+          doctor_id: string | null
+          expected_payment_date: string
+          glosa_appeal_status: string | null
+          glosa_reason: string | null
+          glosa_value: number | null
+          id: string
+          insurance_company_id: string | null
+          patient_id: string | null
+          payment_type: string
+          procedure_id: string | null
+          reconciled_transaction_id: string | null
+          status: string
+          tiss_batch_id: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          appointment_id?: string | null
+          clinic_id: string
+          created_at?: string
+          description: string
+          doctor_id?: string | null
+          expected_payment_date: string
+          glosa_appeal_status?: string | null
+          glosa_reason?: string | null
+          glosa_value?: number | null
+          id?: string
+          insurance_company_id?: string | null
+          patient_id?: string | null
+          payment_type: string
+          procedure_id?: string | null
+          reconciled_transaction_id?: string | null
+          status: string
+          tiss_batch_id?: string | null
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          appointment_id?: string | null
+          clinic_id?: string
+          created_at?: string
+          description?: string
+          doctor_id?: string | null
+          expected_payment_date?: string
+          glosa_appeal_status?: string | null
+          glosa_reason?: string | null
+          glosa_value?: number | null
+          id?: string
+          insurance_company_id?: string | null
+          patient_id?: string | null
+          payment_type?: string
+          procedure_id?: string | null
+          reconciled_transaction_id?: string | null
+          status?: string
+          tiss_batch_id?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_forecasts_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_forecasts_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_forecasts_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_forecasts_insurance_company_id_fkey"
+            columns: ["insurance_company_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_forecasts_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_forecasts_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_settings: {
+        Row: {
+          cancellation_fee_percentage: number
+          cancellation_tolerance_hours: number
+          clinic_id: string
+          created_at: string
+          default_insurance_payment_term: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          cancellation_fee_percentage?: number
+          cancellation_tolerance_hours?: number
+          clinic_id: string
+          created_at?: string
+          default_insurance_payment_term?: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          cancellation_fee_percentage?: number
+          cancellation_tolerance_hours?: number
+          clinic_id?: string
+          created_at?: string
+          default_insurance_payment_term?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_settings_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: true
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_companies: {
+        Row: {
+          clinic_id: string
+          code: string | null
+          created_at: string
+          id: string
+          name: string
+          payment_term: number
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          code?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          payment_term?: number
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          code?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          payment_term?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_companies_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_record_audit: {
         Row: {
           action: string
@@ -403,6 +614,113 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procedures: {
+        Row: {
+          clinic_id: string
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          value_insurance: number | null
+          value_private: number
+        }
+        Insert: {
+          clinic_id: string
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          value_insurance?: number | null
+          value_private: number
+        }
+        Update: {
+          clinic_id?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          value_insurance?: number | null
+          value_private?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedures_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tiss_batches: {
+        Row: {
+          approved_value: number | null
+          batch_number: string
+          clinic_id: string
+          created_at: string
+          denied_value: number | null
+          id: string
+          insurance_company_id: string | null
+          response_date: string | null
+          response_file_url: string | null
+          status: string
+          submission_date: string
+          total_value: number
+          updated_at: string
+        }
+        Insert: {
+          approved_value?: number | null
+          batch_number: string
+          clinic_id: string
+          created_at?: string
+          denied_value?: number | null
+          id?: string
+          insurance_company_id?: string | null
+          response_date?: string | null
+          response_file_url?: string | null
+          status: string
+          submission_date?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Update: {
+          approved_value?: number | null
+          batch_number?: string
+          clinic_id?: string
+          created_at?: string
+          denied_value?: number | null
+          id?: string
+          insurance_company_id?: string | null
+          response_date?: string | null
+          response_file_url?: string | null
+          status?: string
+          submission_date?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiss_batches_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tiss_batches_insurance_company_id_fkey"
+            columns: ["insurance_company_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_companies"
             referencedColumns: ["id"]
           },
         ]
