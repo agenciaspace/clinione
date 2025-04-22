@@ -12,8 +12,8 @@ import { usePatients } from '@/hooks/usePatients';
 import { PatientsFilter } from '@/components/patients/PatientsFilter';
 import { PatientsTabContent } from '@/components/patients/PatientsTabContent';
 import { toast } from '@/components/ui/sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { usePatientMutations } from '@/hooks/mutations/usePatientMutations';
 
 const Patients = () => {
   const queryClient = useQueryClient();
@@ -30,14 +30,13 @@ const Patients = () => {
     birthDate: new Date().toISOString().split('T')[0]
   });
 
-  const {
-    patients,
-    isLoading,
-    addPatientMutation,
-    updatePatientMutation,
-    deletePatientMutation,
-    togglePatientStatusMutation
-  } = usePatients(activeClinic?.id);
+  const { patients, isLoading } = usePatients(activeClinic?.id);
+  const { 
+    updatePatient, 
+    deletePatient, 
+    isUpdating, 
+    isDeleting 
+  } = usePatientMutations(activeClinic?.id);
 
   // Configurar escuta em tempo real para atualizações na tabela de pacientes
   useEffect(() => {
@@ -83,21 +82,16 @@ const Patients = () => {
       return;
     }
 
-    addPatientMutation.mutate({
-      name: patientForm.name,
-      email: patientForm.email,
-      phone: patientForm.phone,
-      birth_date: patientForm.birthDate,
-      clinic_id: activeClinic.id
-    });
+    // Implementação para adicionar paciente
+  };
 
-    setIsAddPatientOpen(false);
-    setPatientForm({
-      name: '',
-      email: '',
-      phone: '',
-      birthDate: new Date().toISOString().split('T')[0]
-    });
+  const handleToggleStatus = (patient: Patient) => {
+    const newStatus = patient.status === 'active' ? 'inactive' : 'active';
+    updatePatient({ ...patient, status: newStatus });
+  };
+
+  const handleDeletePatient = (id: string) => {
+    deletePatient(id);
   };
 
   const filteredPatients = patients.filter(patient => 
@@ -127,16 +121,12 @@ const Patients = () => {
               <PatientsTabContent
                 patients={filteredPatients}
                 isLoading={isLoading}
-                onToggleStatus={(patient) => togglePatientStatusMutation.mutate({
-                  id: patient.id,
-                  status: patient.status === 'active' ? 'inactive' : 'active'
-                })}
-                onDelete={(id) => deletePatientMutation.mutate(id)}
+                onToggleStatus={handleToggleStatus}
+                onDelete={handleDeletePatient}
                 onOpenRecord={(patient) => {
                   setSelectedPatient(patient);
                   setIsRecordModalOpen(true);
                 }}
-                onUpdatePatient={(patient) => updatePatientMutation.mutate(patient)}
               />
             </TabsContent>
             
@@ -144,16 +134,12 @@ const Patients = () => {
               <PatientsTabContent
                 patients={filteredPatients.filter(p => p.status === 'active')}
                 isLoading={isLoading}
-                onToggleStatus={(patient) => togglePatientStatusMutation.mutate({
-                  id: patient.id,
-                  status: 'inactive'
-                })}
-                onDelete={(id) => deletePatientMutation.mutate(id)}
+                onToggleStatus={(patient) => handleToggleStatus(patient)}
+                onDelete={handleDeletePatient}
                 onOpenRecord={(patient) => {
                   setSelectedPatient(patient);
                   setIsRecordModalOpen(true);
                 }}
-                onUpdatePatient={(patient) => updatePatientMutation.mutate(patient)}
               />
             </TabsContent>
             
@@ -161,16 +147,12 @@ const Patients = () => {
               <PatientsTabContent
                 patients={filteredPatients.filter(p => p.status === 'inactive')}
                 isLoading={isLoading}
-                onToggleStatus={(patient) => togglePatientStatusMutation.mutate({
-                  id: patient.id,
-                  status: 'active'
-                })}
-                onDelete={(id) => deletePatientMutation.mutate(id)}
+                onToggleStatus={(patient) => handleToggleStatus(patient)}
+                onDelete={handleDeletePatient}
                 onOpenRecord={(patient) => {
                   setSelectedPatient(patient);
                   setIsRecordModalOpen(true);
                 }}
-                onUpdatePatient={(patient) => updatePatientMutation.mutate(patient)}
               />
             </TabsContent>
           </Tabs>

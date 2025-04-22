@@ -4,13 +4,14 @@ import { Patient } from '@/types';
 import { toast } from '@/components/ui/sonner';
 import { EditPatientDialog } from './EditPatientDialog';
 import { PatientActionMenu } from './PatientActionMenu';
+import { usePatientMutations } from '@/hooks/mutations/usePatientMutations';
+import { useClinic } from '@/contexts/ClinicContext';
 
 interface PatientActionsProps {
   patient: Patient;
   onToggleStatus: (patient: Patient) => void;
   onDelete: (id: string) => void;
   onOpenRecord: (patient: Patient) => void;
-  onUpdatePatient?: (patient: Patient) => void;
 }
 
 export const PatientActions = ({
@@ -18,10 +19,10 @@ export const PatientActions = ({
   onToggleStatus,
   onDelete,
   onOpenRecord,
-  onUpdatePatient,
 }: PatientActionsProps) => {
+  const { activeClinic } = useClinic();
+  const { updatePatient, isUpdating } = usePatientMutations(activeClinic?.id);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     email: '',
@@ -29,10 +30,8 @@ export const PatientActions = ({
     birthDate: '',
   });
 
-  // Inicializa o formulário quando o diálogo é aberto ou o paciente muda
   useEffect(() => {
     if (isEditDialogOpen && patient) {
-      // Certifique-se de que a data está no formato correto para o input type="date"
       const formattedDate = patient.birthDate 
         ? patient.birthDate.split('T')[0] 
         : '';
@@ -55,39 +54,21 @@ export const PatientActions = ({
   };
 
   const handleSaveEdit = async () => {
-    if (!onUpdatePatient) {
-      toast.error("Função de atualização não disponível");
-      return;
-    }
-    
-    // Validação
     if (!editForm.name.trim()) {
       toast.error("O nome do paciente é obrigatório");
       return;
     }
 
-    try {
-      setIsSubmitting(true);
-      
-      // Certifique-se de que todos os campos estão devidamente formatados
-      const updatedPatient = {
-        ...patient,
-        name: editForm.name.trim(),
-        email: editForm.email?.trim() || '',
-        phone: editForm.phone?.trim() || '',
-        birthDate: editForm.birthDate || patient.birthDate,
-      };
-      
-      // Enviar para o servidor
-      await onUpdatePatient(updatedPatient);
-      toast.success("Paciente atualizado com sucesso");
-      handleCloseEditDialog();
-    } catch (error) {
-      console.error("Erro ao atualizar paciente:", error);
-      toast.error("Erro ao atualizar paciente. Tente novamente.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    const updatedPatient = {
+      ...patient,
+      name: editForm.name.trim(),
+      email: editForm.email?.trim() || '',
+      phone: editForm.phone?.trim() || '',
+      birthDate: editForm.birthDate || patient.birthDate,
+    };
+    
+    updatePatient(updatedPatient);
+    handleCloseEditDialog();
   };
 
   const handleOpenEditDialog = () => {
@@ -96,17 +77,12 @@ export const PatientActions = ({
 
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false);
-    
-    // Limpamos o formulário após fechar o diálogo
-    setTimeout(() => {
-      setEditForm({
-        name: '',
-        email: '',
-        phone: '',
-        birthDate: '',
-      });
-      setIsSubmitting(false);
-    }, 100);
+    setEditForm({
+      name: '',
+      email: '',
+      phone: '',
+      birthDate: '',
+    });
   };
 
   return (
@@ -122,16 +98,12 @@ export const PatientActions = ({
       <EditPatientDialog
         open={isEditDialogOpen}
         onOpenChange={(open) => {
-          if (open) {
-            setIsEditDialogOpen(true);
-          } else {
-            handleCloseEditDialog();
-          }
+          if (!open) handleCloseEditDialog();
         }}
         formData={editForm}
         onInputChange={handleInputChange}
         onSave={handleSaveEdit}
-        isLoading={isSubmitting}
+        isLoading={isUpdating}
       />
     </>
   );
