@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Doctor } from '@/types';
+import { Doctor, Appointment } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClinic } from '@/contexts/ClinicContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +11,6 @@ import { useAppointments } from '@/hooks/useAppointments';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { AppointmentCalendar } from '@/components/dashboard/AppointmentCalendar';
 import { AppointmentList } from '@/components/dashboard/AppointmentList';
-import { CheckCircle, XCircle } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
 const Dashboard = () => {
