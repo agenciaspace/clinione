@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -8,13 +7,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter
+  DialogFooter,
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Appointment } from '@/types';
-import { CheckCircle, XCircle, Calendar as CalendarIcon } from 'lucide-react';
+import { CheckCircle, XCircle, Calendar as CalendarIcon, TrashIcon } from 'lucide-react';
 
 interface AppointmentDetailsProps {
   appointment: Appointment | null;
@@ -22,6 +29,7 @@ interface AppointmentDetailsProps {
   onClose: () => void;
   onConfirm: (id: string) => void;
   onCancel: (id: string) => void;
+  onDelete: (id: string) => void;
   onUpdateNotes: (id: string, notes: string) => void;
 }
 
@@ -31,9 +39,11 @@ export const AppointmentDetails = ({
   onClose,
   onConfirm,
   onCancel,
+  onDelete,
   onUpdateNotes
 }: AppointmentDetailsProps) => {
   const [notes, setNotes] = React.useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
   React.useEffect(() => {
     if (appointment) {
@@ -47,6 +57,16 @@ export const AppointmentDetails = ({
 
   const handleSaveNotes = () => {
     onUpdateNotes(appointment.id, notes);
+  };
+
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = () => {
+    onDelete(appointment.id);
+    setShowDeleteConfirm(false);
+    onClose();
   };
 
   const appointmentTime = format(new Date(appointment.date), 'HH:mm', { locale: ptBR });
@@ -68,77 +88,106 @@ export const AppointmentDetails = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <CalendarIcon className="mr-2 h-5 w-5 text-healthgreen-600" />
-            Detalhes do Agendamento
-          </DialogTitle>
-          <DialogDescription>
-            {appointmentTime} - {appointmentDate}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-4 py-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Paciente:</span>
-            <span className="text-sm">{appointment.patient_name}</span>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <CalendarIcon className="mr-2 h-5 w-5 text-healthgreen-600" />
+              Detalhes do Agendamento
+            </DialogTitle>
+            <DialogDescription>
+              {appointmentTime} - {appointmentDate}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Paciente:</span>
+              <span className="text-sm">{appointment.patient_name}</span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Profissional:</span>
+              <span className="text-sm">{appointment.doctor_name || 'Não especificado'}</span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Status:</span>
+              {getStatusBadge()}
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Tipo:</span>
+              <span className="text-sm">{appointment.type === 'online' ? 'Teleconsulta' : 'Presencial'}</span>
+            </div>
+            
+            <div className="space-y-2">
+              <span className="text-sm font-medium">Observações:</span>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Adicione observações sobre este agendamento..."
+                className="h-24"
+              />
+              <Button variant="outline" size="sm" onClick={handleSaveNotes} className="w-full">
+                Salvar observações
+              </Button>
+            </div>
           </div>
           
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Profissional:</span>
-            <span className="text-sm">{appointment.doctor_name || 'Não especificado'}</span>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Status:</span>
-            {getStatusBadge()}
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Tipo:</span>
-            <span className="text-sm">{appointment.type === 'online' ? 'Teleconsulta' : 'Presencial'}</span>
-          </div>
-          
-          <div className="space-y-2">
-            <span className="text-sm font-medium">Observações:</span>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Adicione observações sobre este agendamento..."
-              className="h-24"
-            />
-            <Button variant="outline" size="sm" onClick={handleSaveNotes} className="w-full">
-              Salvar observações
-            </Button>
-          </div>
-        </div>
-        
-        <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
-          {appointment.status !== 'confirmed' && appointment.status !== 'cancelled' && (
+          <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
+            {appointment.status !== 'confirmed' && appointment.status !== 'cancelled' && (
+              <Button 
+                variant="outline"
+                className="text-healthgreen-600 border-healthgreen-200 hover:border-healthgreen-600"
+                onClick={() => onConfirm(appointment.id)}
+                size="sm"
+              >
+                <CheckCircle className="h-4 w-4 mr-1" /> Confirmar
+              </Button>
+            )}
+            
+            {appointment.status !== 'cancelled' && (
+              <Button 
+                variant="outline"
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => onCancel(appointment.id)}
+                size="sm"
+              >
+                <XCircle className="h-4 w-4 mr-1" /> Cancelar
+              </Button>
+            )}
+
             <Button 
-              variant="outline"
-              className="text-healthgreen-600 border-healthgreen-200 hover:border-healthgreen-600"
-              onClick={() => onConfirm(appointment.id)}
+              variant="destructive"
               size="sm"
+              onClick={handleDelete}
             >
-              <CheckCircle className="h-4 w-4 mr-1" /> Confirmar
+              <TrashIcon className="h-4 w-4 mr-1" /> Excluir
             </Button>
-          )}
-          
-          {appointment.status !== 'cancelled' && (
-            <Button 
-              variant="outline"
-              className="text-gray-500 hover:text-gray-700"
-              onClick={() => onCancel(appointment.id)}
-              size="sm"
-            >
-              <XCircle className="h-4 w-4 mr-1" /> Cancelar
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowDeleteConfirm(false)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

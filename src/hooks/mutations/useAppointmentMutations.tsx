@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
@@ -177,10 +176,31 @@ export const useAppointmentMutations = (clinicId: string | undefined) => {
     },
   });
 
+  const deleteAppointment = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      toast.success('Agendamento excluído com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+    },
+    onError: (error) => {
+      console.error('Error deleting appointment:', error);
+      toast.error('Erro ao excluir agendamento');
+    },
+  });
+
   return {
     createAppointment: createAppointment.mutate,
     confirmAppointment: confirmAppointment.mutate,
     cancelAppointment: cancelAppointment.mutate,
+    deleteAppointment: deleteAppointment.mutate,
     updateAppointmentNotes: (id: string, notes: string) => 
       updateAppointmentNotes.mutate({ id, notes }),
   };

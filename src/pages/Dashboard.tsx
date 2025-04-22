@@ -37,6 +37,7 @@ const Dashboard = () => {
     createAppointment,
     confirmAppointment, 
     cancelAppointment, 
+    deleteAppointment,
     updateAppointmentNotes 
   } = useAppointments(selectedDate, selectedDoctor);
 
@@ -354,6 +355,7 @@ const Dashboard = () => {
         onClose={handleCloseDetails}
         onConfirm={confirmAppointment}
         onCancel={cancelAppointment}
+        onDelete={deleteAppointment}
         onUpdateNotes={handleUpdateNotes}
       />
 
