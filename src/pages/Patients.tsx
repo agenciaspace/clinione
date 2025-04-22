@@ -92,8 +92,9 @@ const Patients = () => {
     updatePatient({ ...patient, status: newStatus });
   };
 
-  const handleDeletePatient = (id: string) => {
+  const handleDeletePatient = async (id: string) => {
     try {
+      console.log("Iniciando exclusão do paciente:", id);
       deletePatient(id);
     } catch (error) {
       console.error("Erro ao excluir paciente:", error);
@@ -147,7 +148,7 @@ const Patients = () => {
               <PatientsTabContent
                 patients={filteredPatients.filter(p => p.status === 'active')}
                 isLoading={isLoading}
-                onToggleStatus={(patient) => handleToggleStatus(patient)}
+                onToggleStatus={handleToggleStatus}
                 onDelete={handleDeletePatient}
                 onOpenRecord={(patient) => {
                   setSelectedPatient(patient);
@@ -161,7 +162,7 @@ const Patients = () => {
               <PatientsTabContent
                 patients={filteredPatients.filter(p => p.status === 'inactive')}
                 isLoading={isLoading}
-                onToggleStatus={(patient) => handleToggleStatus(patient)}
+                onToggleStatus={handleToggleStatus}
                 onDelete={handleDeletePatient}
                 onOpenRecord={(patient) => {
                   setSelectedPatient(patient);

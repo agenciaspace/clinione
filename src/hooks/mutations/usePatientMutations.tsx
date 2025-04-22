@@ -37,6 +37,19 @@ export const usePatientMutations = (clinicId?: string) => {
 
   const deletePatientMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Primeiro, verifique se há prontuários relacionados
+      const { data: recordsData, error: recordsError } = await supabase
+        .from('patient_records')
+        .select('id')
+        .eq('patient_id', id);
+      
+      if (recordsError) {
+        console.log('Erro ao verificar prontuários:', recordsError);
+      } else {
+        console.log(`Encontrados ${recordsData?.length || 0} prontuários associados ao paciente.`);
+      }
+      
+      // Agora excluir o paciente (com ON DELETE CASCADE configurado no banco)
       const { error } = await supabase
         .from('patients')
         .delete()
