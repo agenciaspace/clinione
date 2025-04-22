@@ -1,10 +1,12 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useClinic } from '@/contexts/ClinicContext';
+import { toast } from '@/components/ui/sonner';
 
 export const useDoctors = () => {
   const { activeClinic } = useClinic();
+  const queryClient = useQueryClient();
 
   const fetchDoctors = async () => {
     if (!activeClinic?.id) return [];
@@ -30,10 +32,64 @@ export const useDoctors = () => {
     enabled: !!activeClinic?.id,
   });
 
+  // Verificar se um médico possui agendamentos
+  const checkDoctorAppointments = async (doctorId: string) => {
+    const { data, error, count } = await supabase
+      .from('appointments')
+      .select('id', { count: 'exact' })
+      .eq('doctor_id', doctorId)
+      .limit(1);
+      
+    if (error) throw error;
+    return (count && count > 0);
+  };
+
+  // Excluir médico
+  const deleteDoctor = useMutation({
+    mutationFn: async (id: string) => {
+      // Verificar se existem agendamentos primeiro
+      const hasAppointments = await checkDoctorAppointments(id);
+      
+      if (hasAppointments) {
+        throw new Error("Este profissional possui agendamentos associados e não pode ser excluído. Cancele os agendamentos primeiro ou inative o profissional.");
+      }
+      
+      const { error } = await supabase
+        .from('doctors')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (deletedId) => {
+      toast.success('Profissional removido com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['doctors'] });
+    },
+    onError: (error: any) => {
+      console.error('Error deleting doctor:', error);
+      toast.error(error.message || 'Não foi possível excluir o profissional');
+    }
+  });
+
+  // Inativar médico em vez de excluir (alternativa mais segura)
+  const inactivateDoctor = useMutation({
+    mutationFn: async (id: string) => {
+      // Aqui não estamos realmente implementando a inativação ainda,
+      // mas poderia ser adicionado um campo status na tabela doctors
+      // e este método atualizaria esse campo para 'inactive'
+      
+      // Por enquanto, apenas simulamos com um erro
+      throw new Error("Função de inativação não implementada. Isso seria uma alternativa à exclusão para preservar o histórico.");
+    }
+  });
+
   return {
     doctors,
     isLoading,
     error,
-    refetch
+    refetch,
+    deleteDoctor: deleteDoctor.mutate,
+    inactivateDoctor: inactivateDoctor.mutate
   };
 };

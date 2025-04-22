@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,15 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Plus, EditIcon, TrashIcon, UserCircle, Mail, Phone, Calendar } from 'lucide-react';
+import { Search, Plus, EditIcon, TrashIcon, UserCircle, Mail, Phone, Calendar, AlertCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Doctor } from '@/types';
 import { toast } from '@/components/ui/sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useDoctors } from '@/hooks/useDoctors';
 import { useClinic } from '@/contexts/ClinicContext';
 import { DoctorPhotoUpload } from '@/components/doctors/DoctorPhotoUpload';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface DoctorFormData {
   id?: string;
@@ -40,11 +41,13 @@ const specialities = [
 ];
 
 const Doctors = () => {
-  const { user } = useAuth();
   const { activeClinic } = useClinic();
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const { doctors, isLoading, deleteDoctor, inactivateDoctor } = useDoctors();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [doctorToDelete, setDoctorToDelete] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState<DoctorFormData>({
     name: '',
     speciality: '',
@@ -54,40 +57,6 @@ const Doctors = () => {
     phone: ''
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (activeClinic) {
-      fetchDoctors(activeClinic.id);
-    } else {
-      setDoctors([]);
-      setLoading(false);
-    }
-  }, [activeClinic]);
-
-  const fetchDoctors = async (clinicId: string) => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('doctors')
-        .select('*')
-        .eq('clinic_id', clinicId);
-        
-      if (error) {
-        console.error('Error fetching doctors:', error);
-        toast.error('Não foi possível carregar os profissionais');
-        return;
-      }
-      
-      if (data) {
-        setDoctors(data as Doctor[]);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filteredDoctors = doctors.filter(doctor =>
     doctor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -142,24 +111,20 @@ const Doctors = () => {
   };
 
   const handleDeleteDoctor = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('doctors')
-        .delete()
-        .eq('id', id);
-        
-      if (error) {
+    setDoctorToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteDoctor = () => {
+    if (doctorToDelete) {
+      try {
+        deleteDoctor(doctorToDelete);
+      } catch (error) {
         console.error('Error deleting doctor:', error);
-        toast.error('Não foi possível excluir o profissional');
-        return;
       }
-      
-      setDoctors(doctors.filter(doctor => doctor.id !== id));
-      toast.success('Profissional removido com sucesso');
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Ocorreu um erro ao excluir o profissional');
     }
+    setIsDeleteDialogOpen(false);
+    setDoctorToDelete(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -197,19 +162,6 @@ const Doctors = () => {
           return;
         }
         
-        setDoctors(doctors.map(doctor => 
-          doctor.id === formData.id ? 
-          {
-            ...doctor,
-            name: formData.name,
-            speciality: formData.speciality,
-            licensenumber: formData.licensenumber,
-            bio: formData.bio,
-            email: formData.email,
-            phone: formData.phone,
-            photo_url: formData.photo_url
-          } : doctor
-        ));
         toast.success('Profissional atualizado com sucesso');
       } else {
         const { data, error } = await supabase
@@ -233,7 +185,6 @@ const Doctors = () => {
         }
         
         if (data && data[0]) {
-          setDoctors([...doctors, data[0] as Doctor]);
           toast.success('Profissional adicionado com sucesso');
         }
       }
@@ -292,7 +243,7 @@ const Doctors = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={4} className="h-24 text-center">
                       <div className="flex justify-center">
@@ -468,8 +419,30 @@ const Doctors = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Diálogo de confirmação para exclusão */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja realmente excluir este profissional? Esta ação não pode ser desfeita.
+              <br /><br />
+              <strong>Nota:</strong> Se o profissional tiver agendamentos associados, 
+              não será possível excluí-lo. Cancele todos os agendamentos vinculados primeiro.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteDoctor}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
 
 export default Doctors;
+
