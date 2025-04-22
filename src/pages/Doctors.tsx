@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +14,7 @@ import { useDoctors } from '@/hooks/useDoctors';
 import { useClinic } from '@/contexts/ClinicContext';
 import { DoctorPhotoUpload } from '@/components/doctors/DoctorPhotoUpload';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DoctorFormData {
   id?: string;
@@ -420,7 +420,6 @@ const Doctors = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de confirmação para exclusão */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -445,4 +444,3 @@ const Doctors = () => {
 };
 
 export default Doctors;
-
