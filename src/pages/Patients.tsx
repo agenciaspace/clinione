@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { PatientsTabContent } from '@/components/patients/PatientsTabContent';
 import { toast } from '@/components/ui/sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePatientMutations } from '@/hooks/mutations/usePatientMutations';
+import { supabase } from '@/integrations/supabase/client'; // Adicionando a importação do supabase
 
 const Patients = () => {
   const queryClient = useQueryClient();

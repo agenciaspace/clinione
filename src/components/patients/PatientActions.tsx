@@ -12,6 +12,7 @@ interface PatientActionsProps {
   onToggleStatus: (patient: Patient) => void;
   onDelete: (id: string) => void;
   onOpenRecord: (patient: Patient) => void;
+  onUpdatePatient?: (patient: Patient) => void;  // Adicionando essa propriedade como opcional
 }
 
 export const PatientActions = ({
@@ -19,6 +20,7 @@ export const PatientActions = ({
   onToggleStatus,
   onDelete,
   onOpenRecord,
+  onUpdatePatient,
 }: PatientActionsProps) => {
   const { activeClinic } = useClinic();
   const { updatePatient, isUpdating } = usePatientMutations(activeClinic?.id);
