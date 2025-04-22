@@ -138,7 +138,7 @@ export const TissLotManager = () => {
                         batch.status === 'preparing' ? 'outline' : 
                         batch.status === 'sent' ? 'secondary' : 
                         batch.status === 'processed' ? 'default' : 
-                        'success'
+                        'default'  // Changed from 'success' to 'default'
                       }>
                         {batch.status === 'preparing' ? 'Em Preparação' : 
                          batch.status === 'sent' ? 'Enviado' : 
