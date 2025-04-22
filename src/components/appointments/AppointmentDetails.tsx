@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   AlertDialog,
@@ -32,7 +33,7 @@ export function AppointmentDetails({
   onDelete,
   onUpdateNotes
 }: AppointmentDetailsProps) {
-  const { isDeleting } = useDeleteAppointment();
+  const { deleteAppointment, isDeleting } = useDeleteAppointment();
   
   const handleDelete = () => {
     if (appointment) {
@@ -41,6 +42,11 @@ export function AppointmentDetails({
   };
 
   if (!appointment) return null;
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -54,7 +60,7 @@ export function AppointmentDetails({
         
         <div className="space-y-4">
           <p><strong>Data:</strong> {appointment.date}</p>
-          <p><strong>Horário:</strong> {appointment.time}</p>
+          <p><strong>Horário:</strong> {formatTime(appointment.date)}</p>
           <p><strong>Tipo:</strong> {appointment.type}</p>
           <p><strong>Status:</strong> {appointment.status}</p>
           <p><strong>Médico:</strong> {appointment.doctor_name || 'Nenhum'}</p>

@@ -18,7 +18,10 @@ export const useDeleteAppointment = () => {
     },
     onSuccess: () => {
       toast.success('Agendamento excluído com sucesso');
+      // Invalidar todas as queries relacionadas a agendamentos para garantir atualização completa
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['month-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['all-appointments'] });
     },
     onError: (error) => {
       console.error('Error deleting appointment:', error);
