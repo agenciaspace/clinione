@@ -15,7 +15,7 @@ import { PatientsTabContent } from '@/components/patients/PatientsTabContent';
 import { toast } from '@/components/ui/sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePatientMutations } from '@/hooks/mutations/usePatientMutations';
-import { supabase } from '@/integrations/supabase/client'; // Adicionando a importação do supabase
+import { supabase } from '@/integrations/supabase/client';
 
 const Patients = () => {
   const queryClient = useQueryClient();
@@ -93,7 +93,17 @@ const Patients = () => {
   };
 
   const handleDeletePatient = (id: string) => {
-    deletePatient(id);
+    try {
+      deletePatient(id);
+    } catch (error) {
+      console.error("Erro ao excluir paciente:", error);
+      toast.error("Erro ao excluir paciente");
+    }
+  };
+
+  const handleUpdatePatient = (updatedPatient: Patient) => {
+    // Invalidar a consulta para recarregar os dados após atualização
+    queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
   };
 
   const filteredPatients = patients.filter(patient => 
@@ -129,6 +139,7 @@ const Patients = () => {
                   setSelectedPatient(patient);
                   setIsRecordModalOpen(true);
                 }}
+                onUpdatePatient={handleUpdatePatient}
               />
             </TabsContent>
             
@@ -142,6 +153,7 @@ const Patients = () => {
                   setSelectedPatient(patient);
                   setIsRecordModalOpen(true);
                 }}
+                onUpdatePatient={handleUpdatePatient}
               />
             </TabsContent>
             
@@ -155,6 +167,7 @@ const Patients = () => {
                   setSelectedPatient(patient);
                   setIsRecordModalOpen(true);
                 }}
+                onUpdatePatient={handleUpdatePatient}
               />
             </TabsContent>
           </Tabs>

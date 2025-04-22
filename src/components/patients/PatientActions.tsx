@@ -12,7 +12,7 @@ interface PatientActionsProps {
   onToggleStatus: (patient: Patient) => void;
   onDelete: (id: string) => void;
   onOpenRecord: (patient: Patient) => void;
-  onUpdatePatient?: (patient: Patient) => void;  // Adicionando essa propriedade como opcional
+  onUpdatePatient?: (patient: Patient) => void;
 }
 
 export const PatientActions = ({
@@ -69,8 +69,17 @@ export const PatientActions = ({
       birthDate: editForm.birthDate || patient.birthDate,
     };
     
-    updatePatient(updatedPatient);
-    handleCloseEditDialog();
+    try {
+      await updatePatient(updatedPatient);
+      // Se onUpdatePatient existir, chame-o com o paciente atualizado
+      if (onUpdatePatient) {
+        onUpdatePatient(updatedPatient);
+      }
+      handleCloseEditDialog();
+    } catch (error) {
+      console.error("Erro ao atualizar paciente:", error);
+      toast.error("Erro ao atualizar paciente");
+    }
   };
 
   const handleOpenEditDialog = () => {
