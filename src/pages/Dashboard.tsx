@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -106,6 +107,17 @@ const Dashboard = () => {
     });
     
     setIsFormOpen(false);
+  };
+
+  const handleDeleteAppointment = (id: string) => {
+    // Aqui adicionamos um try/catch para evitar travamentos
+    try {
+      deleteAppointment(id);
+      toast.success('Agendamento excluído com sucesso');
+    } catch (error) {
+      console.error('Erro ao excluir agendamento:', error);
+      toast.error('Erro ao excluir agendamento');
+    }
   };
 
   const hasAppointmentsOnDate = (date: Date) => {
@@ -355,7 +367,7 @@ const Dashboard = () => {
         onClose={handleCloseDetails}
         onConfirm={confirmAppointment}
         onCancel={cancelAppointment}
-        onDelete={deleteAppointment}
+        onDelete={handleDeleteAppointment}
         onUpdateNotes={handleUpdateNotes}
       />
 
