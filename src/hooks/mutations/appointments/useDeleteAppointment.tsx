@@ -6,7 +6,7 @@ import { toast } from '@/components/ui/sonner';
 export const useDeleteAppointment = () => {
   const queryClient = useQueryClient();
 
-  const deleteAppointment = useMutation({
+  const mutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('appointments')
@@ -27,6 +27,7 @@ export const useDeleteAppointment = () => {
   });
 
   return {
-    deleteAppointment: deleteAppointment.mutate,
+    deleteAppointment: mutation.mutate,
+    isDeleting: mutation.isPending,
   };
 };

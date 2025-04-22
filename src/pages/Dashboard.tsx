@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Doctor, Appointment } from '@/types';
@@ -104,13 +103,8 @@ const Dashboard = () => {
   };
 
   const handleDeleteAppointment = (id: string) => {
-    try {
-      deleteAppointment(id);
-      toast.success('Agendamento excluído com sucesso');
-    } catch (error) {
-      console.error('Erro ao excluir agendamento:', error);
-      toast.error('Erro ao excluir agendamento');
-    }
+    deleteAppointment(id);
+    setIsDetailsOpen(false);
   };
 
   const hasAppointmentsOnDate = (date: Date) => {
