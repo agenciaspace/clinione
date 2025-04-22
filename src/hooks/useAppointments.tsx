@@ -24,7 +24,8 @@ export const useAppointments = (selectedDate?: Date | null, doctorId?: string | 
     createAppointment,
     confirmAppointment,
     cancelAppointment,
-    updateAppointmentNotes
+    updateAppointmentNotes,
+    deleteAppointment
   } = useAppointmentMutations(clinicId);
 
   useEffect(() => {
@@ -60,5 +61,6 @@ export const useAppointments = (selectedDate?: Date | null, doctorId?: string | 
     confirmAppointment,
     cancelAppointment,
     updateAppointmentNotes,
+    deleteAppointment,
   };
 };

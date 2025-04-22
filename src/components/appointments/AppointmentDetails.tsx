@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -8,6 +9,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+} from '@/components/ui/dialog';
+import { 
   AlertDialog,
   AlertDialogContent,
   AlertDialogHeader,
@@ -16,12 +19,12 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction
-} from '@/components/ui/dialog';
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Appointment } from '@/types';
-import { CheckCircle, XCircle, Calendar as CalendarIcon, TrashIcon } from 'lucide-react';
+import { CheckCircle, XCircle, Calendar as CalendarIcon, Trash2 as TrashIcon } from 'lucide-react';
 
 interface AppointmentDetailsProps {
   appointment: Appointment | null;
