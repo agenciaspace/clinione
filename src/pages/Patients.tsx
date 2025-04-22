@@ -95,6 +95,13 @@ const Patients = () => {
   const handleDeletePatient = async (id: string) => {
     try {
       console.log("Iniciando exclusão do paciente:", id);
+      // Fechar qualquer modal aberto relacionado ao paciente
+      if (selectedPatient?.id === id) {
+        setIsRecordModalOpen(false);
+        setSelectedPatient(null);
+      }
+      
+      // Chamar a mutação para excluir o paciente
       deletePatient(id);
     } catch (error) {
       console.error("Erro ao excluir paciente:", error);
