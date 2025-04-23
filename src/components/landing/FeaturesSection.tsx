@@ -91,7 +91,7 @@ export const FeaturesSection = () => {
           {features.map((feature, index) => (
             <Card key={index}>
               <CardHeader className="pb-2">
-                <feature.icon className="h-10 w-10 text-healthblue-600 mb-2" />
+                <feature.icon className="h-10 w-10 text-[#FFD400] mb-2" />
                 <CardTitle>{feature.title}</CardTitle>
                 <CardDescription>{feature.description}</CardDescription>
               </CardHeader>
@@ -99,7 +99,7 @@ export const FeaturesSection = () => {
                 <ul className="space-y-2">
                   {feature.benefits.map((benefit, benefitIndex) => (
                     <li key={benefitIndex} className="flex items-start">
-                      <CheckCircle className="h-5 w-5 text-healthgreen-500 mr-2 shrink-0 mt-0.5" />
+                      <CheckCircle className="h-5 w-5 text-[#FFD400] mr-2 shrink-0 mt-0.5" />
                       <span>{benefit}</span>
                     </li>
                   ))}

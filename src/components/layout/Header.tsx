@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useClinic } from '../../contexts/ClinicContext';
@@ -131,7 +132,7 @@ export const Header: React.FC = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="p-1 flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-[#FFFAE6] flex items-center justify-center text-[#FFD600] font-medium">
+                <div className="w-8 h-8 rounded-full bg-[#FFFDF5] flex items-center justify-center text-[#FFD400] font-medium">
                   {user?.name?.charAt(0) || 'U'}
                 </div>
                 <span className="hidden md:inline text-sm font-medium">

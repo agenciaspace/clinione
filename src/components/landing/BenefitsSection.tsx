@@ -41,8 +41,8 @@ export const BenefitsSection = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 text-center">
           {benefits.map((benefit, index) => (
             <div key={index} className="bg-white p-4 md:p-6 rounded-lg shadow-sm">
-              <div className="inline-block p-3 bg-healthblue-50 rounded-full mb-4">
-                <benefit.icon className="h-7 w-7 text-healthblue-600" />
+              <div className="inline-block p-3 bg-[#FFFDF5] rounded-full mb-4">
+                <benefit.icon className="h-7 w-7 text-[#FFD400]" />
               </div>
               <h3 className="text-lg md:text-xl font-bold mb-2">{benefit.title}</h3>
               <p className="text-gray-600">{benefit.description}</p>

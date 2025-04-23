@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -82,8 +83,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <nav className="flex-1 px-4 pb-4 overflow-y-auto">
         <ul className="space-y-1">
           {filteredMenuItems.map(item => <li key={item.path}>
-              <Link to={item.path} className={cn("flex items-center px-4 py-2.5 text-sm rounded-md transition-colors", "hover:bg-gray-100", path === item.path ? "bg-[#FFFAE6] text-black font-medium" : "text-gray-700")} onClick={handleNavClick}>
-                <item.icon size={20} className={cn("mr-3", path === item.path ? "text-[#FFD600]" : "text-gray-500")} />
+              <Link to={item.path} className={cn("flex items-center px-4 py-2.5 text-sm rounded-md transition-colors", "hover:bg-gray-100", path === item.path ? "bg-[#FFFDF5] text-[#0A0A0A] font-medium" : "text-gray-700")} onClick={handleNavClick}>
+                <item.icon size={20} className={cn("mr-3", path === item.path ? "text-[#FFD400]" : "text-gray-500")} />
                 <span>{item.title}</span>
               </Link>
             </li>)}

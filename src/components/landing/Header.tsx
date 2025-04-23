@@ -18,16 +18,16 @@ export const Header = () => {
         </div>
         
         <nav className="hidden md:flex items-center space-x-3 lg:space-x-6">
-          <a href="#features" className="text-gray-700 hover:text-healthblue-600 font-medium">
+          <a href="#features" className="text-gray-700 hover:text-[#FFD400] font-medium">
             Funcionalidades
           </a>
-          <a href="#benefits" className="text-gray-700 hover:text-healthblue-600 font-medium">
+          <a href="#benefits" className="text-gray-700 hover:text-[#FFD400] font-medium">
             Benefícios
           </a>
-          <a href="#pricing" className="text-gray-700 hover:text-healthblue-600 font-medium">
+          <a href="#pricing" className="text-gray-700 hover:text-[#FFD400] font-medium">
             Planos
           </a>
-          <Link to="/login" className="text-healthblue-600 hover:text-healthblue-700 font-medium">
+          <Link to="/login" className="text-[#FFD400] hover:text-[#FFE133] font-medium">
             Entrar
           </Link>
           <Link to="/register">
@@ -45,16 +45,16 @@ export const Header = () => {
             <SheetContent side="right" className="w-[250px] sm:w-[300px]">
               <div className="flex flex-col h-full">
                 <div className="flex-1 py-6 flex flex-col gap-4">
-                  <a href="#features" className="text-gray-700 hover:text-healthblue-600 font-medium px-2 py-2">
+                  <a href="#features" className="text-gray-700 hover:text-[#FFD400] font-medium px-2 py-2">
                     Funcionalidades
                   </a>
-                  <a href="#benefits" className="text-gray-700 hover:text-healthblue-600 font-medium px-2 py-2">
+                  <a href="#benefits" className="text-gray-700 hover:text-[#FFD400] font-medium px-2 py-2">
                     Benefícios
                   </a>
-                  <a href="#pricing" className="text-gray-700 hover:text-healthblue-600 font-medium px-2 py-2">
+                  <a href="#pricing" className="text-gray-700 hover:text-[#FFD400] font-medium px-2 py-2">
                     Planos
                   </a>
-                  <Link to="/login" className="text-healthblue-600 hover:text-healthblue-700 font-medium px-2 py-2">
+                  <Link to="/login" className="text-[#FFD400] hover:text-[#FFE133] font-medium px-2 py-2">
                     Entrar
                   </Link>
                 </div>

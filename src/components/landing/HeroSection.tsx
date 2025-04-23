@@ -7,12 +7,12 @@ import { ArrowRight } from 'lucide-react';
 
 export const HeroSection = () => {
   return (
-    <section className="bg-gradient-to-b from-blue-50 to-white py-12 md:py-20">
+    <section className="bg-gradient-to-b from-[#FFFDF5] to-white py-12 md:py-20">
       <div className="container mx-auto px-4">
         <div className="flex flex-col-reverse md:flex-row items-center">
           <div className="md:w-1/2 md:pr-6 lg:pr-12 mt-8 md:mt-0">
-            <Badge className="mb-4">Nova Plataforma</Badge>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 text-gray-900">
+            <Badge className="mb-4 bg-[#FFD400] text-[#0A0A0A]">Nova Plataforma</Badge>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 text-[#0A0A0A]">
               Gestão completa para sua clínica e presença online
             </h1>
             <p className="text-lg md:text-xl text-gray-600 mb-6 md:mb-8">
@@ -34,8 +34,8 @@ export const HeroSection = () => {
           </div>
           <div className="md:w-1/2">
             <div className="relative">
-              <div className="absolute -top-6 -left-6 w-64 h-64 bg-healthblue-100 rounded-full filter blur-3xl opacity-30"></div>
-              <div className="absolute -bottom-8 -right-8 w-64 h-64 bg-healthgreen-100 rounded-full filter blur-3xl opacity-30"></div>
+              <div className="absolute -top-6 -left-6 w-64 h-64 bg-[#FFFDF5] rounded-full filter blur-3xl opacity-30"></div>
+              <div className="absolute -bottom-8 -right-8 w-64 h-64 bg-[#FFFDF5] rounded-full filter blur-3xl opacity-30"></div>
               <img 
                 src="/lovable-uploads/23a94562-2cda-47ac-ad04-8d2c65539b49.png" 
                 alt="Médico e paciente consultando documentos" 

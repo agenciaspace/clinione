@@ -13,6 +13,10 @@
   transition: filter 300ms;
 }
 
+.logo-flat {
+  filter: none;
+}
+
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);

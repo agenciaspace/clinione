@@ -67,10 +67,10 @@ export const PricingSection = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {plans.map((plan, index) => (
-            <Card key={index} className={`border-2 ${plan.highlight ? 'border-healthblue-600' : 'border-gray-100'} relative`}>
+            <Card key={index} className={`border-2 ${plan.highlight ? 'border-[#FFD400]' : 'border-gray-100'} relative`}>
               {plan.highlight && (
                 <div className="absolute top-0 inset-x-0 transform -translate-y-1/2">
-                  <Badge className="bg-healthblue-600 text-white mx-auto block w-fit">
+                  <Badge className="bg-[#FFD400] text-[#0A0A0A] mx-auto block w-fit">
                     Mais Escolhido
                   </Badge>
                 </div>
@@ -87,7 +87,7 @@ export const PricingSection = () => {
                 <ul className="space-y-3 mb-6">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start">
-                      <CheckCircle className="h-5 w-5 text-healthgreen-500 mr-2 shrink-0 mt-0.5" />
+                      <CheckCircle className="h-5 w-5 text-[#FFD400] mr-2 shrink-0 mt-0.5" />
                       <span>{feature}</span>
                     </li>
                   ))}
