@@ -32,6 +32,8 @@ const Patients = () => {
     handleToggleStatus,
     handleDeletePatient,
     handleUpdatePatient,
+    handleOpenRecordModal,
+    handleCloseRecordModal,
     filteredPatients,
     isLoading,
   } = usePatientManagement();
@@ -84,10 +86,7 @@ const Patients = () => {
                 isLoading={isLoading}
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDeletePatient}
-                onOpenRecord={(patient) => {
-                  setSelectedPatient(patient);
-                  setIsRecordModalOpen(true);
-                }}
+                onOpenRecord={handleOpenRecordModal}
                 onUpdatePatient={handleUpdatePatient}
               />
             </TabsContent>
@@ -98,10 +97,7 @@ const Patients = () => {
                 isLoading={isLoading}
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDeletePatient}
-                onOpenRecord={(patient) => {
-                  setSelectedPatient(patient);
-                  setIsRecordModalOpen(true);
-                }}
+                onOpenRecord={handleOpenRecordModal}
                 onUpdatePatient={handleUpdatePatient}
               />
             </TabsContent>
@@ -112,10 +108,7 @@ const Patients = () => {
                 isLoading={isLoading}
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDeletePatient}
-                onOpenRecord={(patient) => {
-                  setSelectedPatient(patient);
-                  setIsRecordModalOpen(true);
-                }}
+                onOpenRecord={handleOpenRecordModal}
                 onUpdatePatient={handleUpdatePatient}
               />
             </TabsContent>
@@ -125,7 +118,7 @@ const Patients = () => {
 
       <PatientRecordModal
         isOpen={isRecordModalOpen}
-        onOpenChange={setIsRecordModalOpen}
+        onOpenChange={handleCloseRecordModal}
         patient={selectedPatient}
         currentUser={user}
       />

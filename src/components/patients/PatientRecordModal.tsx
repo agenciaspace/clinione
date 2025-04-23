@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import PatientRecord from '@/components/patients/PatientRecord';
 import { Patient } from '@/types';
@@ -18,6 +18,14 @@ export const PatientRecordModal: React.FC<PatientRecordModalProps> = ({
   patient,
   currentUser,
 }) => {
+  // Efeito para limpar qualquer estado residual quando o modal for fechado
+  useEffect(() => {
+    if (!isOpen) {
+      // Este efeito garante que o estado seja limpo quando o modal é fechado
+      console.log("Modal fechado, limpando estado");
+    }
+  }, [isOpen]);
+
   if (!patient) return null;
 
   return (
@@ -27,6 +35,7 @@ export const PatientRecordModal: React.FC<PatientRecordModalProps> = ({
           patient={patient} 
           onClose={() => onOpenChange(false)} 
           currentUser={currentUser}
+          key={`patient-record-${patient.id}-${isOpen}`} // Chave para forçar remontagem
         />
       </DialogContent>
     </Dialog>

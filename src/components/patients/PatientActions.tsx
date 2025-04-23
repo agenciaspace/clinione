@@ -71,10 +71,13 @@ export const PatientActions = ({
     
     try {
       await updatePatient(updatedPatient);
-      // Se onUpdatePatient existir, chame-o com o paciente atualizado
+      
+      // Notificar sobre a atualização
       if (onUpdatePatient) {
+        console.log("Notificando sobre atualização do paciente:", updatedPatient);
         onUpdatePatient(updatedPatient);
       }
+      
       handleCloseEditDialog();
     } catch (error) {
       console.error("Erro ao atualizar paciente:", error);
@@ -88,12 +91,15 @@ export const PatientActions = ({
 
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false);
-    setEditForm({
-      name: '',
-      email: '',
-      phone: '',
-      birthDate: '',
-    });
+    // Limpeza após fechamento para evitar problemas de estado
+    setTimeout(() => {
+      setEditForm({
+        name: '',
+        email: '',
+        phone: '',
+        birthDate: '',
+      });
+    }, 100);
   };
 
   return (

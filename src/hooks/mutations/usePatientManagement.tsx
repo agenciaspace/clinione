@@ -62,7 +62,28 @@ export const usePatientManagement = () => {
   };
 
   const handleUpdatePatient = (updatedPatient: Patient) => {
+    console.log("Atualizando paciente:", updatedPatient);
+    // Invalidar a query para forçar uma nova consulta
     queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
+    
+    // Atualizar o paciente selecionado se estiver aberto no modal
+    if (selectedPatient?.id === updatedPatient.id) {
+      setSelectedPatient(updatedPatient);
+    }
+  };
+
+  // Garantir que o estado do modal seja corretamente atualizado
+  const handleOpenRecordModal = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setIsRecordModalOpen(true);
+  };
+
+  const handleCloseRecordModal = () => {
+    setIsRecordModalOpen(false);
+    // Atrase a limpeza do paciente selecionado para evitar problemas de renderização
+    setTimeout(() => {
+      setSelectedPatient(null);
+    }, 100);
   };
 
   const filteredPatients = patients.filter(patient => 
@@ -86,6 +107,8 @@ export const usePatientManagement = () => {
     handleToggleStatus,
     handleDeletePatient,
     handleUpdatePatient,
+    handleOpenRecordModal,
+    handleCloseRecordModal,
     filteredPatients,
     isLoading,
   };
