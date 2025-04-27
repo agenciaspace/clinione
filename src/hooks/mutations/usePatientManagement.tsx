@@ -52,7 +52,9 @@ export const usePatientManagement = () => {
       console.log("Iniciando exclusão do paciente:", id);
       if (selectedPatient?.id === id) {
         setIsRecordModalOpen(false);
-        setSelectedPatient(null);
+        setTimeout(() => {
+          setSelectedPatient(null);
+        }, 100);
       }
       deletePatient(id);
     } catch (error) {
@@ -70,6 +72,8 @@ export const usePatientManagement = () => {
     if (selectedPatient?.id === updatedPatient.id) {
       setSelectedPatient(updatedPatient);
     }
+    
+    toast.success('Paciente atualizado com sucesso');
   };
 
   // Garantir que o estado do modal seja corretamente atualizado
@@ -83,7 +87,7 @@ export const usePatientManagement = () => {
     // Atrase a limpeza do paciente selecionado para evitar problemas de renderização
     setTimeout(() => {
       setSelectedPatient(null);
-    }, 100);
+    }, 150);
   };
 
   const filteredPatients = patients.filter(patient => 

@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog';
 import PatientRecord from '@/components/patients/PatientRecord';
 import { Patient } from '@/types';
 import { User } from '@/types';
@@ -31,6 +31,9 @@ export const PatientRecordModal: React.FC<PatientRecordModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogDescription className="sr-only">
+          Prontuário do paciente {patient.name}
+        </DialogDescription>
         <PatientRecord 
           patient={patient} 
           onClose={() => onOpenChange(false)} 

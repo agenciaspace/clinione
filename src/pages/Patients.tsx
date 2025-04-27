@@ -23,9 +23,7 @@ const Patients = () => {
     isAddPatientOpen,
     setIsAddPatientOpen,
     selectedPatient,
-    setSelectedPatient,
     isRecordModalOpen,
-    setIsRecordModalOpen,
     patientForm,
     handleInputChange,
     handleAddPatient,
@@ -42,8 +40,12 @@ const Patients = () => {
   useEffect(() => {
     if (!activeClinic?.id) return;
 
+    // Remover canais antigos antes de criar novos para evitar subscrições duplicadas
+    const channelName = `patient-changes-${activeClinic.id}`;
+    supabase.removeChannel(supabase.getChannels().find(ch => ch.topic === channelName));
+
     const channel = supabase
-      .channel('patient-changes')
+      .channel(channelName)
       .on('postgres_changes', 
         { 
           event: '*', 
