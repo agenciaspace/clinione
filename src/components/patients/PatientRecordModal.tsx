@@ -26,6 +26,7 @@ export const PatientRecordModal: React.FC<PatientRecordModalProps> = ({
     }
   }, [isOpen]);
 
+  // Se não há paciente selecionado, não renderize o modal
   if (!patient) return null;
 
   return (
@@ -38,7 +39,7 @@ export const PatientRecordModal: React.FC<PatientRecordModalProps> = ({
           patient={patient} 
           onClose={() => onOpenChange(false)} 
           currentUser={currentUser}
-          key={`patient-record-${patient.id}-${isOpen}`} // Chave para forçar remontagem
+          key={`patient-record-${patient.id}-${isOpen}-${Date.now()}`} // Chave dinâmica para forçar remontagem completa
         />
       </DialogContent>
     </Dialog>

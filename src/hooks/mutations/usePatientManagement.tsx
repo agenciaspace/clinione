@@ -50,11 +50,13 @@ export const usePatientManagement = () => {
   const handleDeletePatient = async (id: string) => {
     try {
       console.log("Iniciando exclusão do paciente:", id);
+      // Fechar o modal e limpar o estado se o paciente excluído for o paciente selecionado
       if (selectedPatient?.id === id) {
         setIsRecordModalOpen(false);
+        // Aguarde um pouco antes de limpar o paciente selecionado para evitar problemas de renderização
         setTimeout(() => {
           setSelectedPatient(null);
-        }, 100);
+        }, 300);
       }
       deletePatient(id);
     } catch (error) {
@@ -65,12 +67,21 @@ export const usePatientManagement = () => {
 
   const handleUpdatePatient = (updatedPatient: Patient) => {
     console.log("Atualizando paciente:", updatedPatient);
-    // Invalidar a query para forçar uma nova consulta
+    
+    // Invalidar a query para forçar uma nova consulta após atualização
     queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
     
     // Atualizar o paciente selecionado se estiver aberto no modal
     if (selectedPatient?.id === updatedPatient.id) {
-      setSelectedPatient(updatedPatient);
+      // Evitar problemas de renderização ao atualizar o estado
+      setTimeout(() => {
+        setSelectedPatient(prevPatient => {
+          if (prevPatient?.id === updatedPatient.id) {
+            return updatedPatient;
+          }
+          return prevPatient;
+        });
+      }, 100);
     }
     
     toast.success('Paciente atualizado com sucesso');
@@ -78,22 +89,27 @@ export const usePatientManagement = () => {
 
   // Garantir que o estado do modal seja corretamente atualizado
   const handleOpenRecordModal = (patient: Patient) => {
+    // Primeiro defina o paciente selecionado
     setSelectedPatient(patient);
-    setIsRecordModalOpen(true);
+    // Em seguida, abra o modal com um pequeno atraso
+    setTimeout(() => {
+      setIsRecordModalOpen(true);
+    }, 50);
   };
 
   const handleCloseRecordModal = () => {
+    // Primeiro feche o modal
     setIsRecordModalOpen(false);
     // Atrase a limpeza do paciente selecionado para evitar problemas de renderização
     setTimeout(() => {
       setSelectedPatient(null);
-    }, 150);
+    }, 300);
   };
 
   const filteredPatients = patients.filter(patient => 
     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone.includes(searchTerm)
+    patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.phone?.includes(searchTerm)
   );
 
   return {

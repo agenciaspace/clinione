@@ -32,6 +32,7 @@ export const PatientActions = ({
     birthDate: '',
   });
 
+  // Atualizar o formulário quando o paciente ou o estado do diálogo mudar
   useEffect(() => {
     if (isEditDialogOpen && patient) {
       const formattedDate = patient.birthDate 
@@ -72,10 +73,12 @@ export const PatientActions = ({
     try {
       await updatePatient(updatedPatient);
       
-      // Notificar sobre a atualização
+      // Notificar sobre a atualização com um pequeno delay para garantir que a atualização foi concluída
       if (onUpdatePatient) {
         console.log("Notificando sobre atualização do paciente:", updatedPatient);
-        onUpdatePatient(updatedPatient);
+        setTimeout(() => {
+          onUpdatePatient(updatedPatient);
+        }, 100);
       }
       
       handleCloseEditDialog();
@@ -99,7 +102,7 @@ export const PatientActions = ({
         phone: '',
         birthDate: '',
       });
-    }, 100);
+    }, 300); // Aumentado para 300ms para garantir que a limpeza aconteça após o fechamento da animação
   };
 
   return (

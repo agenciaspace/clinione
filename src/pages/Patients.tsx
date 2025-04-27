@@ -40,28 +40,45 @@ const Patients = () => {
   useEffect(() => {
     if (!activeClinic?.id) return;
 
-    // Remover canais antigos antes de criar novos para evitar subscrições duplicadas
-    const channelName = `patient-changes-${activeClinic.id}`;
-    supabase.removeChannel(supabase.getChannels().find(ch => ch.topic === channelName));
+    // Criar um nome de canal único para evitar sobreposições
+    const channelName = `patient-changes-${activeClinic.id}-${Date.now()}`;
+    
+    // Remover canais antigos com prefixo semelhante
+    const existingChannels = supabase.getChannels();
+    existingChannels.forEach(ch => {
+      if (ch.topic && ch.topic.startsWith(`patient-changes-${activeClinic.id}`)) {
+        console.log('Removendo canal antigo de pacientes:', ch.topic);
+        supabase.removeChannel(ch);
+      }
+    });
 
-    const channel = supabase
-      .channel(channelName)
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'patients',
-          filter: `clinic_id=eq.${activeClinic.id}`
-        }, 
-        (payload) => {
-          console.log('Alteração em pacientes detectada:', payload);
-          queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
-        }
-      )
-      .subscribe();
+    // Criar novo canal com um pequeno delay para evitar condições de corrida
+    const setupChannelTimer = setTimeout(() => {
+      console.log('Configurando novo canal para pacientes:', channelName);
+      const channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'patients',
+            filter: `clinic_id=eq.${activeClinic.id}`
+          }, 
+          (payload) => {
+            console.log('Alteração em pacientes detectada:', payload);
+            queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
+          }
+        )
+        .subscribe();
+
+      return () => {
+        console.log('Removendo canal de pacientes ao desmontar:', channelName);
+        supabase.removeChannel(channel);
+      };
+    }, 500); // Delay para evitar problemas de sincronização
 
     return () => {
-      supabase.removeChannel(channel);
+      clearTimeout(setupChannelTimer);
     };
   }, [activeClinic?.id, queryClient]);
 
