@@ -6,7 +6,6 @@ import { usePatientMutations } from '@/hooks/mutations/usePatientMutations';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/components/ui/sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 export const usePatientManagement = () => {
   const queryClient = useQueryClient();
@@ -51,13 +50,10 @@ export const usePatientManagement = () => {
     try {
       console.log("Iniciando exclusão do paciente:", id);
       
-      // Fechar o modal e limpar o estado se o paciente excluído for o paciente selecionado
+      // Fechar o modal se o paciente excluído for o paciente selecionado
       if (selectedPatient?.id === id) {
         setIsRecordModalOpen(false);
-        // Aguarde um pouco antes de limpar o paciente selecionado
-        setTimeout(() => {
-          setSelectedPatient(null);
-        }, 500);
+        setSelectedPatient(null);
       }
       
       await deletePatient(id);
@@ -83,10 +79,7 @@ export const usePatientManagement = () => {
     
     // Atualizar o paciente selecionado se estiver aberto no modal
     if (selectedPatient?.id === updatedPatient.id) {
-      // Evitar problemas de renderização usando setTimeout
-      setTimeout(() => {
-        setSelectedPatient(updatedPatient);
-      }, 200);
+      setSelectedPatient(updatedPatient);
     }
     
     toast.success('Paciente atualizado com sucesso');
@@ -94,21 +87,13 @@ export const usePatientManagement = () => {
 
   // Garantir que o estado do modal seja corretamente atualizado
   const handleOpenRecordModal = useCallback((patient: Patient) => {
-    // Primeiro defina o paciente selecionado
     setSelectedPatient(patient);
-    // Em seguida, abra o modal com um pequeno atraso
-    setTimeout(() => {
-      setIsRecordModalOpen(true);
-    }, 100);
+    setIsRecordModalOpen(true);
   }, []);
 
   const handleCloseRecordModal = useCallback(() => {
-    // Primeiro feche o modal
     setIsRecordModalOpen(false);
-    // Atrase a limpeza do paciente selecionado para evitar problemas de renderização
-    setTimeout(() => {
-      setSelectedPatient(null);
-    }, 500);
+    setSelectedPatient(null);
   }, []);
 
   const filteredPatients = patients.filter(patient => 

@@ -42,10 +42,9 @@ const Patients = () => {
   useEffect(() => {
     if (!activeClinic?.id) return;
     
-    // Cleanup any existing channel first
+    // Limpar canal existente
     if (patientChannelRef.current) {
       try {
-        console.log('Removendo canal de pacientes existente:', patientChannelRef.current.topic);
         supabase.removeChannel(patientChannelRef.current);
       } catch (error) {
         console.error('Erro ao remover canal de pacientes:', error);
@@ -53,48 +52,44 @@ const Patients = () => {
       patientChannelRef.current = null;
     }
     
-    // Wait a small amount of time before creating a new channel
-    const setupChannelTimer = setTimeout(() => {
-      // Create a unique channel name with timestamp
-      const channelName = `patient-changes-${activeClinic.id}-${Date.now()}`;
-      console.log('Configurando novo canal para pacientes:', channelName);
-      
-      try {
-        const channel = supabase
-          .channel(channelName)
-          .on('postgres_changes', 
-            { 
-              event: '*', 
-              schema: 'public', 
-              table: 'patients',
-              filter: `clinic_id=eq.${activeClinic.id}`
-            }, 
-            (payload) => {
-              console.log('Alteração em pacientes detectada:', payload);
-              queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
-            }
-          )
-          .subscribe((status) => {
-            console.log(`Canal de pacientes ${channelName} status:`, status);
-          });
-          
-        patientChannelRef.current = channel;
-      } catch (error) {
-        console.error('Erro ao configurar canal de pacientes:', error);
-      }
-    }, 1000); // Increased delay to ensure proper cleanup
+    // Criar um novo canal com nome único
+    const channelName = `patient-changes-${activeClinic.id}-${Date.now()}`;
+    console.log('Configurando novo canal para pacientes:', channelName);
+    
+    try {
+      const channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'patients',
+            filter: `clinic_id=eq.${activeClinic.id}`
+          }, 
+          (payload) => {
+            console.log('Alteração em pacientes detectada:', payload);
+            queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
+          }
+        )
+        .subscribe((status) => {
+          console.log(`Canal de pacientes ${channelName} status:`, status);
+        });
+        
+      patientChannelRef.current = channel;
+    } catch (error) {
+      console.error('Erro ao configurar canal de pacientes:', error);
+    }
 
-    // Cleanup on unmount or when activeClinic changes
+    // Cleanup ao desmontar
     return () => {
-      clearTimeout(setupChannelTimer);
       if (patientChannelRef.current) {
         try {
           console.log('Removendo canal de pacientes ao desmontar:', patientChannelRef.current.topic);
           supabase.removeChannel(patientChannelRef.current);
+          patientChannelRef.current = null;
         } catch (error) {
           console.error('Erro ao remover canal de pacientes durante limpeza:', error);
         }
-        patientChannelRef.current = null;
       }
     };
   }, [activeClinic?.id, queryClient]);

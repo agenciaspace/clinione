@@ -35,19 +35,16 @@ export const PatientActions = ({
   // Atualizar o formulário quando o paciente ou o estado do diálogo mudar
   useEffect(() => {
     if (isEditDialogOpen && patient) {
-      // Use setTimeout to ensure we have the latest patient data
-      setTimeout(() => {
-        const formattedDate = patient.birthDate 
-          ? patient.birthDate.split('T')[0] 
-          : '';
-        
-        setEditForm({
-          name: patient.name || '',
-          email: patient.email || '',
-          phone: patient.phone || '',
-          birthDate: formattedDate,
-        });
-      }, 50);
+      const formattedDate = patient.birthDate 
+        ? patient.birthDate.split('T')[0] 
+        : '';
+      
+      setEditForm({
+        name: patient.name || '',
+        email: patient.email || '',
+        phone: patient.phone || '',
+        birthDate: formattedDate,
+      });
     }
   }, [patient, isEditDialogOpen]);
 
@@ -77,14 +74,12 @@ export const PatientActions = ({
       await updatePatient(updatedPatient);
       
       // Close the dialog first
-      handleCloseEditDialog();
+      setIsEditDialogOpen(false);
       
-      // Notify about the update with a delay to ensure state is updated properly
+      // Notify about the update
       if (onUpdatePatient) {
         console.log("Notificando sobre atualização do paciente:", updatedPatient);
-        setTimeout(() => {
-          onUpdatePatient(updatedPatient);
-        }, 300);
+        onUpdatePatient(updatedPatient);
       }
     } catch (error) {
       console.error("Erro ao atualizar paciente:", error);
@@ -98,15 +93,12 @@ export const PatientActions = ({
 
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false);
-    // Clear form with delay to avoid React state update conflicts
-    setTimeout(() => {
-      setEditForm({
-        name: '',
-        email: '',
-        phone: '',
-        birthDate: '',
-      });
-    }, 300);
+    setEditForm({
+      name: '',
+      email: '',
+      phone: '',
+      birthDate: '',
+    });
   };
 
   return (

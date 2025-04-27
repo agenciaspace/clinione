@@ -44,8 +44,8 @@ export const PatientRecordModal: React.FC<PatientRecordModalProps> = ({
           patient={patient} 
           onClose={() => onOpenChange(false)} 
           currentUser={currentUser}
-          // Use a robust unique key that includes all relevant variables
-          key={`patient-record-${patient.id}-${isOpen}-${Date.now()}`}
+          // Usar uma chave mais simples e estável
+          key={`patient-record-${patient.id}`}
         />
       </DialogContent>
     </Dialog>
