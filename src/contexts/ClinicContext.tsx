@@ -80,30 +80,44 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [user]);
 
   useEffect(() => {
-    // Limpeza do canal de webhook anterior se existir
+    // First clean up any existing webhook channel before attempting to create a new one
     if (webhookChannel) {
-      console.log('[WEBHOOK] Removendo canal webhook anterior');
-      supabase.removeChannel(webhookChannel);
-      setWebhookChannel(null);
+      try {
+        console.log('[WEBHOOK] Removendo canal webhook anterior');
+        supabase.removeChannel(webhookChannel);
+      } catch (e) {
+        console.error('Erro ao remover canal webhook:', e);
+      } finally {
+        setWebhookChannel(null);
+      }
     }
     
+    // Only setup a new channel if we have an active clinic
     if (activeClinic?.id) {
-      // Usar um pequeno delay para evitar múltiplas tentativas de subscrição
+      // Use a delay to avoid race conditions with channel setup/teardown
       const setupTimer = setTimeout(() => {
         console.log(`[WEBHOOK] Configurando novo canal webhook para clínica ${activeClinic.id}`);
         try {
-          // Verificar todos os canais existentes
+          // Get all existing channels
           const existingChannels = supabase.getChannels();
-          const channelName = `webhook-${activeClinic.id}`;
           
-          // Remover canais com o mesmo nome antes de criar um novo
-          const existingChannel = existingChannels.find(ch => ch.topic === channelName);
-          if (existingChannel) {
-            console.log('[WEBHOOK] Removendo canal existente com o mesmo nome');
-            supabase.removeChannel(existingChannel);
-          }
+          // Create a unique channel name with timestamp to avoid collisions
+          const channelName = `webhook-${activeClinic.id}-${Date.now()}`;
           
-          const channel = setupWebhookRealtimeListeners(activeClinic.id);
+          // Remove any webhook channels for this clinic to prevent duplicates
+          existingChannels.forEach(ch => {
+            if (ch.topic && ch.topic.startsWith(`webhook-${activeClinic.id}`)) {
+              console.log('[WEBHOOK] Removendo canal existente com nome similar:', ch.topic);
+              try {
+                supabase.removeChannel(ch);
+              } catch (e) {
+                console.error('Erro ao remover canal existente:', e);
+              }
+            }
+          });
+          
+          // Create the new channel with the unique name
+          const channel = setupWebhookRealtimeListeners(activeClinic.id, channelName);
           
           if (channel) {
             setWebhookChannel(channel);
@@ -111,7 +125,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         } catch (error) {
           console.error('[WEBHOOK] Erro ao configurar canal webhook:', error);
         }
-      }, 500); // Delay aumentado para 500ms
+      }, 800); // Increased delay to ensure cleanup has completed
       
       return () => {
         clearTimeout(setupTimer);
@@ -120,8 +134,12 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     
     return () => {
       if (webhookChannel) {
-        console.log('[WEBHOOK] Cleanup: Removendo canal webhook ao desmontar');
-        supabase.removeChannel(webhookChannel);
+        try {
+          console.log('[WEBHOOK] Cleanup: Removendo canal webhook ao desmontar');
+          supabase.removeChannel(webhookChannel);
+        } catch (e) {
+          console.error('Erro ao remover canal webhook durante limpeza:', e);
+        }
       }
     };
   }, [activeClinic?.id]);

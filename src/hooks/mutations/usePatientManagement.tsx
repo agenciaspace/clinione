@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Patient, PatientFormData } from '@/types';
 import { usePatients } from '@/hooks/usePatients';
 import { usePatientMutations } from '@/hooks/mutations/usePatientMutations';
@@ -42,74 +42,79 @@ export const usePatientManagement = () => {
     }
   };
 
-  const handleToggleStatus = (patient: Patient) => {
+  const handleToggleStatus = useCallback((patient: Patient) => {
     const newStatus = patient.status === 'active' ? 'inactive' : 'active';
     updatePatient({ ...patient, status: newStatus });
-  };
+  }, [updatePatient]);
 
-  const handleDeletePatient = async (id: string) => {
+  const handleDeletePatient = useCallback(async (id: string) => {
     try {
       console.log("Iniciando exclusão do paciente:", id);
+      
       // Fechar o modal e limpar o estado se o paciente excluído for o paciente selecionado
       if (selectedPatient?.id === id) {
         setIsRecordModalOpen(false);
-        // Aguarde um pouco antes de limpar o paciente selecionado para evitar problemas de renderização
+        // Aguarde um pouco antes de limpar o paciente selecionado
         setTimeout(() => {
           setSelectedPatient(null);
-        }, 300);
+        }, 500);
       }
-      deletePatient(id);
+      
+      await deletePatient(id);
+      
+      // Forçar a atualização da lista
+      if (activeClinic?.id) {
+        queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
+      }
+      
     } catch (error) {
       console.error("Erro ao excluir paciente:", error);
       toast.error("Erro ao excluir paciente");
     }
-  };
+  }, [selectedPatient, deletePatient, activeClinic?.id, queryClient]);
 
-  const handleUpdatePatient = (updatedPatient: Patient) => {
+  const handleUpdatePatient = useCallback((updatedPatient: Patient) => {
     console.log("Atualizando paciente:", updatedPatient);
     
     // Invalidar a query para forçar uma nova consulta após atualização
-    queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.id] });
+    if (activeClinic?.id) {
+      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
+    }
     
     // Atualizar o paciente selecionado se estiver aberto no modal
     if (selectedPatient?.id === updatedPatient.id) {
-      // Evitar problemas de renderização ao atualizar o estado
+      // Evitar problemas de renderização usando setTimeout
       setTimeout(() => {
-        setSelectedPatient(prevPatient => {
-          if (prevPatient?.id === updatedPatient.id) {
-            return updatedPatient;
-          }
-          return prevPatient;
-        });
-      }, 100);
+        setSelectedPatient(updatedPatient);
+      }, 200);
     }
     
     toast.success('Paciente atualizado com sucesso');
-  };
+  }, [selectedPatient, queryClient, activeClinic?.id]);
 
   // Garantir que o estado do modal seja corretamente atualizado
-  const handleOpenRecordModal = (patient: Patient) => {
+  const handleOpenRecordModal = useCallback((patient: Patient) => {
     // Primeiro defina o paciente selecionado
     setSelectedPatient(patient);
     // Em seguida, abra o modal com um pequeno atraso
     setTimeout(() => {
       setIsRecordModalOpen(true);
-    }, 50);
-  };
+    }, 100);
+  }, []);
 
-  const handleCloseRecordModal = () => {
+  const handleCloseRecordModal = useCallback(() => {
     // Primeiro feche o modal
     setIsRecordModalOpen(false);
     // Atrase a limpeza do paciente selecionado para evitar problemas de renderização
     setTimeout(() => {
       setSelectedPatient(null);
-    }, 300);
-  };
+    }, 500);
+  }, []);
 
   const filteredPatients = patients.filter(patient => 
     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone?.includes(searchTerm)
+    (patient.email && patient.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (patient.phone && patient.phone.includes(searchTerm))
   );
 
   return {

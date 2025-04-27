@@ -24,6 +24,11 @@ export const PatientRecordModal: React.FC<PatientRecordModalProps> = ({
       // Este efeito garante que o estado seja limpo quando o modal é fechado
       console.log("Modal fechado, limpando estado");
     }
+    
+    // Cleanup function to ensure proper resource cleanup
+    return () => {
+      console.log("PatientRecordModal unmounting, cleaning resources");
+    };
   }, [isOpen]);
 
   // Se não há paciente selecionado, não renderize o modal
@@ -39,7 +44,8 @@ export const PatientRecordModal: React.FC<PatientRecordModalProps> = ({
           patient={patient} 
           onClose={() => onOpenChange(false)} 
           currentUser={currentUser}
-          key={`patient-record-${patient.id}-${isOpen}-${Date.now()}`} // Chave dinâmica para forçar remontagem completa
+          // Use a robust unique key that includes all relevant variables
+          key={`patient-record-${patient.id}-${isOpen}-${Date.now()}`}
         />
       </DialogContent>
     </Dialog>

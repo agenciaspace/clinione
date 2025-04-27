@@ -35,16 +35,19 @@ export const PatientActions = ({
   // Atualizar o formulário quando o paciente ou o estado do diálogo mudar
   useEffect(() => {
     if (isEditDialogOpen && patient) {
-      const formattedDate = patient.birthDate 
-        ? patient.birthDate.split('T')[0] 
-        : '';
-      
-      setEditForm({
-        name: patient.name || '',
-        email: patient.email || '',
-        phone: patient.phone || '',
-        birthDate: formattedDate,
-      });
+      // Use setTimeout to ensure we have the latest patient data
+      setTimeout(() => {
+        const formattedDate = patient.birthDate 
+          ? patient.birthDate.split('T')[0] 
+          : '';
+        
+        setEditForm({
+          name: patient.name || '',
+          email: patient.email || '',
+          phone: patient.phone || '',
+          birthDate: formattedDate,
+        });
+      }, 50);
     }
   }, [patient, isEditDialogOpen]);
 
@@ -73,15 +76,16 @@ export const PatientActions = ({
     try {
       await updatePatient(updatedPatient);
       
-      // Notificar sobre a atualização com um pequeno delay para garantir que a atualização foi concluída
+      // Close the dialog first
+      handleCloseEditDialog();
+      
+      // Notify about the update with a delay to ensure state is updated properly
       if (onUpdatePatient) {
         console.log("Notificando sobre atualização do paciente:", updatedPatient);
         setTimeout(() => {
           onUpdatePatient(updatedPatient);
-        }, 100);
+        }, 300);
       }
-      
-      handleCloseEditDialog();
     } catch (error) {
       console.error("Erro ao atualizar paciente:", error);
       toast.error("Erro ao atualizar paciente");
@@ -94,7 +98,7 @@ export const PatientActions = ({
 
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false);
-    // Limpeza após fechamento para evitar problemas de estado
+    // Clear form with delay to avoid React state update conflicts
     setTimeout(() => {
       setEditForm({
         name: '',
@@ -102,7 +106,7 @@ export const PatientActions = ({
         phone: '',
         birthDate: '',
       });
-    }, 300); // Aumentado para 300ms para garantir que a limpeza aconteça após o fechamento da animação
+    }, 300);
   };
 
   return (
