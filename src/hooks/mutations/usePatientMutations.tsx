@@ -23,9 +23,30 @@ export const usePatientMutations = (clinicId?: string) => {
         .single();
       
       if (error) throw error;
-      return data;
+      
+      // Transform data to Patient type for consistency
+      const transformedData = {
+        id: data.id,
+        name: data.name,
+        email: data.email || '',
+        phone: data.phone || '',
+        birthDate: data.birth_date,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        clinic_id: data.clinic_id,
+        status: data.status || 'active',
+        lastVisit: data.last_visit
+      };
+      
+      return transformedData;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Optimistically update the cache with the modified data
+      queryClient.setQueryData(['patients', clinicId], (oldData: Patient[] = []) => {
+        return oldData.map(patient => patient.id === data.id ? data : patient);
+      });
+      
+      // Still invalidate to ensure eventual consistency
       queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
       toast.success('Paciente atualizado com sucesso');
     },
@@ -81,8 +102,8 @@ export const usePatientMutations = (clinicId?: string) => {
   });
 
   return {
-    updatePatient: updatePatientMutation.mutate,
-    deletePatient: deletePatientMutation.mutate,
+    updatePatient: updatePatientMutation.mutateAsync,
+    deletePatient: deletePatientMutation.mutateAsync,
     isUpdating: updatePatientMutation.isPending,
     isDeleting: deletePatientMutation.isPending
   };

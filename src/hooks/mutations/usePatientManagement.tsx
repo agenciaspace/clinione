@@ -72,7 +72,14 @@ export const usePatientManagement = () => {
   const handleUpdatePatient = useCallback((updatedPatient: Patient) => {
     console.log("Atualizando paciente:", updatedPatient);
     
-    // Invalidar a query para forçar uma nova consulta após atualização
+    // Update the patients data in the cache directly
+    queryClient.setQueryData(['patients', activeClinic?.id], (oldData: Patient[] = []) => {
+      return oldData.map(patient => 
+        patient.id === updatedPatient.id ? updatedPatient : patient
+      );
+    });
+    
+    // Also invalidate to ensure eventual consistency with the server
     if (activeClinic?.id) {
       queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
     }
@@ -81,8 +88,6 @@ export const usePatientManagement = () => {
     if (selectedPatient?.id === updatedPatient.id) {
       setSelectedPatient(updatedPatient);
     }
-    
-    toast.success('Paciente atualizado com sucesso');
   }, [selectedPatient, queryClient, activeClinic?.id]);
 
   // Garantir que o estado do modal seja corretamente atualizado

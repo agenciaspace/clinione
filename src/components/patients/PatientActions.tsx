@@ -71,15 +71,16 @@ export const PatientActions = ({
     };
     
     try {
-      await updatePatient(updatedPatient);
+      // Use the updatePatient mutation which now returns a promise
+      const updatedData = await updatePatient(updatedPatient);
       
       // Close the dialog first
       setIsEditDialogOpen(false);
       
-      // Notify about the update
-      if (onUpdatePatient) {
-        console.log("Notificando sobre atualização do paciente:", updatedPatient);
-        onUpdatePatient(updatedPatient);
+      // Notify about the update with the server-returned data
+      if (onUpdatePatient && updatedData) {
+        console.log("Notificando sobre atualização do paciente:", updatedData);
+        onUpdatePatient(updatedData);
       }
     } catch (error) {
       console.error("Erro ao atualizar paciente:", error);

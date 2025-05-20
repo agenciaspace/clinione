@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useClinic } from '@/contexts/ClinicContext';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { Patient } from '@/types';
 
 const Patients = () => {
   const { user } = useAuth();
@@ -68,6 +69,63 @@ const Patients = () => {
           }, 
           (payload) => {
             console.log('Alteração em pacientes detectada:', payload);
+            
+            // Get current cache data
+            const currentPatients = queryClient.getQueryData<Patient[]>(['patients', activeClinic.id]) || [];
+            
+            // Handle different event types
+            if (payload.eventType === 'INSERT') {
+              // Add new patient to the cache if it doesn't exist
+              const newPatient = payload.new;
+              if (newPatient && !currentPatients.some(p => p.id === newPatient.id)) {
+                // Format the patient data to match our expected structure
+                const formattedPatient = {
+                  id: newPatient.id,
+                  name: newPatient.name,
+                  email: newPatient.email || '',
+                  phone: newPatient.phone || '',
+                  birthDate: newPatient.birth_date,
+                  created_at: newPatient.created_at,
+                  updated_at: newPatient.updated_at,
+                  clinic_id: newPatient.clinic_id,
+                  status: newPatient.status || 'active',
+                  lastVisit: newPatient.last_visit
+                };
+                
+                queryClient.setQueryData(['patients', activeClinic.id], [...currentPatients, formattedPatient]);
+              }
+            } else if (payload.eventType === 'UPDATE') {
+              // Update existing patient in the cache
+              const updatedPatient = payload.new;
+              if (updatedPatient) {
+                const formattedPatient = {
+                  id: updatedPatient.id,
+                  name: updatedPatient.name,
+                  email: updatedPatient.email || '',
+                  phone: updatedPatient.phone || '',
+                  birthDate: updatedPatient.birth_date,
+                  created_at: updatedPatient.created_at,
+                  updated_at: updatedPatient.updated_at,
+                  clinic_id: updatedPatient.clinic_id,
+                  status: updatedPatient.status || 'active',
+                  lastVisit: updatedPatient.last_visit
+                };
+                
+                queryClient.setQueryData(['patients', activeClinic.id], 
+                  currentPatients.map(p => p.id === updatedPatient.id ? formattedPatient : p)
+                );
+              }
+            } else if (payload.eventType === 'DELETE') {
+              // Remove patient from cache
+              const deletedId = payload.old?.id;
+              if (deletedId) {
+                queryClient.setQueryData(['patients', activeClinic.id], 
+                  currentPatients.filter(p => p.id !== deletedId)
+                );
+              }
+            }
+            
+            // Always invalidate to ensure consistency
             queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
           }
         )
