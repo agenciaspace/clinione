@@ -459,49 +459,7 @@ const Settings = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Sessões ativas</CardTitle>
-              <CardDescription>Gerencie seus dispositivos conectados</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 border rounded-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
-                      <CheckCircle className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">Este dispositivo</h4>
-                      <p className="text-sm text-gray-500">Chrome • Windows • São Paulo, Brasil</p>
-                    </div>
-                  </div>
-                  <Badge>Atual</Badge>
-                </div>
-              </div>
-
-              <div className="p-4 border rounded-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 mr-3">
-                      <Shield className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">iPhone 12</h4>
-                      <p className="text-sm text-gray-500">Safari • iOS • São Paulo, Brasil • Há 2 dias</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="text-red-500">
-                    Encerrar
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <Button variant="outline">Encerrar todas as outras sessões</Button>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Card for active sessions removed as it wasn't functioning properly */}
 
           <Card>
             <CardHeader>
