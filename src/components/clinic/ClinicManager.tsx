@@ -264,14 +264,9 @@ const ClinicManager: React.FC = () => {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Minhas Clínicas</CardTitle>
-            <CardDescription>Gerencie suas clínicas e selecione a clínica ativa</CardDescription>
-          </div>
-          <Button onClick={handleAddClinic}>
-            Nova Clínica
-          </Button>
+        <CardHeader>
+          <CardTitle>Minhas Clínicas</CardTitle>
+          <CardDescription>Gerencie suas clínicas e selecione a clínica ativa</CardDescription>
         </CardHeader>
         <CardContent>
           <ClinicList 
