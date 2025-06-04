@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
@@ -24,8 +23,8 @@ export const usePatientMutations = (clinicId?: string) => {
       
       if (error) throw error;
       
-      // Transform data to Patient type for consistency
-      const transformedData = {
+      // Transform data to Patient type for consistency with proper status typing
+      const transformedData: Patient = {
         id: data.id,
         name: data.name,
         email: data.email || '',
@@ -34,7 +33,7 @@ export const usePatientMutations = (clinicId?: string) => {
         created_at: data.created_at,
         updated_at: data.updated_at,
         clinic_id: data.clinic_id,
-        status: data.status || 'active',
+        status: (data.status as 'active' | 'inactive') || 'active', // Properly type the status
         lastVisit: data.last_visit
       };
       
