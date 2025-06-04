@@ -769,6 +769,47 @@ export type Database = {
           },
         ]
       }
+      transcriptions: {
+        Row: {
+          audio_url: string
+          created_at: string
+          doctor_id: string
+          id: string
+          notes: string | null
+          patient_id: string | null
+          transcription_text: string
+          updated_at: string
+        }
+        Insert: {
+          audio_url: string
+          created_at?: string
+          doctor_id: string
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          transcription_text: string
+          updated_at?: string
+        }
+        Update: {
+          audio_url?: string
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          transcription_text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcriptions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

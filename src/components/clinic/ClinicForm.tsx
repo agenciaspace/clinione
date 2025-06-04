@@ -24,6 +24,7 @@ import PhotoUpload from './PhotoUpload';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { WorkingHoursConfig } from '../WorkingHoursConfig';
+import { toast } from '@/components/ui/sonner';
 import type { WorkingHours } from '@/types';
 
 const defaultWorkingHours: WorkingHours = {
@@ -101,17 +102,37 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
   };
 
   const checkSlugAvailability = async (slug: string) => {
-    if (!slug) return false;
+    if (!slug) {
+      setSlugError('');
+      return false;
+    }
     
     setIsCheckingSlug(true);
+    setSlugError('');
+    
     try {
-      const { data, error } = await supabase
+      console.log('Verificando disponibilidade do slug:', slug);
+      console.log('ID da clínica editando:', editingClinicId);
+      
+      let query = supabase
         .from('clinics')
         .select('id')
-        .eq('slug', slug)
-        .neq('id', editingClinicId || '');
+        .eq('slug', slug);
       
-      if (error) throw error;
+      // Se estamos editando, excluir a clínica atual da verificação
+      if (editingClinicId) {
+        query = query.neq('id', editingClinicId);
+      }
+      
+      const { data, error } = await query;
+      
+      console.log('Resultado da consulta:', { data, error });
+      
+      if (error) {
+        console.error('Erro na consulta de slug:', error);
+        setSlugError('Erro ao verificar disponibilidade do endereço. Tente novamente.');
+        return false;
+      }
       
       if (data && data.length > 0) {
         setSlugError('Este endereço já está sendo usado por outra clínica. Tente outro nome.');
@@ -122,7 +143,7 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
       }
     } catch (error) {
       console.error('Erro ao verificar disponibilidade do slug:', error);
-      setSlugError('Erro ao verificar disponibilidade do endereço');
+      setSlugError('Erro ao verificar disponibilidade do endereço. Tente novamente.');
       return false;
     } finally {
       setIsCheckingSlug(false);
@@ -130,8 +151,10 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
   };
 
   const handleSlugBlur = async () => {
-    if (formData.slug) {
+    if (formData.slug && formData.slug.length >= 3) {
       await checkSlugAvailability(formData.slug);
+    } else if (formData.slug && formData.slug.length < 3) {
+      setSlugError('O endereço deve ter pelo menos 3 caracteres.');
     }
   };
 
@@ -141,6 +164,26 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
   
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação antes do submit
+    if (!formData.name.trim()) {
+      toast.error('Nome da clínica é obrigatório');
+      return;
+    }
+    
+    if (formData.slug && formData.slug.length < 3) {
+      setSlugError('O endereço deve ter pelo menos 3 caracteres.');
+      return;
+    }
+    
+    // Se há slug, verificar disponibilidade uma última vez
+    if (formData.slug) {
+      const isAvailable = await checkSlugAvailability(formData.slug);
+      if (!isAvailable) {
+        return;
+      }
+    }
+    
     setIsSubmitting(true);
     try {
       await onSubmit(e, formData);
@@ -152,36 +195,59 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
   useEffect(() => {
     if (isEditing && editingClinicId) {
       const fetchClinicData = async () => {
-        const { data, error } = await supabase
-          .from('clinics')
-          .select('*')
-          .eq('id', editingClinicId)
-          .single();
+        try {
+          const { data, error } = await supabase
+            .from('clinics')
+            .select('*')
+            .eq('id', editingClinicId)
+            .single();
 
-        if (!error && data) {
-          let workingHoursData: WorkingHours;
-          
-          if (data.working_hours && typeof data.working_hours === 'object') {
-            workingHoursData = data.working_hours as WorkingHours;
-          } else {
-            workingHoursData = defaultWorkingHours;
+          if (error) {
+            console.error('Erro ao buscar dados da clínica:', error);
+            toast.error('Erro ao carregar dados da clínica');
+            return;
           }
-          
-          setFormData({
-            name: data.name,
-            address: data.address || '',
-            phone: data.phone || '',
-            email: data.email || '',
-            slug: data.slug || '',
-            workingHours: workingHoursData
-          });
-          setPhoto(data.photo);
+
+          if (data) {
+            let workingHoursData: WorkingHours;
+            
+            if (data.working_hours && typeof data.working_hours === 'object') {
+              workingHoursData = data.working_hours as WorkingHours;
+            } else {
+              workingHoursData = defaultWorkingHours;
+            }
+            
+            setFormData({
+              name: data.name,
+              address: data.address || '',
+              phone: data.phone || '',
+              email: data.email || '',
+              slug: data.slug || '',
+              workingHours: workingHoursData
+            });
+            setPhoto(data.photo);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar dados da clínica:', error);
+          toast.error('Erro ao carregar dados da clínica');
         }
       };
 
       fetchClinicData();
+    } else {
+      // Reset form quando não está editando
+      setFormData({
+        name: '',
+        address: '',
+        phone: '',
+        email: '',
+        slug: '',
+        workingHours: defaultWorkingHours
+      });
+      setPhoto(null);
+      setSlugError('');
     }
-  }, [isEditing, editingClinicId]);
+  }, [isEditing, editingClinicId, isOpen]);
 
   const formContent = (
     <form onSubmit={handleFormSubmit}>
@@ -228,8 +294,12 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
                 onChange={handleInputChange}
                 onBlur={handleSlugBlur}
                 placeholder="ex: vila-mariana-clinica"
+                disabled={isCheckingSlug}
               />
             </div>
+            {isCheckingSlug && (
+              <p className="text-sm text-gray-500">Verificando disponibilidade...</p>
+            )}
             {slugError ? (
               <p className="text-sm text-red-500">{slugError}</p>
             ) : (
@@ -237,7 +307,7 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
                 Este será o link usado para divulgar sua clínica online. Ele deve ser único e fácil de lembrar.
               </p>
             )}
-            {formData.slug && !slugError && (
+            {formData.slug && !slugError && !isCheckingSlug && (
               <div className="text-sm flex items-center mt-1">
                 <span className="mr-1">Ver página pública:</span>
                 <a 
