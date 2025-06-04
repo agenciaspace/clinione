@@ -70,7 +70,12 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
   const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
   const isMobile = useIsMobile();
   
-  const { slots, isLoading, error, refetch } = useAvailableSlots(clinicId, selectedDate);
+  // Passar o selectedDoctor para o hook useAvailableSlots
+  const { slots, isLoading, error, refetch } = useAvailableSlots(
+    clinicId, 
+    selectedDate, 
+    selectedDoctor || undefined
+  );
 
   useEffect(() => {
     if (open && !selectedDate) {
@@ -108,12 +113,10 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
   useEffect(() => {
     if (selectedDate) {
       console.log(`Slots carregados para ${selectedDate.toISOString().split('T')[0]}:`, slots?.length || 0);
-      // Resetar médico selecionado quando a data muda
-      setSelectedDoctor(null);
-      // Forçar refetch quando a data mudar
+      // Forçar refetch quando a data ou médico mudar
       refetch();
     }
-  }, [selectedDate, refetch]);
+  }, [selectedDate, selectedDoctor, refetch]);
 
   const handleSlotSelect = (slot: any) => {
     setSelectedSlot(slot);
@@ -225,10 +228,8 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
     setSelectedDoctor(null);
   };
 
-  // Filtrar slots pelo médico selecionado
-  const filteredSlots = selectedDoctor 
-    ? slots.filter(slot => slot.doctor_id === selectedDoctor) 
-    : slots;
+  // Filtrar slots pelo médico selecionado (agora não é mais necessário pois o hook já faz isso)
+  const filteredSlots = slots;
 
   // Agrupar slots por médico
   const slotsByDoctor = filteredSlots.reduce((acc: any, slot) => {

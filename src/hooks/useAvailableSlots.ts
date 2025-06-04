@@ -10,9 +10,9 @@ interface AvailableSlot {
   doctor_name: string;
 }
 
-export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
+export const useAvailableSlots = (clinicId: string, date: Date | undefined, doctorId?: string) => {
   const { data: slots, isLoading, error, refetch } = useQuery({
-    queryKey: ['available-slots', clinicId, date?.toISOString()],
+    queryKey: ['available-slots', clinicId, date?.toISOString(), doctorId],
     queryFn: async () => {
       if (!date) {
         console.log('❌ Nenhuma data fornecida para buscar slots');
@@ -22,6 +22,7 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
       console.log('🔍 Buscando slots disponíveis para:');
       console.log('  📍 Clínica ID:', clinicId);
       console.log('  📅 Data:', date.toISOString());
+      console.log('  👨‍⚕️ Médico ID:', doctorId || 'Todos os médicos');
       
       // Garantir que estamos usando apenas a data sem o horário
       const formattedDate = date.toISOString().split('T')[0];
@@ -67,10 +68,18 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
         
         // Verificar se há médicos cadastrados
         console.log('👨‍⚕️ Verificando médicos cadastrados...');
-        const { data: doctorsData, error: doctorsError } = await supabase
+        let doctorsQuery = supabase
           .from('doctors')
           .select('id, name, speciality')
           .eq('clinic_id', clinicId);
+          
+        // Se um médico específico foi selecionado, filtrar por ele
+        if (doctorId) {
+          doctorsQuery = doctorsQuery.eq('id', doctorId);
+          console.log('🎯 Filtrando por médico específico:', doctorId);
+        }
+          
+        const { data: doctorsData, error: doctorsError } = await doctorsQuery;
           
         if (doctorsError) {
           console.error('❌ Erro ao buscar médicos:', doctorsError);
@@ -78,7 +87,11 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
         }
         
         if (!doctorsData || doctorsData.length === 0) {
-          console.log('❌ Nenhum médico cadastrado para esta clínica');
+          if (doctorId) {
+            console.log('❌ Médico específico não encontrado para esta clínica');
+          } else {
+            console.log('❌ Nenhum médico cadastrado para esta clínica');
+          }
           return [];
         }
         
@@ -89,9 +102,15 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
         
         // Buscar os horários disponíveis usando a função get_available_slots
         console.log('🔄 Chamando função get_available_slots...');
+        console.log('  Parâmetros:');
+        console.log('    p_clinic_id:', clinicId);
+        console.log('    p_date:', formattedDate);
+        console.log('    p_doctor_id:', doctorId || null);
+        
         const { data, error } = await supabase.rpc('get_available_slots', {
           p_clinic_id: clinicId,
           p_date: formattedDate,
+          p_doctor_id: doctorId || null,
         });
 
         if (error) {
@@ -108,12 +127,29 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
           console.log('   - Todos os horários já estão ocupados');
           console.log('   - Data/hora já passou');
           console.log('   - Médico não tem horários configurados');
+          console.log('   - Função get_available_slots não está retornando dados');
+          
+          // Vamos fazer um teste adicional para ver se há agendamentos para este dia
+          const { data: appointments, error: appointmentsError } = await supabase
+            .from('appointments')
+            .select('*')
+            .eq('clinic_id', clinicId)
+            .gte('date', formattedDate + 'T00:00:00.000Z')
+            .lt('date', formattedDate + 'T23:59:59.999Z');
+            
+          if (!appointmentsError) {
+            console.log(`📅 Agendamentos existentes para ${formattedDate}:`, appointments?.length || 0);
+            appointments?.forEach(apt => {
+              console.log(`  - ${apt.patient_name} com Dr. ${apt.doctor_name} às ${new Date(apt.date).toLocaleTimeString()}`);
+            });
+          }
+          
           return [];
         }
         
         console.log(`✅ ${data.length} slots disponíveis encontrados para ${formattedDate}:`);
-        console.log('📋 Primeiros 5 slots:');
-        data.slice(0, 5).forEach((slot: any, index: number) => {
+        console.log('📋 Todos os slots encontrados:');
+        data.forEach((slot: any, index: number) => {
           console.log(`   ${index + 1}. Dr(a). ${slot.doctor_name} - ${new Date(slot.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`);
         });
         
