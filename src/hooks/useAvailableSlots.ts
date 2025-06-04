@@ -14,7 +14,10 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
   const { data: slots, isLoading, error, refetch } = useQuery({
     queryKey: ['available-slots', clinicId, date?.toISOString()],
     queryFn: async () => {
-      if (!date) return [];
+      if (!date) {
+        console.log('Nenhuma data fornecida para buscar slots');
+        return [];
+      }
       
       console.log('Buscando slots disponíveis para a clínica:', clinicId, 'na data:', date.toISOString());
       
@@ -22,18 +25,54 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
       const formattedDate = date.toISOString().split('T')[0];
       
       try {
-        // Buscar os working_hours da clínica para debug
-        const { data: clinicData } = await supabase
+        // Primeiro, verificar se a clínica tem working_hours configurados
+        const { data: clinicData, error: clinicError } = await supabase
           .from('clinics')
           .select('working_hours')
           .eq('id', clinicId)
           .single();
           
-        if (clinicData?.working_hours) {
-          // Corrigido: usar 'long' corretamente para obter o nome completo do dia
-          const dayOfWeek = new Date(formattedDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-          console.log(`Working hours para ${dayOfWeek}:`, clinicData.working_hours[dayOfWeek]);
+        if (clinicError) {
+          console.error('Erro ao buscar dados da clínica:', clinicError);
+          toast.error('Erro ao carregar dados da clínica');
+          return [];
         }
+          
+        if (!clinicData?.working_hours) {
+          console.log('Clínica não possui horários de funcionamento configurados');
+          toast.error('Horários de funcionamento não configurados para esta clínica');
+          return [];
+        }
+        
+        // Verificar se há horários para o dia da semana
+        const dayOfWeek = new Date(formattedDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+        const dayHours = clinicData.working_hours[dayOfWeek];
+        
+        console.log(`Working hours para ${dayOfWeek}:`, dayHours);
+        
+        if (!dayHours || dayHours.length === 0) {
+          console.log(`Clínica fechada em ${dayOfWeek}`);
+          return [];
+        }
+        
+        // Verificar se há médicos cadastrados
+        const { data: doctorsData, error: doctorsError } = await supabase
+          .from('doctors')
+          .select('id, name')
+          .eq('clinic_id', clinicId);
+          
+        if (doctorsError) {
+          console.error('Erro ao buscar médicos:', doctorsError);
+          toast.error('Erro ao carregar médicos');
+          return [];
+        }
+        
+        if (!doctorsData || doctorsData.length === 0) {
+          console.log('Nenhum médico cadastrado para esta clínica');
+          return [];
+        }
+        
+        console.log(`Encontrados ${doctorsData.length} médicos para a clínica`);
         
         // Buscar os horários disponíveis usando a função get_available_slots
         const { data, error } = await supabase.rpc('get_available_slots', {
@@ -44,7 +83,7 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
         if (error) {
           console.error('Erro ao buscar slots disponíveis:', error);
           toast.error(`Erro ao carregar horários: ${error.message}`);
-          throw error;
+          return [];
         }
         
         if (!data || data.length === 0) {
@@ -52,12 +91,12 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
           return [];
         }
         
-        console.log('Slots disponíveis encontrados:', data.length, 'slots:', data);
+        console.log('Slots disponíveis encontrados:', data.length, 'slots para', formattedDate);
         return data as AvailableSlot[];
       } catch (err) {
-        console.error('Erro ao buscar horários disponíveis:', err);
+        console.error('Erro inesperado ao buscar horários disponíveis:', err);
         toast.error('Não foi possível carregar os horários disponíveis');
-        throw err;
+        return [];
       }
     },
     enabled: !!clinicId && !!date,
