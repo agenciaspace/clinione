@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -135,10 +136,11 @@ const Doctors = () => {
       return;
     }
     
+    // Validação do CRM mais flexível - apenas avisa se formato não padrão
     const crmRegex = /^\d{6}-\d{2}\/[A-Z]{2}$/;
-    if (!crmRegex.test(formData.licensenumber)) {
-      toast.error('CRM inválido. Use o formato: 123456-78/SP');
-      return;
+    if (formData.licensenumber && !crmRegex.test(formData.licensenumber)) {
+      // Apenas um aviso, não bloqueia o cadastro
+      console.warn('CRM não está no formato padrão (123456-78/SP), mas permitindo o cadastro');
     }
     
     try {
@@ -318,7 +320,7 @@ const Doctors = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome completo</Label>
+                  <Label htmlFor="name">Nome completo *</Label>
                   <div className="relative">
                     <UserCircle className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input 
@@ -377,7 +379,7 @@ const Doctors = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="licensenumber">CRM</Label>
+                <Label htmlFor="licensenumber">CRM (opcional)</Label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input 
@@ -385,13 +387,12 @@ const Doctors = () => {
                     name="licensenumber" 
                     value={formData.licensenumber} 
                     onChange={handleInputChange} 
-                    className="pl-10" 
-                    required
-                    placeholder="123456-78/SP"
+                    className="pl-10"
+                    placeholder="123456-78/SP (opcional)"
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Formato: 123456-78/SP (6 dígitos, hífen, 2 dígitos, barra, sigla do estado em maiúsculo)
+                  Formato sugerido: 123456-78/SP (6 dígitos, hífen, 2 dígitos, barra, sigla do estado em maiúsculo)
                 </p>
               </div>
 
@@ -437,7 +438,7 @@ const Doctors = () => {
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
+        </AlertDialogFooter>
       </AlertDialog>
     </DashboardLayout>
   );
