@@ -34,13 +34,15 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
           
         if (clinicError) {
           console.error('Erro ao buscar dados da clínica:', clinicError);
-          toast.error('Erro ao carregar dados da clínica');
-          return [];
+          if (clinicError.code === 'PGRST116') {
+            console.log('Clínica não encontrada');
+            return [];
+          }
+          throw new Error(`Erro ao carregar dados da clínica: ${clinicError.message}`);
         }
           
         if (!clinicData?.working_hours) {
           console.log('Clínica não possui horários de funcionamento configurados');
-          toast.error('Horários de funcionamento não configurados para esta clínica');
           return [];
         }
         
@@ -63,8 +65,7 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
           
         if (doctorsError) {
           console.error('Erro ao buscar médicos:', doctorsError);
-          toast.error('Erro ao carregar médicos');
-          return [];
+          throw new Error(`Erro ao carregar médicos: ${doctorsError.message}`);
         }
         
         if (!doctorsData || doctorsData.length === 0) {
@@ -81,9 +82,8 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
         });
 
         if (error) {
-          console.error('Erro ao buscar slots disponíveis:', error);
-          toast.error(`Erro ao carregar horários: ${error.message}`);
-          return [];
+          console.error('Erro detalhado ao buscar slots disponíveis:', error);
+          throw new Error(`Erro ao carregar horários: ${error.message}`);
         }
         
         if (!data || data.length === 0) {
@@ -92,18 +92,32 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
         }
         
         console.log('Slots disponíveis encontrados:', data.length, 'slots para', formattedDate);
+        console.log('Primeiros slots:', data.slice(0, 3));
+        
         return data as AvailableSlot[];
-      } catch (err) {
+      } catch (err: any) {
         console.error('Erro inesperado ao buscar horários disponíveis:', err);
-        toast.error('Não foi possível carregar os horários disponíveis');
+        
+        // Mostrar toast apenas para erros relevantes
+        if (err.message && !err.message.includes('não encontrada')) {
+          toast.error('Não foi possível carregar os horários disponíveis');
+        }
+        
         return [];
       }
     },
     enabled: !!clinicId && !!date,
-    retry: 1,
+    retry: (failureCount, error: any) => {
+      // Não tentar novamente para erros de dados não encontrados
+      if (error?.message?.includes('não encontrada') || error?.code === 'PGRST116') {
+        return false;
+      }
+      // Tentar novamente até 2 vezes para outros erros
+      return failureCount < 2;
+    },
     retryDelay: 1000,
-    staleTime: 0, // Não guardar cache dos horários
-    gcTime: 0, 
+    staleTime: 30000, // Cache por 30 segundos
+    gcTime: 60000, // Manter no cache por 1 minuto
   });
 
   return {
