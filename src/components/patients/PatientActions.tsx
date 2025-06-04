@@ -62,7 +62,7 @@ export const PatientActions = ({
       return;
     }
 
-    const updatedPatient = {
+    const updatedPatient: Patient = {
       ...patient,
       name: editForm.name.trim(),
       email: editForm.email?.trim() || '',

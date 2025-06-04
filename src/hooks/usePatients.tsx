@@ -30,14 +30,14 @@ export const usePatients = (clinicId?: string) => {
         created_at: patient.created_at,
         updated_at: patient.updated_at,
         clinic_id: patient.clinic_id,
-        status: patient.status || 'active',
+        status: (patient.status as 'active' | 'inactive') || 'active',
         lastVisit: patient.last_visit
       }));
     },
     enabled: !!clinicId,
     refetchOnWindowFocus: true, // Allow refetching when window gets focus
     staleTime: 0, // Treat data as immediately stale to ensure fresh data
-    cacheTime: 1000 * 60 * 5, // Cache for 5 minutes
+    gcTime: 1000 * 60 * 5, // Cache for 5 minutes (was cacheTime in v4)
   });
 
   return {
