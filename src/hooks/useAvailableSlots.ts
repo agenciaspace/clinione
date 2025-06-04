@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -29,7 +30,7 @@ export const useAvailableSlots = (clinicId: string, date: Date | undefined) => {
           .single();
           
         if (clinicData?.working_hours) {
-          // Usando 'long' em vez de 'lowercase' para corrigir o erro de TypeScript
+          // Corrigido: usar 'long' corretamente para obter o nome completo do dia
           const dayOfWeek = new Date(formattedDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
           console.log(`Working hours para ${dayOfWeek}:`, clinicData.working_hours[dayOfWeek]);
         }
