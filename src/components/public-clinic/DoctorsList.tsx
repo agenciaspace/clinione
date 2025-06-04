@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 interface Doctor {
   id: string;
   name: string;
-  speciality: string;
+  speciality?: string;
   bio?: string;
   photo_url?: string;
 }
@@ -15,13 +15,18 @@ interface DoctorsListProps {
 }
 
 export const DoctorsList = ({ doctors }: DoctorsListProps) => {
+  console.log('🔍 DoctorsList recebeu médicos:', doctors);
+  
   if (!doctors || doctors.length === 0) {
+    console.log('❌ Nenhum médico encontrado para exibir');
     return (
       <div className="text-center p-4">
         <p className="text-gray-500">Nenhuma informação de profissionais disponível.</p>
       </div>
     );
   }
+  
+  console.log('✅ Exibindo', doctors.length, 'médicos');
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -35,6 +40,8 @@ export const DoctorsList = ({ doctors }: DoctorsListProps) => {
               .slice(0, 2)
           : 'DR';
 
+        console.log('👨‍⚕️ Renderizando médico:', doctor.name, 'Especialidade:', doctor.speciality);
+
         return (
           <div key={doctor.id} className="flex items-start p-4 border rounded-lg">
             <Avatar className="h-16 w-16 mr-3">
@@ -43,7 +50,9 @@ export const DoctorsList = ({ doctors }: DoctorsListProps) => {
             </Avatar>
             <div className="flex flex-col">
               <p className="font-medium text-base">{doctor.name}</p>
-              <p className="text-sm text-gray-500">{doctor.speciality}</p>
+              {doctor.speciality && (
+                <p className="text-sm text-gray-500">{doctor.speciality}</p>
+              )}
               {doctor.bio && (
                 <p className="text-sm text-gray-600 mt-1 line-clamp-3">{doctor.bio}</p>
               )}

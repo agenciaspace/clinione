@@ -11,6 +11,7 @@ import { DoctorsList } from '@/components/public-clinic/DoctorsList';
 import { WorkingHoursComponent } from '@/components/public-clinic/WorkingHours';
 import { useClinicPublicData } from '@/hooks/useClinicPublicData';
 import { webhookEvents } from '@/utils/webhook-service';
+import { supabase } from '@/integrations/supabase/client';
 
 const PublicClinicPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -18,6 +19,8 @@ const PublicClinicPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
   const [isPreview, setIsPreview] = useState(false);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
   
   useEffect(() => {
     const isPreviewMode = location.pathname.includes('/dashboard/public-page');
@@ -27,11 +30,48 @@ const PublicClinicPage: React.FC = () => {
 
   const { 
     clinic, 
-    doctors, 
     isLoading, 
     error, 
     availableClinics 
   } = useClinicPublicData(slug, selectedClinicId, isPreview);
+
+  // Carregar médicos quando a clínica for carregada
+  useEffect(() => {
+    const loadDoctors = async () => {
+      if (!clinic?.id) {
+        console.log('❌ Nenhuma clínica carregada ainda para buscar médicos');
+        return;
+      }
+
+      console.log('🔍 Carregando médicos para clínica:', clinic.id, clinic.name);
+      setLoadingDoctors(true);
+      
+      try {
+        const { data, error } = await supabase
+          .from('doctors')
+          .select('id, name, speciality, bio, photo_url')
+          .eq('clinic_id', clinic.id)
+          .order('name');
+          
+        if (error) {
+          console.error('❌ Erro ao carregar médicos:', error);
+          setDoctors([]);
+          return;
+        }
+        
+        console.log('✅ Médicos carregados com sucesso:', data?.length || 0);
+        console.log('📋 Lista de médicos:', data);
+        setDoctors(data || []);
+      } catch (err) {
+        console.error('💥 Erro inesperado ao carregar médicos:', err);
+        setDoctors([]);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+    
+    loadDoctors();
+  }, [clinic?.id]);
 
   // Disparar evento de visualização da página quando a clínica for carregada
   useEffect(() => {
@@ -53,10 +93,9 @@ const PublicClinicPage: React.FC = () => {
       console.log("Clínica carregada:", clinic);
       console.log("Logo:", clinic.logo);
       console.log("Photo:", clinic.photo);
-      console.log("Médicos:", doctors);
       console.log("Horários de funcionamento:", clinic.working_hours);
     }
-  }, [clinic, doctors]);
+  }, [clinic]);
 
   if (isLoading) {
     return (
@@ -144,7 +183,14 @@ const PublicClinicPage: React.FC = () => {
             
             <section>
               <h2 className="text-xl font-semibold mb-4">Nossa Equipe</h2>
-              <DoctorsList doctors={doctors} />
+              {loadingDoctors ? (
+                <div className="flex items-center justify-center p-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                  <span className="ml-2 text-gray-600">Carregando profissionais...</span>
+                </div>
+              ) : (
+                <DoctorsList doctors={doctors} />
+              )}
             </section>
           </div>
           
