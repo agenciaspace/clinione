@@ -68,6 +68,7 @@ export const PatientActions = ({
       email: editForm.email?.trim() || '',
       phone: editForm.phone?.trim() || '',
       birthDate: editForm.birthDate || patient.birthDate,
+      status: patient.status as 'active' | 'inactive', // Explicitly type the status
     };
     
     try {
