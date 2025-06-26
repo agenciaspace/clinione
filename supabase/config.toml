@@ -1,5 +1,14 @@
-
 project_id = "tfkchwuphjaauyfqptbk"
+
+# Auth configuration
+[auth]
+enabled = true
+site_url = "https://clini.one"
+
+# Email template configuration
+[auth.email.template.recovery]
+subject = "Redefinir sua senha - Clini.One"
+content_path = "./supabase/templates/reset-password.html"
 
 # Webhook Processor function config
 [functions.webhook-processor]

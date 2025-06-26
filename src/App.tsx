@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +9,8 @@ import { RoleBasedRoute } from "./components/auth/RoleBasedRoute";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Patients from "./pages/Patients";
 import Doctors from "./pages/Doctors";
@@ -35,6 +36,8 @@ const App = () => (
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/patients" element={<Patients />} />
               <Route path="/dashboard/doctors" element={<Doctors />} />
@@ -47,8 +50,6 @@ const App = () => (
               {/* Public clinic routes */}
               <Route path="/c/:slug" element={<PublicClinicPage />} />
               <Route path="/dashboard/public-page" element={<PublicClinicPage />} />
-              {/* Redirect from old format to new format */}
-              <Route path="/:slug" element={<Navigate to="/c/:slug" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

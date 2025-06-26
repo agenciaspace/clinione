@@ -22,3 +22,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel
+
+# Working Trees
+*-deploy/
+*-worktree/
+
+# Deploy scripts logs
+deploy-*.log
+
+# Vercel
+.vercel
+
+# Environment variables
+.env.local
+.env.production
