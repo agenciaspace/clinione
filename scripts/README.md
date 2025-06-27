@@ -263,7 +263,7 @@ git config --unset-all alias.deploy-dev
 
 - **Produção**: https://clini.one
 - **Vercel Dashboard**: https://vercel.com/dashboard
-- **GitHub**: https://github.com/[seu-usuario]/[seu-repo]
+- **GitHub**: https://github.com/agenciaspace/clinione
 
 ## 📞 Suporte
 

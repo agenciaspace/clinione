@@ -68,6 +68,13 @@ check_dependencies() {
         exit 1
     fi
     
+    # Verificar se o remote está configurado
+    if ! git remote get-url origin > /dev/null 2>&1; then
+        print_error "Repositório remoto não configurado"
+        print_warning "Execute: ./scripts/setup-github.sh"
+        exit 1
+    fi
+    
     print_success "Todas as dependências verificadas"
 }
 
@@ -122,6 +129,7 @@ deploy_github() {
     print_step "🐙 Fazendo deploy no GitHub..."
     
     # Push para o GitHub
+    echo -e "${BLUE}📤 Fazendo push para GitHub...${NC}"
     git push "$GITHUB_REPO" "$branch"
     
     # Criar tag de release se for main/master
@@ -188,7 +196,7 @@ show_status() {
     
     echo -e "${CYAN}🌐 URLs de Acesso:${NC}"
     echo -e "   📱 Produção: https://clini.one"
-    echo -e "   🔗 GitHub: https://github.com/$(git config --get remote.origin.url | sed 's/.*github.com[:/]\([^.]*\).*/\1/')"
+    echo -e "   🔗 GitHub: https://github.com/agenciaspace/clinione"
     echo -e "   ▲ Vercel Dashboard: https://vercel.com/dashboard"
     echo ""
     
