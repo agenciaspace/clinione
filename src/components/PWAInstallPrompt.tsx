@@ -15,21 +15,71 @@ export function PWAInstallPrompt() {
   const [isInstalled, setIsInstalled] = useState(false);
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    // Check if app is already installed
+  // Enhanced function to detect if PWA is already installed
+  const detectPWAInstallation = (): boolean => {
+    // Method 1: Check display mode (most reliable)
     if (window.matchMedia('(display-mode: standalone)').matches) {
+      return true;
+    }
+
+    // Method 2: Check if running in standalone mode (iOS Safari)
+    if ((window.navigator as any).standalone === true) {
+      return true;
+    }
+
+    // Method 3: Check if launched from home screen (Android)
+    if (window.matchMedia('(display-mode: minimal-ui)').matches) {
+      return true;
+    }
+
+    // Method 4: Check user agent for WebView indicators
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    if (userAgent.includes('wv') || userAgent.includes('webview')) {
+      return true;
+    }
+
+    // Method 5: Check if beforeinstallprompt was never fired (may indicate installed)
+    const hasNeverSeenPrompt = !localStorage.getItem('hasSeenInstallPrompt') && 
+                               !localStorage.getItem('pwaInstallPromptShown');
+
+    // Method 6: Check if app was previously installed (custom tracking)
+    if (localStorage.getItem('pwaInstalled') === 'true') {
+      return true;
+    }
+
+    return false;
+  };
+
+  useEffect(() => {
+    // Enhanced installation detection
+    const isPWAInstalled = detectPWAInstallation();
+    if (isPWAInstalled) {
       setIsInstalled(true);
+      // Mark as installed in localStorage for future checks
+      localStorage.setItem('pwaInstalled', 'true');
       return;
+    }
+
+    // Check if user has dismissed the prompt recently (within 7 days)
+    const lastDismissed = localStorage.getItem('pwaPromptLastDismissed');
+    if (lastDismissed) {
+      const daysSinceDismissed = (Date.now() - parseInt(lastDismissed)) / (1000 * 60 * 60 * 24);
+      if (daysSinceDismissed < 7) {
+        return; // Don't show prompt again within 7 days
+      }
     }
 
     // Check if it's iOS
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     if (isIOS) {
-      // For iOS, we'll show instructions instead of a button
+      // For iOS, check if user has seen the prompt recently
       const hasSeenIOSPrompt = localStorage.getItem('hasSeenIOSInstallPrompt');
-      if (!hasSeenIOSPrompt) {
+      const lastIOSPrompt = localStorage.getItem('iosPromptLastShown');
+      
+      if (!hasSeenIOSPrompt || (lastIOSPrompt && (Date.now() - parseInt(lastIOSPrompt)) > 7 * 24 * 60 * 60 * 1000)) {
         setTimeout(() => {
           setShowInstallPrompt(true);
+          localStorage.setItem('iosPromptLastShown', Date.now().toString());
         }, 3000);
       }
       return;
@@ -39,19 +89,34 @@ export function PWAInstallPrompt() {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Show install prompt after a delay
+      // Show install prompt after a delay, but respect user's previous dismissals
       const hasSeenPrompt = localStorage.getItem('hasSeenInstallPrompt');
-      if (!hasSeenPrompt) {
+      const promptCount = parseInt(localStorage.getItem('pwaPromptCount') || '0');
+      
+      // Don't show more than 3 times total, and respect dismissal period
+      if (!hasSeenPrompt && promptCount < 3) {
         setTimeout(() => {
           setShowInstallPrompt(true);
+          localStorage.setItem('pwaPromptShown', 'true');
+          localStorage.setItem('pwaPromptCount', (promptCount + 1).toString());
         }, 5000);
       }
     };
 
+    // Listen for app installed event
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setShowInstallPrompt(false);
+      localStorage.setItem('pwaInstalled', 'true');
+      localStorage.setItem('hasSeenInstallPrompt', 'true');
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -65,6 +130,10 @@ export function PWAInstallPrompt() {
       if (outcome === 'accepted') {
         setIsInstalled(true);
         localStorage.setItem('hasSeenInstallPrompt', 'true');
+        localStorage.setItem('pwaInstalled', 'true');
+      } else {
+        // User dismissed the native prompt
+        localStorage.setItem('pwaPromptLastDismissed', Date.now().toString());
       }
       
       setDeferredPrompt(null);
@@ -78,8 +147,10 @@ export function PWAInstallPrompt() {
     setShowInstallPrompt(false);
     localStorage.setItem('hasSeenInstallPrompt', 'true');
     localStorage.setItem('hasSeenIOSInstallPrompt', 'true');
+    localStorage.setItem('pwaPromptLastDismissed', Date.now().toString());
   };
 
+  // Don't show if already installed or user has dismissed recently
   if (!showInstallPrompt || isInstalled) return null;
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);

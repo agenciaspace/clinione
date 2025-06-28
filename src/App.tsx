@@ -78,7 +78,7 @@ const App = () => (
             <PWAInstallPrompt />
             <BrowserRouter>
               <Routes>
-                <Route path="/" element={<LandingPage />} />
+                <Route path="/" element={<Navigate to="/login" replace />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -106,6 +106,8 @@ const App = () => (
                 <Route path="/c/:slug" element={<PublicClinicPage />} />
                 <Route path="/dashboard/public-page" element={<PublicClinicPage />} />
                 <Route path="/dashboard/public-page/:clinicId" element={<PublicClinicPage />} />
+                {/* Landing page route for marketing purposes */}
+                <Route path="/landing" element={<LandingPage />} />
                 {/* Redirect from old format to new format - only for specific patterns */}
                 <Route path="/:slug" element={<RedirectToNewFormat />} />
                 <Route path="*" element={<NotFound />} />
