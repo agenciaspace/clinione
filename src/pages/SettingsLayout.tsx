@@ -54,7 +54,7 @@ const SettingsLayout = () => {
   ];
 
   return (
-    <DashboardLayout>
+    <DashboardLayout requireClinic={false}>
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar de navegação */}
         <div className="lg:w-1/4">
