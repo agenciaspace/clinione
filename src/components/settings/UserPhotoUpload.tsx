@@ -25,10 +25,11 @@ export const UserPhotoUpload = ({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validar o tipo de arquivo
-    if (!file.type.startsWith('image/')) {
+    // Validar o tipo de arquivo - apenas PNG e JPEG
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
       toast.error('Arquivo inválido', {
-        description: 'Por favor, selecione uma imagem.',
+        description: 'Por favor, selecione apenas arquivos PNG ou JPEG.',
       });
       return;
     }
@@ -129,7 +130,7 @@ export const UserPhotoUpload = ({
             type="file"
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             onChange={handleFileUpload}
-            accept="image/*"
+            accept="image/png,image/jpeg,image/jpg"
             disabled={isUploading || isRemoving}
           />
           <Camera className="mr-2 h-4 w-4" />
