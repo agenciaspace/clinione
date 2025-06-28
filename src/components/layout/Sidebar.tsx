@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -70,7 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
   console.log('Current user roles:', userRoles);
   const filteredMenuItems = userRoles.length === 0 ? menuItems : menuItems.filter(item => userRoles.some(role => item.roles.includes(role)));
-  return <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm h-full">
+  return <aside className="flex flex-col bg-card border-r border-border shadow-sm h-full">
       <div className="px-0 py-0">
         <img src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" alt="Clini.One Logo" className="h-16 w-auto min-h-[150px] min-w-[200px] max-w-[250px] object-contain aspect-[4/1]" />
       </div>
@@ -78,8 +77,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <nav className="flex-1 px-4 pb-4 overflow-y-auto">
         <ul className="space-y-1">
           {filteredMenuItems.map(item => <li key={item.path}>
-              <Link to={item.path} className={cn("flex items-center px-4 py-2.5 text-sm rounded-md transition-colors", "hover:bg-gray-100", path === item.path ? "bg-[#FFFDF5] text-[#0A0A0A] font-medium" : "text-gray-700")} onClick={handleNavClick}>
-                <item.icon size={20} className={cn("mr-3", path === item.path ? "text-[#FFD400]" : "text-gray-500")} />
+              <Link to={item.path} className={cn("flex items-center px-4 py-2.5 text-sm rounded-md transition-colors", "hover:bg-accent", path === item.path ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground")} onClick={handleNavClick}>
+                <item.icon size={20} className={cn("mr-3", path === item.path ? "text-primary" : "text-muted-foreground")} />
                 <span>{item.title}</span>
               </Link>
             </li>)}
