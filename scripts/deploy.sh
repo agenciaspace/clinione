@@ -70,7 +70,7 @@ fi
 
 # Deploy na Vercel
 echo -e "${BLUE}🚀 Fazendo deploy na Vercel...${NC}"
-vercel --prod --yes
+vercel --prod
 
 echo -e "${GREEN}✅ Deploy concluído com sucesso!${NC}"
 echo -e "${GREEN}🌐 Site disponível em: https://clini.one${NC}"

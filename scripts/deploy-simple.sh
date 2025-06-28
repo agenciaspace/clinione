@@ -32,7 +32,7 @@ if ! command -v vercel &> /dev/null; then
 fi
 
 echo "🚀 Deploy na Vercel..."
-vercel --prod --yes
+vercel --prod
 
 echo "✅ Deploy concluído!"
 echo "🌐 Site: https://clini.one" 
