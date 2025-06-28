@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from '@/integrations/supabase/client';
 import WebhookSettings from '@/components/settings/WebhookSettings';
+import { UserPhotoUpload } from '@/components/settings/UserPhotoUpload';
 
 const Settings = () => {
   const { user } = useAuth();
@@ -49,6 +50,27 @@ const Settings = () => {
     phone: '',
     profession: 'Médico'
   });
+
+  const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null);
+
+  // Carregar dados do usuário incluindo foto
+  useEffect(() => {
+    if (user) {
+      // Acessar metadados do usuário através do Supabase Auth
+      const getUserData = async () => {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          setUserPhotoUrl(authUser.user_metadata?.avatar_url || null);
+          setProfileData(prev => ({
+            ...prev,
+            name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '',
+            email: authUser.email || ''
+          }));
+        }
+      };
+      getUserData();
+    }
+  }, [user]);
 
   const [password, setPassword] = useState({
     current: '',
@@ -76,6 +98,11 @@ const Settings = () => {
 
   const [verificationCode, setVerificationCode] = useState('');
   const [showVerificationInput, setShowVerificationInput] = useState(false);
+
+  // Handler function for photo update
+  const handlePhotoUpdate = (url: string | null) => {
+    setUserPhotoUrl(url);
+  };
 
   // Handler functions for profile form
   const handleProfileChange = (e) => {
@@ -282,17 +309,12 @@ const Settings = () => {
               <form onSubmit={handleUpdateProfile} className="space-y-6">
                 <div className="flex flex-col md:flex-row gap-6">
                   <div className="md:w-1/4 flex flex-col items-center justify-start">
-                    <div className="mb-4 w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 border">
-                      <User className="h-16 w-16" />
-                    </div>
-                    <div className="flex flex-col space-y-2">
-                      <Button variant="outline" size="sm" type="button">
-                        Alterar foto
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-red-500" type="button">
-                        Remover
-                      </Button>
-                    </div>
+                    <UserPhotoUpload
+                      userId={user?.id || ''}
+                      currentPhotoUrl={userPhotoUrl}
+                      userName={profileData.name}
+                      onPhotoUpdated={handlePhotoUpdate}
+                    />
                   </div>
 
                   <div className="md:w-3/4 space-y-4">
