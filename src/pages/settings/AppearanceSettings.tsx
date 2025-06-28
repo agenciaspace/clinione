@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -6,17 +6,23 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Moon, Sun, Monitor } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
+import { toast } from '@/components/ui/sonner';
 
 export const AppearanceSettings = () => {
-  const [theme, setTheme] = useState('light');
-  const [language, setLanguage] = useState('pt-BR');
-  const [fontSize, setFontSize] = useState('medium');
+  const { settings, updateSettings } = useTheme();
+
+  const handleSavePreferences = () => {
+    toast.success("Preferências salvas", {
+      description: "Suas configurações de aparência foram salvas com sucesso."
+    });
+  };
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Aparência</h2>
-        <p className="text-gray-500">Personalize a aparência da interface</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Aparência</h2>
+        <p className="text-gray-500 dark:text-gray-400">Personalize a aparência da interface</p>
       </div>
 
       <Card>
@@ -28,9 +34,9 @@ export const AppearanceSettings = () => {
           <div className="grid grid-cols-3 gap-4">
             <div 
               className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                theme === 'light' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                settings.theme === 'light' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900' : 'border-gray-200 dark:border-gray-700'
               }`}
-              onClick={() => setTheme('light')}
+              onClick={() => updateSettings({ theme: 'light' })}
             >
               <div className="flex flex-col items-center space-y-2">
                 <Sun className="h-8 w-8" />
@@ -40,9 +46,9 @@ export const AppearanceSettings = () => {
             
             <div 
               className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                theme === 'dark' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                settings.theme === 'dark' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900' : 'border-gray-200 dark:border-gray-700'
               }`}
-              onClick={() => setTheme('dark')}
+              onClick={() => updateSettings({ theme: 'dark' })}
             >
               <div className="flex flex-col items-center space-y-2">
                 <Moon className="h-8 w-8" />
@@ -52,9 +58,9 @@ export const AppearanceSettings = () => {
             
             <div 
               className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                theme === 'system' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                settings.theme === 'system' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900' : 'border-gray-200 dark:border-gray-700'
               }`}
-              onClick={() => setTheme('system')}
+              onClick={() => updateSettings({ theme: 'system' })}
             >
               <div className="flex flex-col items-center space-y-2">
                 <Monitor className="h-8 w-8" />
@@ -73,7 +79,7 @@ export const AppearanceSettings = () => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Idioma da interface</Label>
-            <Select value={language} onValueChange={setLanguage}>
+            <Select value={settings.language} onValueChange={(value) => updateSettings({ language: value })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -87,7 +93,7 @@ export const AppearanceSettings = () => {
 
           <div className="space-y-2">
             <Label>Formato de data</Label>
-            <Select defaultValue="dd/mm/yyyy">
+            <Select value={settings.dateFormat} onValueChange={(value) => updateSettings({ dateFormat: value })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -101,7 +107,7 @@ export const AppearanceSettings = () => {
 
           <div className="space-y-2">
             <Label>Formato de hora</Label>
-            <Select defaultValue="24h">
+            <Select value={settings.timeFormat} onValueChange={(value) => updateSettings({ timeFormat: value })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -122,7 +128,7 @@ export const AppearanceSettings = () => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Tamanho da fonte</Label>
-            <Select value={fontSize} onValueChange={setFontSize}>
+            <Select value={settings.fontSize} onValueChange={(value: any) => updateSettings({ fontSize: value })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -142,7 +148,10 @@ export const AppearanceSettings = () => {
                 Use uma fonte com serifa para melhor legibilidade
               </p>
             </div>
-            <Switch />
+            <Switch 
+              checked={settings.serifFont}
+              onCheckedChange={(checked) => updateSettings({ serifFont: checked })}
+            />
           </div>
         </CardContent>
       </Card>
@@ -160,7 +169,10 @@ export const AppearanceSettings = () => {
                 Reduzir animações para melhor performance
               </p>
             </div>
-            <Switch />
+            <Switch 
+              checked={settings.reducedAnimations}
+              onCheckedChange={(checked) => updateSettings({ reducedAnimations: checked })}
+            />
           </div>
           <Separator />
 
@@ -171,7 +183,10 @@ export const AppearanceSettings = () => {
                 Interface mais densa com menos espaçamento
               </p>
             </div>
-            <Switch />
+            <Switch 
+              checked={settings.compactMode}
+              onCheckedChange={(checked) => updateSettings({ compactMode: checked })}
+            />
           </div>
           <Separator />
 
@@ -182,13 +197,16 @@ export const AppearanceSettings = () => {
                 Manter a barra lateral aberta em telas grandes
               </p>
             </div>
-            <Switch defaultChecked />
+            <Switch 
+              checked={settings.sidebarAlwaysVisible}
+              onCheckedChange={(checked) => updateSettings({ sidebarAlwaysVisible: checked })}
+            />
           </div>
         </CardContent>
       </Card>
 
       <div className="flex justify-end">
-        <Button>Salvar preferências</Button>
+        <Button onClick={handleSavePreferences}>Salvar preferências</Button>
       </div>
     </div>
   );
