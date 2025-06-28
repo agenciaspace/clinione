@@ -106,19 +106,40 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
           }
         } else if (slug) {
           console.log("Buscando clínica pelo slug na URL pública:", slug);
+          
+          // First, check if clinic exists with this slug (regardless of publication status)
+          const { data: clinicCheck, error: checkError } = await supabase
+            .from('clinics')
+            .select('id, name, slug, is_published')
+            .eq('slug', slug)
+            .maybeSingle();
+            
+          if (checkError) {
+            console.error("Erro ao verificar clínica:", checkError);
+            throw new Error("Erro ao buscar página da clínica");
+          }
+          
+          if (!clinicCheck) {
+            console.log("Nenhuma clínica encontrada com slug:", slug);
+            throw new Error("Página da clínica não encontrada");
+          }
+          
+          if (!clinicCheck.is_published) {
+            console.log("Clínica encontrada mas não publicada:", clinicCheck);
+            throw new Error("Esta página não está mais disponível");
+          }
+          
+          // Now get the full clinic data
           clinicQuery = await supabase
             .from('clinics')
             .select('*')
             .eq('slug', slug)
             .eq('is_published', true)
-            .maybeSingle();
+            .single();
             
           if (clinicQuery.error) {
-            throw new Error("Página da clínica não encontrada ou não publicada");
-          }
-          
-          if (!clinicQuery.data) {
-            throw new Error("Página da clínica não encontrada");
+            console.error("Erro ao buscar dados completos da clínica:", clinicQuery.error);
+            throw new Error("Erro ao carregar página da clínica");
           }
         } else {
           throw new Error("Nenhum slug fornecido");

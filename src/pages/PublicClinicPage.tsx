@@ -109,23 +109,45 @@ const PublicClinicPage: React.FC = () => {
   }
 
   if (error || !clinic) {
+    console.log('❌ Erro na página pública:', { error, clinic, slug, clinicId, isPreview });
+    
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Ops!</h1>
-          <p className="text-gray-600 mb-8">{error || "Clínica não encontrada"}</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Página não encontrada</h1>
+          <p className="text-gray-600 mb-4">
+            {error || "A página que você está procurando não foi encontrada ou não está mais disponível."}
+          </p>
+          
+          {slug && (
+            <div className="bg-gray-100 p-3 rounded-md mb-4 text-sm text-gray-700">
+              <p><strong>Slug procurado:</strong> {slug}</p>
+              <p><strong>URL:</strong> /c/{slug}</p>
+            </div>
+          )}
+          
           {isPreview ? (
-            <Button onClick={() => navigate('/dashboard/clinic')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Ir para Gerenciamento da Clínica
-            </Button>
-          ) : (
-            <Button asChild>
-              <Link to="/">
+            <div className="space-y-2">
+              <Button onClick={() => navigate('/dashboard/clinic')}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar à página inicial
-              </Link>
-            </Button>
+                Ir para Gerenciamento da Clínica
+              </Button>
+              <p className="text-xs text-gray-500">
+                Certifique-se de que a clínica foi criada e tem um slug configurado
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Button asChild>
+                <Link to="/">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Voltar à página inicial
+                </Link>
+              </Button>
+              <p className="text-xs text-gray-500">
+                Esta página pode ter sido removida ou despublicada
+              </p>
+            </div>
           )}
         </div>
       </div>
