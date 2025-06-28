@@ -5,11 +5,11 @@ const supabasePublicKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(supabaseUrl, supabasePublicKey);
 
-async function checkUserPhotosStorage() {
+async function checkStorageBuckets() {
   try {
-    console.log('🧪 Testando acesso ao bucket "user-photos"...\n');
+    console.log('🧪 Testando acesso aos buckets de storage...\n');
     
-    // Tentar fazer upload de um arquivo de teste
+    const buckets = ['user-photos', 'clinic-photos', 'doctor-photos'];
     const testFileContent = Buffer.from([
       0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
       0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
@@ -19,54 +19,37 @@ async function checkUserPhotosStorage() {
       0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
     ]);
     
-    const testFilePath = 'test-user/test-upload.png';
-    
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('user-photos')
-      .upload(testFilePath, testFileContent, {
-        contentType: 'image/png'
-      });
-    
-    if (uploadError) {
-      console.error('❌ Erro no teste de upload:', uploadError);
+    for (const bucketName of buckets) {
+      console.log(`📦 Testando bucket "${bucketName}"...`);
       
-      if (uploadError.message === 'Bucket not found') {
-        console.log('\n🔧 O bucket "user-photos" não existe!');
-        console.log('📋 Você precisa criar o bucket manualmente no dashboard do Supabase:');
-        console.log('   1. Acesse: https://supabase.com/dashboard/project/tfkchwuphjaauyfqptbk/storage/buckets');
-        console.log('   2. Clique em "New bucket"');
-        console.log('   3. Nome: user-photos');
-        console.log('   4. Marque como "Public bucket"');
-        console.log('   5. Clique em "Save"');
-      }
-    } else {
-      console.log('✅ Teste de upload bem-sucedido!');
-      console.log(`   Arquivo: ${uploadData.path}`);
+      const testFilePath = `test-${Date.now()}/test-upload.png`;
       
-      // Obter URL pública
-      const { data: { publicUrl } } = supabase.storage
-        .from('user-photos')
-        .getPublicUrl(testFilePath);
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(testFilePath, testFileContent, {
+          contentType: 'image/png'
+        });
       
-      console.log(`   URL pública: ${publicUrl}`);
-      
-      // Limpar arquivo de teste
-      const { error: removeError } = await supabase.storage
-        .from('user-photos')
-        .remove([testFilePath]);
-      
-      if (removeError) {
-        console.log('⚠️ Não foi possível remover o arquivo de teste:', removeError.message);
+      if (uploadError) {
+        console.log(`   ❌ ${bucketName}: ${uploadError.message}`);
       } else {
-        console.log('🧹 Arquivo de teste removido');
+        console.log(`   ✅ ${bucketName}: Funcionando!`);
+        
+        // Limpar arquivo de teste
+        await supabase.storage
+          .from(bucketName)
+          .remove([testFilePath]);
       }
-      
-      console.log('\n🎉 O bucket "user-photos" está funcionando corretamente!');
     }
+    
+    console.log('\n💡 Soluções possíveis:');
+    console.log('1. Criar o bucket "user-photos" manualmente no dashboard do Supabase');
+    console.log('2. Usar temporariamente o bucket "clinic-photos" se estiver funcionando');
+    console.log('3. Executar a migração SQL para criar o bucket automaticamente');
     
   } catch (error) {
     console.error('💥 Erro inesperado:', error);
   }
 }
 
-checkUserPhotosStorage(); 
+checkStorageBuckets(); 

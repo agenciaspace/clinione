@@ -46,18 +46,18 @@ export const UserPhotoUpload = ({
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `profile-${Date.now()}.${fileExt}`;
-      const filePath = `${userId}/${fileName}`;
+      const filePath = `user-profiles/${userId}/${fileName}`;
 
-      // Upload do arquivo
+      // Upload do arquivo (usando clinic-photos temporariamente)
       const { error: uploadError } = await supabase.storage
-        .from('user-photos')
+        .from('clinic-photos')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       // Obter a URL pública do arquivo
       const { data: { publicUrl } } = supabase.storage
-        .from('user-photos')
+        .from('clinic-photos')
         .getPublicUrl(filePath);
 
       // Atualizar o perfil do usuário no banco de dados
