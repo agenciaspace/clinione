@@ -19,6 +19,13 @@ import Reports from "./pages/Reports";
 import Financial from "./pages/Financial";
 
 import Settings from "./pages/Settings";
+import SettingsLayout from "./pages/SettingsLayout";
+import { ProfileSettings } from "./pages/settings/ProfileSettings";
+import { SecuritySettings } from "./pages/settings/SecuritySettings";
+import { NotificationsSettings } from "./pages/settings/NotificationsSettings";
+import { AppearanceSettings } from "./pages/settings/AppearanceSettings";
+import { EmailSettings } from "./pages/settings/EmailSettings";
+import { WebhooksSettings } from "./pages/settings/WebhooksSettings";
 import ClinicProfile from "./pages/ClinicProfile";
 import PublicClinicPage from "./pages/PublicClinicPage";
 import NotFound from "./pages/NotFound";
@@ -59,8 +66,17 @@ const App = () => (
               <Route path="/dashboard/financial" element={<Financial />} />
 
               <Route path="/dashboard/clinic" element={<ClinicProfile />} />
-              {/* Temporarily remove role-based protection for Settings page */}
-              <Route path="/dashboard/settings" element={<Settings />} />
+              
+              {/* Settings routes with subroutes */}
+              <Route path="/dashboard/settings" element={<SettingsLayout />}>
+                <Route index element={<Navigate to="/dashboard/settings/profile" replace />} />
+                <Route path="profile" element={<ProfileSettings />} />
+                <Route path="security" element={<SecuritySettings />} />
+                <Route path="notifications" element={<NotificationsSettings />} />
+                <Route path="appearance" element={<AppearanceSettings />} />
+                <Route path="email" element={<EmailSettings />} />
+                <Route path="webhooks" element={<WebhooksSettings />} />
+              </Route>
               {/* Public clinic routes */}
               <Route path="/c/:slug" element={<PublicClinicPage />} />
               <Route path="/dashboard/public-page" element={<PublicClinicPage />} />
