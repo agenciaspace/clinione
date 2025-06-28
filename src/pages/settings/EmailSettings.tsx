@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,38 +6,72 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/sonner';
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, Mail, Send, Settings } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useClinic } from '@/contexts/ClinicContext';
+import { NotificationService, SMTPConfig } from '@/utils/notification-service';
 
 export const EmailSettings = () => {
+  const { user } = useAuth();
+  const { activeClinic } = useClinic();
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
+  const [smtpConfigured, setSmtpConfigured] = useState(false);
   
-  const [smtpConfig, setSmtpConfig] = useState({
+  const [smtpConfig, setSmtpConfig] = useState<SMTPConfig>({
+    clinic_id: activeClinic?.id || '',
     host: '',
-    port: '587',
+    port: 587,
     username: '',
     password: '',
-    fromEmail: '',
-    fromName: '',
-    secure: false
+    from_email: '',
+    from_name: '',
+    secure: true,
+    is_active: true
   });
+
+  useEffect(() => {
+    if (activeClinic) {
+      loadSmtpConfig();
+    }
+  }, [activeClinic]);
+
+  const loadSmtpConfig = async () => {
+    if (!activeClinic) return;
+
+    try {
+      const config = await NotificationService.getSmtpConfig(activeClinic.id);
+      if (config) {
+        setSmtpConfig(config);
+        setSmtpConfigured(true);
+      }
+    } catch (error) {
+      console.error('Error loading SMTP config:', error);
+    }
+  };
 
   const handleSmtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSmtpConfig(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'port' ? parseInt(value) || 587 : value
     }));
   };
 
   const handleSaveSmtpConfig = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!activeClinic) return;
+
     setLoading(true);
     
     try {
-      // Save SMTP configuration to your database
-      // Example: await supabase.from('smtp_config').upsert({ ...smtpConfig, user_id: user.id });
-      
+      const configToSave = {
+        ...smtpConfig,
+        clinic_id: activeClinic.id
+      };
+
+      await NotificationService.saveSmtpConfig(configToSave);
+      setSmtpConfigured(true);
       toast.success('Configurações SMTP salvas com sucesso');
     } catch (error) {
       console.error('Erro ao salvar configurações SMTP:', error);
@@ -48,12 +82,16 @@ export const EmailSettings = () => {
   };
 
   const handleTestSmtp = async () => {
+    if (!activeClinic) return;
+
     setTestLoading(true);
     try {
-      // Send test email using current SMTP config
-      // Example API call to test SMTP connection
-      
-      toast.success('Email de teste enviado com sucesso');
+      const success = await NotificationService.testSmtpConfig(smtpConfig);
+      if (success) {
+        toast.success('Email de teste enviado com sucesso! Verifique sua caixa de entrada.');
+      } else {
+        toast.error('Erro ao enviar email de teste. Verifique as configurações.');
+      }
     } catch (error) {
       console.error('Erro ao testar SMTP:', error);
       toast.error('Erro ao enviar email de teste');
@@ -61,6 +99,17 @@ export const EmailSettings = () => {
       setTestLoading(false);
     }
   };
+
+  if (!activeClinic) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Email</h2>
+          <p className="text-gray-500">Selecione uma clínica para configurar o email</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -72,10 +121,20 @@ export const EmailSettings = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
             Configuração SMTP
-            <Badge variant="outline" className="ml-2">
-              <AlertCircle className="h-3 w-3 mr-1" />
-              Não configurado
+            <Badge variant={smtpConfigured ? "default" : "outline"} className="ml-2">
+              {smtpConfigured ? (
+                <>
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Configurado
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  Não configurado
+                </>
+              )}
             </Badge>
           </CardTitle>
           <CardDescription>
@@ -101,6 +160,7 @@ export const EmailSettings = () => {
                 <Input 
                   id="port" 
                   name="port" 
+                  type="number"
                   placeholder="587" 
                   value={smtpConfig.port} 
                   onChange={handleSmtpChange} 
@@ -138,24 +198,24 @@ export const EmailSettings = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fromEmail">Email do remetente</Label>
+                <Label htmlFor="from_email">Email do remetente</Label>
                 <Input 
-                  id="fromEmail" 
-                  name="fromEmail" 
+                  id="from_email" 
+                  name="from_email" 
                   type="email" 
                   placeholder="noreply@suaclinica.com" 
-                  value={smtpConfig.fromEmail} 
+                  value={smtpConfig.from_email} 
                   onChange={handleSmtpChange} 
                   required 
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fromName">Nome do remetente</Label>
+                <Label htmlFor="from_name">Nome do remetente</Label>
                 <Input 
-                  id="fromName" 
-                  name="fromName" 
+                  id="from_name" 
+                  name="from_name" 
                   placeholder="Sua Clínica" 
-                  value={smtpConfig.fromName} 
+                  value={smtpConfig.from_name} 
                   onChange={handleSmtpChange} 
                   required 
                 />
@@ -171,6 +231,15 @@ export const EmailSettings = () => {
               <Label htmlFor="secure">Usar conexão segura (TLS/SSL)</Label>
             </div>
 
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="is_active" 
+                checked={smtpConfig.is_active}
+                onCheckedChange={(checked) => setSmtpConfig({...smtpConfig, is_active: checked})}
+              />
+              <Label htmlFor="is_active">Ativar envio de emails</Label>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-2 pt-4">
               <Button type="submit" disabled={loading} className="flex-1">
                 {loading ? 'Salvando...' : 'Salvar configurações'}
@@ -179,9 +248,10 @@ export const EmailSettings = () => {
                 type="button" 
                 variant="outline" 
                 onClick={handleTestSmtp}
-                disabled={testLoading || !smtpConfig.host}
+                disabled={testLoading || !smtpConfig.host || !smtpConfigured}
                 className="flex-1"
               >
+                <Send className="h-4 w-4 mr-2" />
                 {testLoading ? 'Testando...' : 'Testar configuração'}
               </Button>
             </div>
@@ -191,7 +261,10 @@ export const EmailSettings = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Templates de email</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Templates de email
+          </CardTitle>
           <CardDescription>Personalize os templates dos emails automáticos</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

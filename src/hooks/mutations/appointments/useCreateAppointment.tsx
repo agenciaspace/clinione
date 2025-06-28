@@ -1,8 +1,8 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
 import { webhookEvents } from '@/utils/webhook-service';
+import { NotificationService } from '@/utils/notification-service';
 import { useFinancialMutations } from '../useFinancialMutations';
 import { useFinancialQueries } from '../../queries/useFinancialQueries';
 import { addDays } from 'date-fns';
@@ -61,6 +61,8 @@ export const useCreateAppointment = (clinicId: string | undefined) => {
         .insert({
           clinic_id: clinicId,
           patient_name,
+          patient_phone,
+          patient_email,
           doctor_id,
           doctor_name,
           date: appointmentDate.toISOString(),
@@ -144,6 +146,36 @@ export const useCreateAppointment = (clinicId: string | undefined) => {
           insurance_company_id,
           doctor_id
         });
+      }
+
+      // Enviar notificação de confirmação de agendamento
+      try {
+        if (patient_email) {
+          // Buscar dados da clínica
+          const { data: clinic } = await supabase
+            .from('clinics')
+            .select('*')
+            .eq('id', clinicId)
+            .single();
+
+          // Buscar dados do médico se especificado
+          let doctor = null;
+          if (doctor_id) {
+            const { data: doctorData } = await supabase
+              .from('doctors')
+              .select('*')
+              .eq('id', doctor_id)
+              .single();
+            doctor = doctorData;
+          }
+
+          if (clinic) {
+            await NotificationService.sendAppointmentConfirmation(data, clinic, doctor);
+          }
+        }
+      } catch (notificationError) {
+        console.error('Erro ao enviar notificação de agendamento:', notificationError);
+        // Não interromper o fluxo se falhar o envio da notificação
       }
       
       return data;
