@@ -33,6 +33,8 @@ import { Doctor } from '@/types';
 
 const appointmentSchema = z.object({
   patient_name: z.string().min(3, { message: 'Nome do paciente é obrigatório' }),
+  patient_phone: z.string().optional(),
+  patient_email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
   doctor_id: z.string().optional(),
   date: z.date().refine(date => date >= new Date(new Date().setHours(0, 0, 0, 0)), {
     message: 'A data deve ser hoje ou uma data futura',
@@ -65,6 +67,8 @@ export function AppointmentForm({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
       patient_name: '',
+      patient_phone: '',
+      patient_email: '',
       doctor_id: undefined,
       date: selectedDate || new Date(),
       time: '09:00',
@@ -103,6 +107,36 @@ export function AppointmentForm({
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="patient_phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefone (opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="(00) 00000-0000" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="patient_email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail (opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="email@exemplo.com" type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}

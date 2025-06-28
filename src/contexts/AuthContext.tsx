@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   getAccessToken: () => Promise<string | null>;
   hasRole: (role: UserRole) => boolean;
   userRoles: UserRole[];
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: () => {},
   register: async () => {},
+  resetPassword: async () => {},
   getAccessToken: async () => null,
   hasRole: () => false,
   userRoles: [],
@@ -37,21 +39,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch user roles from the database
   const fetchUserRoles = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      // First try to get roles from user_roles table
+      const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
       
-      if (error) {
-        console.error("Error fetching user roles:", error);
+      if (rolesError) {
+        console.error("Error fetching user roles:", rolesError);
+        
+        // If no roles found, try to get from user metadata as fallback
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.user_metadata?.role) {
+          const fallbackRole = user.user_metadata.role as UserRole;
+          setUserRoles([fallbackRole]);
+          console.log("Using fallback role from metadata:", [fallbackRole]);
+          
+          // Try to insert the role into user_roles table for future use
+          try {
+            const { error: insertError } = await supabase
+              .from('user_roles')
+              .insert({
+                user_id: userId,
+                role: fallbackRole
+              });
+            
+            if (insertError) {
+              console.log("Could not insert fallback role:", insertError.message);
+            }
+          } catch (err) {
+            console.log("Error inserting fallback role:", err);
+          }
+        }
         return;
       }
       
       // Extract roles from data
-      const roles = data.map(item => item.role as UserRole);
+      const roles = rolesData?.map(item => item.role as UserRole) || [];
       setUserRoles(roles);
       
       console.log("User roles loaded:", roles);
+      
+      // If no roles found but user has metadata role, create the role entry
+      if (roles.length === 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.user_metadata?.role) {
+          const metadataRole = user.user_metadata.role as UserRole;
+          setUserRoles([metadataRole]);
+          console.log("Using role from user metadata:", [metadataRole]);
+          
+          // Insert role into database for future use (without clinic_id for now)
+          try {
+            const { error: insertError } = await supabase
+              .from('user_roles')
+              .insert({
+                user_id: userId,
+                role: metadataRole
+              });
+            
+            if (insertError) {
+              console.log("Could not insert role:", insertError.message);
+            } else {
+              console.log("Role inserted successfully");
+            }
+          } catch (err) {
+            console.log("Error inserting role:", err);
+          }
+        }
+      }
     } catch (error) {
       console.error("Error in fetchUserRoles:", error);
     }
@@ -226,6 +281,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Reset de senha com Supabase
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("Erro ao solicitar reset de senha:", error);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider 
       value={{ 
@@ -235,6 +306,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         logout,
         register,
+        resetPassword,
         getAccessToken,
         hasRole,
         userRoles

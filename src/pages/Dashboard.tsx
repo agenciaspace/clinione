@@ -42,6 +42,8 @@ const Dashboard = () => {
       setDoctors([]);
     }
   }, [activeClinic]);
+
+
   
   const fetchDoctors = async () => {
     if (!activeClinic) return;
@@ -95,8 +97,15 @@ const Dashboard = () => {
     }
     
     await createAppointment({
-      ...formData,
-      doctor_name: doctorName
+      patient_name: formData.patient_name,
+      patient_phone: formData.patient_phone,
+      patient_email: formData.patient_email,
+      doctor_id: formData.doctor_id,
+      doctor_name: doctorName,
+      date: formData.date,
+      time: formData.time,
+      type: formData.type,
+      notes: formData.notes
     });
     
     setIsFormOpen(false);

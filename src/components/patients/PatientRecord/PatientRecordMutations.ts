@@ -7,11 +7,17 @@ export function useCreateRecord(patientId: string, currentUser: any) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ content }: { content: string }) => {
+      // Get current session to ensure we have proper authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const newRecord = {
         patient_id: patientId,
         content,
-        created_by: currentUser?.id || 'sistema',
-        created_by_name: currentUser?.email?.split('@')[0] || 'Sistema'
+        created_by: currentUser?.id || session.user.id,
+        created_by_name: currentUser?.name || currentUser?.email?.split('@')[0] || 'Sistema'
       };
 
       const { data, error } = await supabase
@@ -19,7 +25,10 @@ export function useCreateRecord(patientId: string, currentUser: any) {
         .insert([newRecord])
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Detailed error:', error);
+        throw error;
+      }
       return data[0];
     },
     onSuccess: () => {

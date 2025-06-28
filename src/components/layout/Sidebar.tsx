@@ -48,11 +48,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     icon: DollarSign,
     roles: ['admin']
   }, {
-    title: 'Marketing',
-    path: '/dashboard/marketing',
-    icon: MessageSquare,
-    roles: ['admin']
-  }, {
     title: 'Clínica',
     path: '/dashboard/clinic',
     icon: Building2,

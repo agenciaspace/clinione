@@ -15,6 +15,8 @@ export const useCreateAppointment = (clinicId: string | undefined) => {
   return useMutation({
     mutationFn: async ({
       patient_name,
+      patient_phone,
+      patient_email,
       doctor_id,
       doctor_name,
       date,
@@ -26,6 +28,8 @@ export const useCreateAppointment = (clinicId: string | undefined) => {
       insurance_company_id
     }: {
       patient_name: string;
+      patient_phone?: string;
+      patient_email?: string;
       doctor_id?: string;
       doctor_name?: string;
       date: Date;
@@ -74,6 +78,50 @@ export const useCreateAppointment = (clinicId: string | undefined) => {
       if (error) throw error;
       
       await webhookEvents.appointments.created(data, clinicId);
+
+      // Criar paciente se não existir
+      try {
+        // Verificar se paciente já existe por nome na mesma clínica
+        const { data: existingPatient } = await supabase
+          .from('patients')
+          .select('id')
+          .eq('clinic_id', clinicId)
+          .eq('name', patient_name)
+          .maybeSingle();
+        
+        if (!existingPatient) {
+          // Criar novo paciente com data de nascimento padrão
+          const currentDate = new Date().toISOString().split('T')[0];
+          
+          const patientData = {
+            clinic_id: clinicId,
+            name: patient_name,
+            phone: patient_phone || '',
+            email: patient_email || '',
+            birth_date: currentDate,
+            status: 'active'
+          };
+          
+          const { data: newPatient, error: patientError } = await supabase
+            .from('patients')
+            .insert(patientData)
+            .select('*')
+            .single();
+            
+          if (!patientError && newPatient) {
+            // Disparar evento de webhook para criação de paciente
+            await webhookEvents.patients.created(newPatient, clinicId);
+            
+            // Invalidar cache de pacientes para atualizar a lista
+            queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
+          } else if (patientError) {
+            console.error('Erro ao criar paciente:', patientError);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar/criar paciente:', error);
+        // Não interromper o fluxo se falhar a criação do paciente
+      }
 
       if (procedure_id && appointmentValue) {
         let expectedPaymentDate: Date;
