@@ -270,6 +270,7 @@ export type Database = {
           photo_url: string | null
           speciality: string | null
           updated_at: string | null
+          working_hours: Json | null
         }
         Insert: {
           bio?: string | null
@@ -283,6 +284,7 @@ export type Database = {
           photo_url?: string | null
           speciality?: string | null
           updated_at?: string | null
+          working_hours?: Json | null
         }
         Update: {
           bio?: string | null
@@ -296,6 +298,7 @@ export type Database = {
           photo_url?: string | null
           speciality?: string | null
           updated_at?: string | null
+          working_hours?: Json | null
         }
         Relationships: [
           {

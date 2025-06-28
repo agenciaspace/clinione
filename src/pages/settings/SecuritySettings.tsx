@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Badge } from "@/components/ui/badge";
 import { toast } from '@/components/ui/sonner';
-import { AlertTriangle, Trash2, Shield, Smartphone, Key, Clock, Monitor, Eye, EyeOff } from 'lucide-react';
+import { AlertTriangle, Trash2, Shield, Smartphone, Key, Clock, Monitor, Eye, EyeOff, QrCode } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +21,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Session {
   id: string;
@@ -29,6 +37,12 @@ interface Session {
   created_at: string;
   last_seen: string;
   is_current: boolean;
+}
+
+interface MFASetup {
+  qr_code: string;
+  secret: string;
+  uri: string;
 }
 
 export const SecuritySettings = () => {
@@ -49,6 +63,10 @@ export const SecuritySettings = () => {
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [showMFASetup, setShowMFASetup] = useState(false);
+  const [mfaSetup, setMfaSetup] = useState<MFASetup | null>(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [mfaLoading, setMfaLoading] = useState(false);
 
   // Carregar configurações de segurança ao montar o componente
   useEffect(() => {
@@ -153,6 +171,7 @@ export const SecuritySettings = () => {
   };
 
   const handleEnable2FA = async () => {
+    setMfaLoading(true);
     try {
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
@@ -161,19 +180,77 @@ export const SecuritySettings = () => {
       
       if (error) throw error;
       
-      // Mostrar QR code para configuração
-      toast.success('2FA habilitado', {
-        description: 'Configure o aplicativo autenticador com o QR code'
-      });
-      setTwoFactorEnabled(true);
+      if (data) {
+        setMfaSetup({
+          qr_code: data.totp.qr_code,
+          secret: data.totp.secret,
+          uri: data.totp.uri
+        });
+        setShowMFASetup(true);
+      }
     } catch (error: any) {
       toast.error('Erro ao habilitar 2FA', {
         description: error.message
       });
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    if (!mfaSetup || !verificationCode.trim()) {
+      toast.error('Digite o código de verificação');
+      return;
+    }
+
+    setMfaLoading(true);
+    try {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const factor = factors?.totp?.[0];
+      
+      if (!factor) {
+        throw new Error('Fator MFA não encontrado');
+      }
+
+      // Primeiro criar um challenge
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: factor.id
+      });
+
+      if (challengeError) throw challengeError;
+
+      // Depois verificar o código
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: factor.id,
+        challengeId: challengeData.id,
+        code: verificationCode
+      });
+
+      if (error) throw error;
+
+      toast.success('2FA configurado com sucesso!', {
+        description: 'Sua conta agora está protegida com autenticação de dois fatores'
+      });
+      
+      setTwoFactorEnabled(true);
+      setShowMFASetup(false);
+      setMfaSetup(null);
+      setVerificationCode('');
+      
+      // Gerar códigos de backup automaticamente
+      await generateBackupCodes();
+      
+    } catch (error: any) {
+      toast.error('Código de verificação inválido', {
+        description: 'Verifique o código no seu aplicativo autenticador'
+      });
+    } finally {
+      setMfaLoading(false);
     }
   };
 
   const handleDisable2FA = async () => {
+    setMfaLoading(true);
     try {
       const { data: factors } = await supabase.auth.mfa.listFactors();
       if (factors?.totp?.length > 0) {
@@ -185,22 +262,42 @@ export const SecuritySettings = () => {
         
         toast.success('2FA desabilitado');
         setTwoFactorEnabled(false);
+        setBackupCodes([]);
       }
     } catch (error: any) {
       toast.error('Erro ao desabilitar 2FA', {
         description: error.message
       });
+    } finally {
+      setMfaLoading(false);
     }
   };
 
-  const generateBackupCodes = () => {
-    const codes = Array.from({ length: 10 }, () => 
-      Math.random().toString(36).substring(2, 8).toUpperCase()
-    );
-    setBackupCodes(codes);
-    toast.success('Códigos de backup gerados', {
-      description: 'Salve estes códigos em local seguro'
-    });
+  const generateBackupCodes = async () => {
+    try {
+      // Gerar códigos de backup seguros
+      const codes = Array.from({ length: 8 }, () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < 8; i++) {
+          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result.match(/.{1,4}/g)?.join('-') || result;
+      });
+      
+      setBackupCodes(codes);
+      toast.success('Códigos de backup gerados', {
+        description: 'Salve estes códigos em local seguro'
+      });
+    } catch (error) {
+      toast.error('Erro ao gerar códigos de backup');
+    }
+  };
+
+  const handleCancelMFASetup = () => {
+    setShowMFASetup(false);
+    setMfaSetup(null);
+    setVerificationCode('');
   };
 
   const handleDeleteAccount = async () => {
@@ -384,6 +481,7 @@ export const SecuritySettings = () => {
             <Switch 
               checked={twoFactorEnabled}
               onCheckedChange={twoFactorEnabled ? handleDisable2FA : handleEnable2FA}
+              disabled={mfaLoading}
             />
           </div>
 
@@ -518,6 +616,75 @@ export const SecuritySettings = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog para configuração do 2FA */}
+      <Dialog open={showMFASetup} onOpenChange={setShowMFASetup}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="h-5 w-5" />
+              Configurar Autenticação de Dois Fatores
+            </DialogTitle>
+            <DialogDescription>
+              Escaneie o QR code com seu aplicativo autenticador e digite o código de verificação.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {mfaSetup && (
+            <div className="space-y-4">
+              {/* QR Code */}
+              <div className="flex justify-center p-4 bg-white rounded-lg">
+                <img 
+                  src={mfaSetup.qr_code} 
+                  alt="QR Code para 2FA" 
+                  className="w-48 h-48"
+                />
+              </div>
+              
+              {/* Chave manual */}
+              <div className="space-y-2">
+                <Label>Ou digite manualmente esta chave:</Label>
+                <div className="p-3 bg-muted rounded text-sm font-mono break-all">
+                  {mfaSetup.secret}
+                </div>
+              </div>
+              
+              {/* Código de verificação */}
+              <div className="space-y-2">
+                <Label htmlFor="verification-code">Código de verificação</Label>
+                <Input
+                  id="verification-code"
+                  type="text"
+                  placeholder="000000"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                  className="text-center text-lg tracking-widest"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Digite o código de 6 dígitos do seu aplicativo autenticador
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleCancelMFASetup}
+              disabled={mfaLoading}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleVerify2FA}
+              disabled={mfaLoading || verificationCode.length !== 6}
+            >
+              {mfaLoading ? 'Verificando...' : 'Verificar e Ativar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }; 

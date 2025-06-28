@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -30,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { Doctor } from '@/types';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const appointmentSchema = z.object({
   patient_name: z.string().min(3, { message: 'Nome do paciente é obrigatório' }),
@@ -63,6 +63,7 @@ export function AppointmentForm({
   doctors, 
   selectedDate 
 }: AppointmentFormProps) {
+  const isMobile = useIsMobile();
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
@@ -84,10 +85,10 @@ export function AppointmentForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Novo Agendamento</DialogTitle>
-          <DialogDescription>
+      <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[90vh] overflow-y-auto' : 'sm:max-w-[500px]'}`}>
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-lg sm:text-xl">Novo Agendamento</DialogTitle>
+          <DialogDescription className="text-sm">
             Preencha os dados para criar um novo agendamento
           </DialogDescription>
         </DialogHeader>
@@ -99,24 +100,24 @@ export function AppointmentForm({
               name="patient_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do Paciente</FormLabel>
+                  <FormLabel className="text-sm">Nome do Paciente</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome completo" {...field} />
+                    <Input placeholder="Nome completo" {...field} className="h-10" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-2 gap-4'}`}>
               <FormField
                 control={form.control}
                 name="patient_phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Telefone (opcional)</FormLabel>
+                    <FormLabel className="text-sm">Telefone (opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="(00) 00000-0000" {...field} />
+                      <Input placeholder="(00) 00000-0000" {...field} className="h-10" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -128,9 +129,9 @@ export function AppointmentForm({
                 name="patient_email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>E-mail (opcional)</FormLabel>
+                    <FormLabel className="text-sm">E-mail (opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="email@exemplo.com" type="email" {...field} />
+                      <Input placeholder="email@exemplo.com" type="email" {...field} className="h-10" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -143,13 +144,13 @@ export function AppointmentForm({
               name="doctor_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Profissional</FormLabel>
+                  <FormLabel className="text-sm">Profissional</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
                     value={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue placeholder="Selecione um profissional" />
                       </SelectTrigger>
                     </FormControl>
@@ -166,19 +167,19 @@ export function AppointmentForm({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-2 gap-4'}`}>
               <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Data</FormLabel>
+                    <FormLabel className="text-sm">Data</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant="outline"
-                            className="pl-3 text-left font-normal"
+                            className="pl-3 text-left font-normal h-10 justify-start"
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {field.value ? (
@@ -197,6 +198,7 @@ export function AppointmentForm({
                           disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                           locale={ptBR}
                           initialFocus
+                          className={isMobile ? 'scale-90' : ''}
                         />
                       </PopoverContent>
                     </Popover>
@@ -210,14 +212,14 @@ export function AppointmentForm({
                 name="time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Horário</FormLabel>
+                    <FormLabel className="text-sm">Horário</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Clock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="HH:MM"
-                          className="pl-10"
-                          {...field}
+                        <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                          placeholder="HH:MM" 
+                          {...field} 
+                          className="pl-10 h-10"
                         />
                       </div>
                     </FormControl>
@@ -232,13 +234,10 @@ export function AppointmentForm({
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tipo de Consulta</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
+                  <FormLabel className="text-sm">Tipo de Consulta</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
                     </FormControl>
@@ -257,11 +256,13 @@ export function AppointmentForm({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Observações</FormLabel>
+                  <FormLabel className="text-sm">Observações (opcional)</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Observações sobre o agendamento (opcional)"
-                      {...field}
+                    <Textarea 
+                      placeholder="Informações adicionais sobre a consulta..." 
+                      className="resize-none"
+                      rows={3}
+                      {...field} 
                     />
                   </FormControl>
                   <FormMessage />
@@ -269,11 +270,21 @@ export function AppointmentForm({
               )}
             />
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
+            <DialogFooter className={`${isMobile ? 'flex-col gap-2' : 'flex-row gap-2'} pt-4`}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                className={`${isMobile ? 'w-full order-2' : 'w-auto'}`}
+              >
                 Cancelar
               </Button>
-              <Button type="submit">Agendar</Button>
+              <Button 
+                type="submit"
+                className={`${isMobile ? 'w-full order-1' : 'w-auto'}`}
+              >
+                Criar Agendamento
+              </Button>
             </DialogFooter>
           </form>
         </Form>

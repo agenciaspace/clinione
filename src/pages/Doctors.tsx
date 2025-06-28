@@ -7,12 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Plus, EditIcon, TrashIcon, UserCircle, Mail, Phone, Calendar, AlertCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Doctor } from '@/types';
+import { Doctor, WorkingHours } from '@/types';
 import { toast } from '@/components/ui/sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDoctors } from '@/hooks/useDoctors';
 import { useClinic } from '@/contexts/ClinicContext';
 import { DoctorPhotoUpload } from '@/components/doctors/DoctorPhotoUpload';
+import { DoctorWorkingHours } from '@/components/doctors/DoctorWorkingHours';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -25,6 +26,7 @@ interface DoctorFormData {
   email: string;
   phone: string;
   photo_url?: string;
+  working_hours?: WorkingHours;
 }
 
 const specialities = [
@@ -40,6 +42,16 @@ const specialities = [
   'Endocrinologia'
 ];
 
+const defaultWorkingHours: WorkingHours = {
+  monday: [{ start: '09:00', end: '18:00' }],
+  tuesday: [{ start: '09:00', end: '18:00' }],
+  wednesday: [{ start: '09:00', end: '18:00' }],
+  thursday: [{ start: '09:00', end: '18:00' }],
+  friday: [{ start: '09:00', end: '18:00' }],
+  saturday: [{ start: '09:00', end: '13:00' }],
+  sunday: []
+};
+
 const Doctors = () => {
   const { activeClinic } = useClinic();
   const { doctors, isLoading, deleteDoctor, inactivateDoctor } = useDoctors();
@@ -54,7 +66,8 @@ const Doctors = () => {
     licensenumber: '',
     bio: '',
     email: '',
-    phone: ''
+    phone: '',
+    working_hours: defaultWorkingHours
   });
   const [isEditing, setIsEditing] = useState(false);
 
@@ -83,6 +96,13 @@ const Doctors = () => {
     }));
   };
 
+  const handleWorkingHoursChange = (workingHours: WorkingHours) => {
+    setFormData(prev => ({
+      ...prev,
+      working_hours: workingHours
+    }));
+  };
+
   const handleAddDoctor = () => {
     setIsEditing(false);
     setFormData({
@@ -91,7 +111,8 @@ const Doctors = () => {
       licensenumber: '',
       bio: '',
       email: '',
-      phone: ''
+      phone: '',
+      working_hours: defaultWorkingHours
     });
     setIsDialogOpen(true);
   };
@@ -105,7 +126,8 @@ const Doctors = () => {
       licensenumber: doctor.licensenumber || '',
       bio: doctor.bio || '',
       email: doctor.email || '',
-      phone: doctor.phone || ''
+      phone: doctor.phone || '',
+      working_hours: doctor.working_hours || defaultWorkingHours
     });
     setIsDialogOpen(true);
   };
@@ -153,7 +175,8 @@ const Doctors = () => {
             bio: formData.bio,
             email: formData.email,
             phone: formData.phone,
-            photo_url: formData.photo_url
+            photo_url: formData.photo_url,
+            working_hours: formData.working_hours
           })
           .eq('id', formData.id);
           
@@ -175,7 +198,8 @@ const Doctors = () => {
             email: formData.email,
             phone: formData.phone,
             photo_url: formData.photo_url,
-            clinic_id: activeClinic.id
+            clinic_id: activeClinic.id,
+            working_hours: formData.working_hours
           })
           .select();
           
@@ -406,6 +430,15 @@ const Doctors = () => {
                   rows={4}
                 />
               </div>
+
+              {/* Working Hours Section */}
+              {formData.working_hours && (
+                <DoctorWorkingHours
+                  workingHours={formData.working_hours}
+                  onChange={handleWorkingHoursChange}
+                  doctorName={formData.name || 'Novo Profissional'}
+                />
+              )}
             </div>
 
             <DialogFooter className="mt-6">

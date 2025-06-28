@@ -51,6 +51,7 @@ export interface Doctor {
   email?: string;
   phone?: string;
   clinic_id: string;
+  working_hours?: WorkingHours; // Individual working hours for each doctor
   created_at?: string;
   updated_at?: string;
 }

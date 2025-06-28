@@ -13,6 +13,7 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
+import Calendar from "./pages/Calendar";
 import Patients from "./pages/Patients";
 import Doctors from "./pages/Doctors";
 import Reports from "./pages/Reports";
@@ -29,8 +30,28 @@ import { WebhooksSettings } from "./pages/settings/WebhooksSettings";
 import ClinicProfile from "./pages/ClinicProfile";
 import PublicClinicPage from "./pages/PublicClinicPage";
 import NotFound from "./pages/NotFound";
+import { PWAInstallPrompt } from './components/PWAInstallPrompt';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors
+        if (error instanceof Error && error.message.includes('4')) {
+          return false;
+        }
+        // Retry up to 3 times with exponential backoff
+        return failureCount < 3;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: 'always'
+    },
+  },
+});
 
 // Component to handle redirect from old format to new format
 const RedirectToNewFormat = () => {
@@ -53,6 +74,8 @@ const App = () => (
           <ClinicProvider>
             <Toaster />
             <Sonner />
+            <OfflineIndicator />
+            <PWAInstallPrompt />
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<LandingPage />} />
@@ -61,6 +84,7 @@ const App = () => (
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/calendar" element={<Calendar />} />
                 <Route path="/dashboard/patients" element={<Patients />} />
                 <Route path="/dashboard/doctors" element={<Doctors />} />
                 <Route path="/dashboard/reports" element={<Reports />} />

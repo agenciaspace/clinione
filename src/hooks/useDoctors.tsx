@@ -3,12 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useClinic } from '@/contexts/ClinicContext';
 import { toast } from '@/components/ui/sonner';
+import { Doctor, WorkingHours } from '@/types';
 
 export const useDoctors = () => {
   const { activeClinic } = useClinic();
   const queryClient = useQueryClient();
 
-  const fetchDoctors = async () => {
+  const fetchDoctors = async (): Promise<Doctor[]> => {
     if (!activeClinic?.id) return [];
 
     const { data, error } = await supabase
@@ -18,7 +19,12 @@ export const useDoctors = () => {
       .order('name');
 
     if (error) throw error;
-    return data;
+    
+    // Convert the data to match our Doctor type
+    return (data || []).map(doctor => ({
+      ...doctor,
+      working_hours: doctor.working_hours ? doctor.working_hours as WorkingHours : undefined
+    })) as Doctor[];
   };
 
   const {

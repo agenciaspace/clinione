@@ -7,26 +7,28 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ requiresMFA?: boolean }>;
   logout: () => void;
   register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   getAccessToken: () => Promise<string | null>;
   hasRole: (role: UserRole) => boolean;
   userRoles: UserRole[];
+  completeMFALogin: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
   isLoading: true,
-  login: async () => {},
+  login: async () => ({}),
   logout: () => {},
   register: async () => {},
   resetPassword: async () => {},
   getAccessToken: async () => null,
   hasRole: () => false,
   userRoles: [],
+  completeMFALogin: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -198,7 +200,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       
-      if (data.user) {
+      // Verificar se 2FA é necessário
+      if (data.user && data.session) {
+        // Verificar se o usuário tem MFA configurado
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const hasMFA = factors?.totp && factors.totp.length > 0;
+        
+        if (hasMFA) {
+          // Se tem MFA mas a sessão não está totalmente autenticada, precisa de verificação
+          // Supabase retorna aal1 para primeira autenticação e aal2 para MFA completa
+          const sessionData = data.session as any;
+          if (sessionData.aal !== 'aal2') {
+            setIsLoading(false);
+            return { requiresMFA: true };
+          }
+        }
+        
+        // Login completo - configurar usuário
         const userData = {
           id: data.user.id,
           name: data.user.user_metadata?.name || 'Usuário',
@@ -210,11 +228,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(userData);
         fetchUserRoles(data.user.id);
       }
+      
+      return {};
     } catch (error) {
       console.error("Erro ao fazer login:", error);
       throw error;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Completar login após verificação MFA
+  const completeMFALogin = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session && session.user) {
+        const userData = {
+          id: session.user.id,
+          name: session.user.user_metadata?.name || 'Usuário',
+          email: session.user.email || '',
+          role: session.user.user_metadata?.role || 'patient',
+          clinicId: session.user.user_metadata?.clinicId
+        };
+        
+        setUser(userData);
+        fetchUserRoles(session.user.id);
+      }
+    } catch (error) {
+      console.error("Erro ao completar login MFA:", error);
+      throw error;
     }
   };
 
@@ -309,7 +352,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetPassword,
         getAccessToken,
         hasRole,
-        userRoles
+        userRoles,
+        completeMFALogin
       }}
     >
       {children}
