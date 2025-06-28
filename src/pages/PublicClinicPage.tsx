@@ -14,7 +14,7 @@ import { webhookEvents } from '@/utils/webhook-service';
 import { supabase } from '@/integrations/supabase/client';
 
 const PublicClinicPage: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, clinicId } = useParams<{ slug: string; clinicId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
@@ -33,7 +33,7 @@ const PublicClinicPage: React.FC = () => {
     isLoading, 
     error, 
     availableClinics 
-  } = useClinicPublicData(slug, selectedClinicId, isPreview);
+  } = useClinicPublicData(slug, selectedClinicId, isPreview, clinicId);
 
   // Carregar médicos quando a clínica for carregada
   useEffect(() => {

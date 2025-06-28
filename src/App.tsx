@@ -64,6 +64,7 @@ const App = () => (
               {/* Public clinic routes */}
               <Route path="/c/:slug" element={<PublicClinicPage />} />
               <Route path="/dashboard/public-page" element={<PublicClinicPage />} />
+              <Route path="/dashboard/public-page/:clinicId" element={<PublicClinicPage />} />
               {/* Redirect from old format to new format - only for specific patterns */}
               <Route path="/:slug" element={<RedirectToNewFormat />} />
               <Route path="*" element={<NotFound />} />

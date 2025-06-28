@@ -30,7 +30,7 @@ export interface ClinicData {
   is_published: boolean | null;
 }
 
-export const useClinicPublicData = (slug?: string, selectedClinicId?: string | null, isPreview: boolean = false) => {
+export const useClinicPublicData = (slug?: string, selectedClinicId?: string | null, isPreview: boolean = false, clinicIdFromUrl?: string) => {
   const [clinic, setClinic] = useState<ClinicData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +80,13 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
               .from('clinics')
               .select('*')
               .eq('id', selectedClinicId)
+              .single();
+          } else if (clinicIdFromUrl) {
+            console.log("Buscando clínica por ID da URL no modo preview:", clinicIdFromUrl);
+            clinicQuery = await supabase
+              .from('clinics')
+              .select('*')
+              .eq('id', clinicIdFromUrl)
               .single();
           } else {
             console.log("Buscando primeira clínica no modo preview");
