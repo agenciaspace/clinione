@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,7 +39,6 @@ import { toast } from '@/components/ui/sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { Transaction } from '@/types';
 import { FinancialForecastDashboard } from '@/components/financial/FinancialForecastDashboard';
-import { TissLotManager } from '@/components/financial/TissLotManager';
 import { webhookEvents } from '@/utils/webhook-service';
 
 const Financial = () => {
@@ -173,7 +171,6 @@ const Financial = () => {
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="transactions">Transações</TabsTrigger>
           <TabsTrigger value="forecasts">Previsibilidade</TabsTrigger>
-          <TabsTrigger value="tiss">Lotes TISS</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
         </TabsList>
 
@@ -505,10 +502,6 @@ const Financial = () => {
 
             <TabsContent value="forecasts" className="space-y-4">
               <FinancialForecastDashboard />
-            </TabsContent>
-
-            <TabsContent value="tiss" className="space-y-4">
-              <TissLotManager />
             </TabsContent>
 
             <TabsContent value="reports" className="space-y-4">

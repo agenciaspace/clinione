@@ -128,7 +128,7 @@ export const FinancialForecastDashboard = () => {
             <div className="flex justify-between">
               <div className="space-y-1">
                 <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-muted-foreground`}>
-                  Enviado ao convênio
+                  Enviado
                 </p>
                 <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>
                   R$ {totalSent.toFixed(2)}
@@ -248,7 +248,7 @@ export const FinancialForecastDashboard = () => {
                         <TableHead>Data prevista</TableHead>
                         <TableHead>Descrição</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Convênio</TableHead>
+                        <TableHead>Pagador</TableHead>
                         <TableHead className="text-right">Valor</TableHead>
                       </TableRow>
                     </TableHeader>
