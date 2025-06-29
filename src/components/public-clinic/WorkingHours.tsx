@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock } from 'lucide-react';
@@ -28,7 +27,7 @@ export const WorkingHoursComponent = ({ workingHours, clinicId }: WorkingHoursPr
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border">
+    <div className="bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700">
       <h2 className="text-lg font-semibold mb-4 flex items-center">
         <Clock className="h-5 w-5 mr-2 text-blue-500" />
         Horário de Funcionamento
@@ -40,8 +39,8 @@ export const WorkingHoursComponent = ({ workingHours, clinicId }: WorkingHoursPr
           
           return (
             <div key={day} className="flex justify-between items-center">
-              <span className="text-gray-600">{dayName}</span>
-              <span className="font-medium">
+              <span className="text-gray-600 dark:text-gray-300">{dayName}</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">
                 {periods && periods.length > 0 
                   ? `${periods[0].start} - ${periods[0].end}`
                   : "Fechado"}
