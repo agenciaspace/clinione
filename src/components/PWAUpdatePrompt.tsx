@@ -1,69 +1,76 @@
 import React, { useEffect } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
+// import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { RefreshCw } from 'lucide-react';
+import { X, RefreshCw } from 'lucide-react';
 
-export function PWAUpdatePrompt() {
-  const {
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
-    onRegistered(r) {
-      console.log('SW Registered:', r);
-    },
-    onRegisterError(error) {
-      console.log('SW registration error', error);
-    },
-  });
+export const PWAUpdatePrompt = () => {
+  // const {
+  //   offlineReady: [offlineReady, setOfflineReady],
+  //   needRefresh: [needRefresh, setNeedRefresh],
+  //   updateServiceWorker,
+  // } = useRegisterSW({
+  //   onRegistered(r) {
+  //     console.log('SW Registered: ' + r)
+  //   },
+  //   onRegisterError(error) {
+  //     console.log('SW registration error', error)
+  //   },
+  // });
 
   const close = () => {
-    setNeedRefresh(false);
+    // setOfflineReady(false);
+    // setNeedRefresh(false);
   };
 
-  const updateSW = () => {
-    updateServiceWorker(true);
-  };
+  // if (!offlineReady && !needRefresh) {
+  //   return null;
+  // }
 
-  if (!needRefresh) return null;
+  return null; // Temporariamente desabilitado
 
-  return (
-    <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-5">
-      <Card className="bg-primary text-primary-foreground shadow-lg">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <RefreshCw className="h-5 w-5" />
-              <div>
-                <h3 className="font-semibold text-sm">
-                  Nova versão disponível
-                </h3>
-                <p className="text-xs opacity-90">
-                  Atualize para ter acesso às últimas melhorias
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={close}
-                className="text-primary-foreground hover:bg-primary-foreground/20"
-              >
-                Depois
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={updateSW}
-                className="bg-white text-primary hover:bg-gray-100"
-              >
-                Atualizar
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-} 
+  // return (
+  //   <div className="fixed bottom-4 right-4 z-50">
+  //     <Card className="w-80 shadow-lg">
+  //       <CardContent className="p-4">
+  //         <div className="flex items-start justify-between">
+  //           <div className="flex-1">
+  //             {offlineReady ? (
+  //               <p className="text-sm">App pronto para funcionar offline!</p>
+  //             ) : (
+  //               <p className="text-sm">Nova versão disponível, clique em recarregar para atualizar.</p>
+  //             )}
+  //           </div>
+  //           <Button
+  //             variant="ghost"
+  //             size="sm"
+  //             onClick={close}
+  //             className="h-6 w-6 p-0"
+  //           >
+  //             <X className="h-4 w-4" />
+  //           </Button>
+  //         </div>
+  //         {needRefresh && (
+  //           <div className="mt-3 flex gap-2">
+  //             <Button
+  //               size="sm"
+  //               onClick={() => updateServiceWorker(true)}
+  //               className="flex items-center gap-1"
+  //             >
+  //               <RefreshCw className="h-3 w-3" />
+  //               Recarregar
+  //             </Button>
+  //             <Button
+  //               variant="outline"
+  //               size="sm"
+  //               onClick={close}
+  //             >
+  //               Depois
+  //             </Button>
+  //           </div>
+  //         )}
+  //       </CardContent>
+  //     </Card>
+  //   </div>
+  // );
+}; 

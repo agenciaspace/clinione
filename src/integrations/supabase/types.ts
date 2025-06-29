@@ -19,6 +19,7 @@ export type Database = {
           id: string
           insurance_company_id: string | null
           notes: string | null
+          patient_email: string | null
           patient_name: string
           payment_type: string | null
           procedure_id: string | null
@@ -36,6 +37,7 @@ export type Database = {
           id?: string
           insurance_company_id?: string | null
           notes?: string | null
+          patient_email?: string | null
           patient_name: string
           payment_type?: string | null
           procedure_id?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           id?: string
           insurance_company_id?: string | null
           notes?: string | null
+          patient_email?: string | null
           patient_name?: string
           payment_type?: string | null
           procedure_id?: string | null
