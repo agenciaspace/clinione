@@ -51,6 +51,12 @@ export function PWAInstallPrompt() {
   };
 
   useEffect(() => {
+    // Check if user has disabled PWA install prompts
+    const installPromptsEnabled = localStorage.getItem('pwaInstallPromptsEnabled');
+    if (installPromptsEnabled === 'false') {
+      return;
+    }
+
     // Enhanced installation detection
     const isPWAInstalled = detectPWAInstallation();
     if (isPWAInstalled) {
@@ -60,27 +66,28 @@ export function PWAInstallPrompt() {
       return;
     }
 
-    // Check if user has dismissed the prompt recently (within 7 days)
+    // Check if user has dismissed the prompt recently (within 30 days - less invasive)
     const lastDismissed = localStorage.getItem('pwaPromptLastDismissed');
     if (lastDismissed) {
       const daysSinceDismissed = (Date.now() - parseInt(lastDismissed)) / (1000 * 60 * 60 * 24);
-      if (daysSinceDismissed < 7) {
-        return; // Don't show prompt again within 7 days
+      if (daysSinceDismissed < 30) {
+        return; // Don't show prompt again within 30 days
       }
     }
 
     // Check if it's iOS
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     if (isIOS) {
-      // For iOS, check if user has seen the prompt recently
+      // For iOS, check if user has seen the prompt recently (increase to 30 days)
       const hasSeenIOSPrompt = localStorage.getItem('hasSeenIOSInstallPrompt');
       const lastIOSPrompt = localStorage.getItem('iosPromptLastShown');
       
-      if (!hasSeenIOSPrompt || (lastIOSPrompt && (Date.now() - parseInt(lastIOSPrompt)) > 7 * 24 * 60 * 60 * 1000)) {
+      if (!hasSeenIOSPrompt || (lastIOSPrompt && (Date.now() - parseInt(lastIOSPrompt)) > 30 * 24 * 60 * 60 * 1000)) {
+        // Increase delay to 10 seconds to be less invasive
         setTimeout(() => {
           setShowInstallPrompt(true);
           localStorage.setItem('iosPromptLastShown', Date.now().toString());
-        }, 3000);
+        }, 10000);
       }
       return;
     }
@@ -93,13 +100,14 @@ export function PWAInstallPrompt() {
       const hasSeenPrompt = localStorage.getItem('hasSeenInstallPrompt');
       const promptCount = parseInt(localStorage.getItem('pwaPromptCount') || '0');
       
-      // Don't show more than 3 times total, and respect dismissal period
-      if (!hasSeenPrompt && promptCount < 3) {
+      // Don't show more than 2 times total (reduced from 3), and respect dismissal period
+      if (!hasSeenPrompt && promptCount < 2) {
+        // Increase delay to 15 seconds to be less invasive
         setTimeout(() => {
           setShowInstallPrompt(true);
           localStorage.setItem('pwaPromptShown', 'true');
           localStorage.setItem('pwaPromptCount', (promptCount + 1).toString());
-        }, 5000);
+        }, 15000);
       }
     };
 
@@ -156,54 +164,46 @@ export function PWAInstallPrompt() {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 animate-in slide-in-from-bottom-5">
-      <Card className="bg-primary text-primary-foreground shadow-lg">
-        <CardContent className="p-4">
-          <div className="flex items-start space-x-3">
+    // Tornar mais discreto - canto superior direito, menor
+    <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 max-w-sm">
+      <Card className="bg-card border shadow-md">
+        <CardContent className="p-3">
+          <div className="flex items-start space-x-2">
             <div className="flex-shrink-0">
-              <Smartphone className="h-6 w-6" />
+              <Smartphone className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div className="flex-1 space-y-2">
-              <h3 className="font-semibold text-base">
-                Instale o Clini.One no seu dispositivo
-              </h3>
+            <div className="flex-1 space-y-1">
+              <h4 className="font-medium text-sm">
+                Instalar App
+              </h4>
               {isIOS ? (
-                <div className="space-y-2">
-                  <p className="text-sm opacity-90">
-                    Para instalar no iOS:
-                  </p>
-                  <ol className="text-sm opacity-90 space-y-1 ml-4">
-                    <li>1. Toque no botão compartilhar <span className="font-mono">⎙</span></li>
-                    <li>2. Role e toque em "Adicionar à Tela de Início"</li>
-                    <li>3. Toque em "Adicionar"</li>
-                  </ol>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Toque em ⎙ → "Adicionar à Tela de Início"
+                </p>
               ) : (
-                <p className="text-sm opacity-90">
-                  Acesse rapidamente o sistema direto da sua tela inicial. 
-                  Funciona offline e envia notificações importantes.
+                <p className="text-xs text-muted-foreground">
+                  Acesse offline direto da tela inicial
                 </p>
               )}
             </div>
-            <div className="flex-shrink-0 flex items-center space-x-2">
+            <div className="flex-shrink-0 flex items-center space-x-1">
               {!isIOS && deferredPrompt && (
                 <Button
                   size="sm"
-                  variant="secondary"
                   onClick={handleInstallClick}
-                  className="bg-white text-primary hover:bg-gray-100"
+                  className="h-7 px-2 text-xs"
                 >
-                  <Download className="h-4 w-4 mr-1" />
+                  <Download className="h-3 w-3 mr-1" />
                   Instalar
                 </Button>
               )}
               <Button
-                size="icon"
+                size="sm"
                 variant="ghost"
                 onClick={handleDismiss}
-                className="text-primary-foreground hover:bg-primary-foreground/20"
+                className="h-7 w-7 p-0"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3" />
               </Button>
             </div>
           </div>

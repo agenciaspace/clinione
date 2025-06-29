@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Plus, EditIcon, TrashIcon, UserCircle, Mail, Phone, Calendar, AlertCircle } from 'lucide-react';
+import { Search, Plus, EditIcon, TrashIcon, UserCircle, Mail, Phone, Calendar, AlertCircle, MapPin } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Doctor, WorkingHours } from '@/types';
 import { toast } from '@/components/ui/sonner';
@@ -14,8 +14,16 @@ import { useDoctors } from '@/hooks/useDoctors';
 import { useClinic } from '@/contexts/ClinicContext';
 import { DoctorPhotoUpload } from '@/components/doctors/DoctorPhotoUpload';
 import { DoctorWorkingHours } from '@/components/doctors/DoctorWorkingHours';
+import { DoctorAddresses } from '@/components/doctors/DoctorAddresses';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
+
+interface Address {
+  name: string;
+  address: string;
+  phone: string;
+  is_primary: boolean;
+}
 
 interface DoctorFormData {
   id?: string;
@@ -27,6 +35,7 @@ interface DoctorFormData {
   phone: string;
   photo_url?: string;
   working_hours?: WorkingHours;
+  addresses?: Address[];
 }
 
 const specialities = [
@@ -67,7 +76,8 @@ const Doctors = () => {
     bio: '',
     email: '',
     phone: '',
-    working_hours: defaultWorkingHours
+    working_hours: defaultWorkingHours,
+    addresses: []
   });
   const [isEditing, setIsEditing] = useState(false);
 
@@ -103,6 +113,13 @@ const Doctors = () => {
     }));
   };
 
+  const handleAddressesChange = (addresses: Address[]) => {
+    setFormData(prev => ({
+      ...prev,
+      addresses: addresses
+    }));
+  };
+
   const handleAddDoctor = () => {
     setIsEditing(false);
     setFormData({
@@ -112,7 +129,8 @@ const Doctors = () => {
       bio: '',
       email: '',
       phone: '',
-      working_hours: defaultWorkingHours
+      working_hours: defaultWorkingHours,
+      addresses: []
     });
     setIsDialogOpen(true);
   };
@@ -127,7 +145,8 @@ const Doctors = () => {
       bio: doctor.bio || '',
       email: doctor.email || '',
       phone: doctor.phone || '',
-      working_hours: doctor.working_hours || defaultWorkingHours
+      working_hours: doctor.working_hours || defaultWorkingHours,
+      addresses: (doctor as any).addresses || []
     });
     setIsDialogOpen(true);
   };
@@ -176,7 +195,8 @@ const Doctors = () => {
             email: formData.email,
             phone: formData.phone,
             photo_url: formData.photo_url,
-            working_hours: formData.working_hours
+            working_hours: formData.working_hours,
+            addresses: formData.addresses || []
           })
           .eq('id', formData.id);
           
@@ -199,7 +219,8 @@ const Doctors = () => {
             phone: formData.phone,
             photo_url: formData.photo_url,
             clinic_id: activeClinic.id,
-            working_hours: formData.working_hours
+            working_hours: formData.working_hours,
+            addresses: formData.addresses || []
           })
           .select();
           
@@ -219,6 +240,13 @@ const Doctors = () => {
       console.error('Error:', error);
       toast.error('Ocorreu um erro ao salvar o profissional');
     }
+  };
+
+  // Função para obter o endereço principal do médico
+  const getPrimaryAddress = (doctor: Doctor) => {
+    const addresses = (doctor as any).addresses as Address[] || [];
+    const primary = addresses.find(addr => addr.is_primary);
+    return primary || addresses[0];
   };
 
   return (
@@ -264,47 +292,65 @@ const Doctors = () => {
                   <TableHead className="w-[250px]">Nome</TableHead>
                   <TableHead>Especialidade</TableHead>
                   <TableHead>CRM</TableHead>
+                  <TableHead>Endereços</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
+                    <TableCell colSpan={5} className="h-24 text-center">
                       <div className="flex justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : filteredDoctors.length > 0 ? (
-                  filteredDoctors.map((doctor) => (
-                    <TableRow key={doctor.id}>
-                      <TableCell className="font-medium">{doctor.name}</TableCell>
-                      <TableCell>{doctor.speciality}</TableCell>
-                      <TableCell>{doctor.licensenumber}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleEditDoctor(doctor)}
-                          >
-                            <EditIcon className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleDeleteDoctor(doctor.id)}
-                          >
-                            <TrashIcon className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  filteredDoctors.map((doctor) => {
+                    const primaryAddress = getPrimaryAddress(doctor);
+                    const addressCount = ((doctor as any).addresses as Address[] || []).length;
+                    
+                    return (
+                      <TableRow key={doctor.id}>
+                        <TableCell className="font-medium">{doctor.name}</TableCell>
+                        <TableCell>{doctor.speciality}</TableCell>
+                        <TableCell>{doctor.licensenumber}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-sm">
+                            <MapPin className="h-3 w-3" />
+                            {addressCount > 0 ? (
+                              <span>
+                                {addressCount} {addressCount === 1 ? 'endereço' : 'endereços'}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">Nenhum</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleEditDoctor(doctor)}
+                            >
+                              <EditIcon className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDeleteDoctor(doctor.id)}
+                            >
+                              <TrashIcon className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
+                    <TableCell colSpan={5} className="h-24 text-center">
                       Nenhum profissional encontrado.
                     </TableCell>
                   </TableRow>
@@ -316,7 +362,7 @@ const Doctors = () => {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-[600px] h-[90vh] max-h-[800px] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-[800px] h-[90vh] max-h-[900px] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Editar Profissional' : 'Adicionar Novo Profissional'}</DialogTitle>
             <DialogDescription>
@@ -430,6 +476,13 @@ const Doctors = () => {
                   rows={4}
                 />
               </div>
+
+              {/* Multiple Addresses Section */}
+              <DoctorAddresses
+                addresses={formData.addresses || []}
+                onChange={handleAddressesChange}
+                doctorName={formData.name || 'Novo Profissional'}
+              />
 
               {/* Working Hours Section */}
               {formData.working_hours && (

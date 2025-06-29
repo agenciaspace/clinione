@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/sonner';
-import { Mail, Bell, Clock, Shield } from 'lucide-react';
+import { Mail, Bell, Clock, Shield, Smartphone, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClinic } from '@/contexts/ClinicContext';
 import { NotificationService, NotificationPreferences } from '@/utils/notification-service';
@@ -31,10 +31,24 @@ export const NotificationsSettings = () => {
     quiet_hours_end: '08:00',
     weekend_quiet: true
   });
+  const [pwaInstallPrompts, setPwaInstallPrompts] = useState(true);
+  const [pwaUpdatePrompts, setPwaUpdatePrompts] = useState(true);
+  const [browserNotifications, setBrowserNotifications] = useState(false);
 
   useEffect(() => {
     if (activeClinic && user) {
       loadNotificationPreferences();
+    }
+    // Carregar configurações salvas
+    const installPrompts = localStorage.getItem('pwaInstallPromptsEnabled');
+    const updatePrompts = localStorage.getItem('pwaUpdatePromptsEnabled');
+    
+    setPwaInstallPrompts(installPrompts !== 'false');
+    setPwaUpdatePrompts(updatePrompts !== 'false');
+
+    // Verificar permissão de notificações do browser
+    if ('Notification' in window) {
+      setBrowserNotifications(Notification.permission === 'granted');
     }
   }, [activeClinic, user]);
 
@@ -81,6 +95,54 @@ export const NotificationsSettings = () => {
       ...prev,
       [key]: value
     }));
+  };
+
+  const handlePwaInstallToggle = (enabled: boolean) => {
+    setPwaInstallPrompts(enabled);
+    localStorage.setItem('pwaInstallPromptsEnabled', enabled.toString());
+    
+    if (!enabled) {
+      // Se desabilitado, marcar como rejeitado por um longo período
+      localStorage.setItem('pwaPromptLastDismissed', Date.now().toString());
+      localStorage.setItem('hasSeenInstallPrompt', 'true');
+    }
+    
+    toast.success(enabled ? 'Prompts de instalação ativados' : 'Prompts de instalação desativados');
+  };
+
+  const handlePwaUpdateToggle = (enabled: boolean) => {
+    setPwaUpdatePrompts(enabled);
+    localStorage.setItem('pwaUpdatePromptsEnabled', enabled.toString());
+    
+    if (!enabled) {
+      localStorage.setItem('pwaUpdateLastDismissed', Date.now().toString());
+    }
+    
+    toast.success(enabled ? 'Prompts de atualização ativados' : 'Prompts de atualização desativados');
+  };
+
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      setBrowserNotifications(permission === 'granted');
+      
+      if (permission === 'granted') {
+        toast.success('Notificações do navegador ativadas');
+      } else {
+        toast.error('Permissão de notificação negada');
+      }
+    }
+  };
+
+  const resetPwaPrompts = () => {
+    localStorage.removeItem('pwaPromptLastDismissed');
+    localStorage.removeItem('pwaUpdateLastDismissed');
+    localStorage.removeItem('hasSeenInstallPrompt');
+    localStorage.removeItem('hasSeenIOSInstallPrompt');
+    localStorage.removeItem('pwaPromptCount');
+    localStorage.removeItem('iosPromptLastShown');
+    
+    toast.success('Configurações de prompts PWA resetadas');
   };
 
   if (!activeClinic || !user) {
@@ -309,6 +371,117 @@ export const NotificationsSettings = () => {
               onCheckedChange={(checked) => updatePreference('weekend_quiet', checked)}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="h-5 w-5" />
+            Prompts do Aplicativo (PWA)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="pwa-install">Prompt de Instalação</Label>
+              <p className="text-sm text-muted-foreground">
+                Mostrar sugestão para instalar o app na tela inicial
+              </p>
+            </div>
+            <Switch
+              id="pwa-install"
+              checked={pwaInstallPrompts}
+              onCheckedChange={handlePwaInstallToggle}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="pwa-update">Prompt de Atualização</Label>
+              <p className="text-sm text-muted-foreground">
+                Notificar quando houver uma nova versão disponível
+              </p>
+            </div>
+            <Switch
+              id="pwa-update"
+              checked={pwaUpdatePrompts}
+              onCheckedChange={handlePwaUpdateToggle}
+            />
+          </div>
+
+          <div className="pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={resetPwaPrompts}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Resetar Prompts
+            </Button>
+            <p className="text-xs text-muted-foreground mt-1">
+              Permite que os prompts apareçam novamente mesmo se foram rejeitados
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notificações do Navegador
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Notificações Push</Label>
+              <p className="text-sm text-muted-foreground">
+                Receber notificações importantes mesmo quando o app não estiver aberto
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {browserNotifications ? 'Ativadas' : 'Desativadas'}
+              </span>
+              {!browserNotifications && (
+                <Button
+                  size="sm"
+                  onClick={requestNotificationPermission}
+                >
+                  Ativar
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {browserNotifications && (
+            <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+              <p className="text-sm text-green-700 dark:text-green-300">
+                ✓ Notificações do navegador estão ativadas. Você receberá alertas importantes sobre agendamentos e atualizações do sistema.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sobre o Aplicativo Web (PWA)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            O Clini.One é um Progressive Web App (PWA) que oferece uma experiência similar a um aplicativo nativo:
+          </p>
+          <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+            <li>• Funciona offline após a primeira visita</li>
+            <li>• Pode ser instalado na tela inicial do dispositivo</li>
+            <li>• Recebe atualizações automáticas</li>
+            <li>• Envia notificações importantes</li>
+            <li>• Carregamento rápido e interface responsiva</li>
+          </ul>
         </CardContent>
       </Card>
 
