@@ -182,7 +182,8 @@ export class NotificationService {
     return {
       ...data,
       template_type: data.template_type as EmailTemplate['template_type'],
-      variables: Array.isArray(data.variables) ? data.variables : JSON.parse(data.variables as string)
+      // @ts-ignore - cast to any due to Supabase type mismatch
+      variables: Array.isArray((data as any).variables) ? (data as any).variables : JSON.parse((data as any).variables as string)
     };
   }
 
@@ -208,7 +209,8 @@ export class NotificationService {
     return {
       ...data,
       template_type: data.template_type as EmailTemplate['template_type'],
-      variables: Array.isArray(data.variables) ? data.variables : JSON.parse(data.variables as string)
+      // @ts-ignore
+      variables: Array.isArray((data as any).variables) ? (data as any).variables : JSON.parse((data as any).variables as string)
     };
   }
 

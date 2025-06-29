@@ -91,8 +91,17 @@ export const EmailSettings = () => {
       }
 
       if (data) {
-        const { clinic_id, created_at, updated_at, ...configData } = data;
-        setSmtpConfig(configData);
+        const { clinic_id, created_at, updated_at, use_tls, secure, ...rest } = data as any;
+        setSmtpConfig({
+          ...rest,
+          port: data.port,
+          username: data.username,
+          password: data.password,
+          from_email: data.from_email,
+          from_name: data.from_name,
+          secure: secure !== undefined ? secure : use_tls ?? false,
+          is_active: data.is_active
+        });
         setSmtpConfigured(true);
       } else {
         setSmtpConfigured(false);
@@ -131,8 +140,8 @@ export const EmailSettings = () => {
           subject: template.subject,
           html_content: template.html_content,
           text_content: template.text_content,
-          variables: Array.isArray(template.variables) ? 
-            template.variables.filter((v): v is string => typeof v === 'string') : []
+          variables: Array.isArray((template as any).variables) ? 
+            (template as any).variables.filter((v: any): v is string => typeof v === 'string') : []
         }));
         setEmailTemplates(templates);
       }
@@ -154,8 +163,10 @@ export const EmailSettings = () => {
     
     setSaving(true);
     try {
-      const configToSave: SMTPConfig = {
-        ...smtpConfig,
+      const { secure, ...smtpRest } = smtpConfig as any;
+      const configToSave = {
+        ...smtpRest,
+        use_tls: secure,
         clinic_id: activeClinic.id
       };
 

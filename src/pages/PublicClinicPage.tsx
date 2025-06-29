@@ -164,7 +164,7 @@ const PublicClinicPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
       {isPreview && (
         <PreviewBanner
           isPublished={clinic.is_published}
@@ -205,20 +205,20 @@ const PublicClinicPage: React.FC = () => {
           {/* Main Content */}
           <div className={`${isMobile ? 'order-1' : 'lg:col-span-2'} space-y-6 sm:space-y-8`}>
             {/* About Section */}
-            <section className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
+            <section className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 p-4 sm:p-6 rounded-lg shadow-sm">
               <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Sobre a Clínica</h2>
-              <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
                 {clinic.description || "Nenhuma informação sobre a clínica disponível."}
               </p>
             </section>
             
             {/* Doctors Section */}
-            <section className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
+            <section className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 p-4 sm:p-6 rounded-lg shadow-sm">
               <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Nossos Profissionais</h2>
               {loadingDoctors ? (
                 <div className="flex items-center justify-center p-4">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                  <span className="ml-2 text-gray-600">Carregando profissionais...</span>
+                  <span className="ml-2 text-gray-600 dark:text-gray-300">Carregando profissionais...</span>
                 </div>
               ) : (
                 <DoctorsList doctors={doctors} />
@@ -229,7 +229,7 @@ const PublicClinicPage: React.FC = () => {
           {/* Sidebar */}
           <div className={`${isMobile ? 'order-2' : 'lg:col-span-1'} space-y-4 sm:space-y-6`}>
             {/* Contact Section */}
-            <section className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
+            <section className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 p-4 sm:p-6 rounded-lg shadow-sm">
               <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Contato</h2>
               <ContactInfo
                 address={clinic.address}
@@ -240,7 +240,7 @@ const PublicClinicPage: React.FC = () => {
             </section>
             
             {/* Working Hours */}
-            <section className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
+            <section className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 p-4 sm:p-6 rounded-lg shadow-sm">
               <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Horário de Funcionamento</h2>
               <WorkingHoursComponent workingHours={clinic.working_hours} clinicId={clinic.id} />
             </section>

@@ -17,6 +17,7 @@ import { DoctorWorkingHours } from '@/components/doctors/DoctorWorkingHours';
 import { DoctorAddresses } from '@/components/doctors/DoctorAddresses';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 
 interface Address {
   name: string;
@@ -196,7 +197,8 @@ const Doctors = () => {
             phone: formData.phone,
             photo_url: formData.photo_url,
             working_hours: formData.working_hours,
-            addresses: formData.addresses || []
+            // @ts-ignore - casting addresses array to Json for Supabase insert
+            addresses: (formData.addresses as unknown) as Json || []
           })
           .eq('id', formData.id);
           
@@ -220,7 +222,8 @@ const Doctors = () => {
             photo_url: formData.photo_url,
             clinic_id: activeClinic.id,
             working_hours: formData.working_hours,
-            addresses: formData.addresses || []
+            // @ts-ignore - casting addresses array to Json for Supabase insert
+            addresses: (formData.addresses as unknown) as Json || []
           })
           .select();
           

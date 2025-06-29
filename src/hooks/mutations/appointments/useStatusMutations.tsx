@@ -46,7 +46,8 @@ export const useAppointmentStatusMutations = (clinicId: string | undefined) => {
 
       // Enviar notificação de cancelamento
       try {
-        if (appointment?.patient_email && clinicId) {
+        // @ts-ignore - appointment may include patient_email
+        if ((appointment as any)?.patient_email && clinicId) {
           // Buscar dados da clínica
           const { data: clinic } = await supabase
             .from('clinics')
