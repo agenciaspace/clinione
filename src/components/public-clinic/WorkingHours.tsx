@@ -29,7 +29,7 @@ export const WorkingHoursComponent = ({ workingHours, clinicId }: WorkingHoursPr
   return (
     <div className="bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700">
       <h2 className="text-lg font-semibold mb-4 flex items-center">
-        <Clock className="h-5 w-5 mr-2 text-blue-500" />
+        <Clock className="h-5 w-5 mr-2 text-blue-500 dark:text-yellow-500" />
         Horário de Funcionamento
       </h2>
       

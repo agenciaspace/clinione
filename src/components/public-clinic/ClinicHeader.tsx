@@ -35,8 +35,8 @@ export const ClinicHeader = ({ name, logo, photo, address, id }: ClinicHeaderPro
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{name}</h1>
-            <p className="text-gray-500 dark:text-gray-400 flex items-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-yellow-400">{name}</h1>
+            <p className="text-gray-500 dark:text-yellow-300 flex items-center">
               <MapPin className="h-4 w-4 mr-1" />
               {address ? address.split(',')[0] : "Endereço não disponível"}
             </p>
