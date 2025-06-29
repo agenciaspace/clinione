@@ -310,6 +310,53 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          html_content: string
+          id: string
+          is_active: boolean
+          subject: string
+          template_type: string
+          text_content: string | null
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          html_content: string
+          id?: string
+          is_active?: boolean
+          subject: string
+          template_type: string
+          text_content?: string | null
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          html_content?: string
+          id?: string
+          is_active?: boolean
+          subject?: string
+          template_type?: string
+          text_content?: string | null
+          updated_at?: string
+          variables?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_forecasts: {
         Row: {
           appointment_id: string | null
@@ -621,6 +668,184 @@ export type Database = {
           },
         ]
       }
+      notification_logs: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          event_data: Json
+          event_type: string
+          id: string
+          notification_id: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          event_data?: Json
+          event_type: string
+          id?: string
+          notification_id: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          event_data?: Json
+          event_type?: string
+          id?: string
+          notification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notification_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          appointment_cancellations: boolean
+          appointment_confirmations: boolean
+          appointment_reminders: boolean
+          appointment_reschedules: boolean
+          clinic_id: string
+          created_at: string
+          financial_reports: boolean
+          id: string
+          push_cancellations: boolean
+          push_new_appointments: boolean
+          push_patient_messages: boolean
+          quiet_hours_end: string
+          quiet_hours_start: string
+          system_updates: boolean
+          updated_at: string
+          user_id: string
+          weekend_quiet: boolean
+        }
+        Insert: {
+          appointment_cancellations?: boolean
+          appointment_confirmations?: boolean
+          appointment_reminders?: boolean
+          appointment_reschedules?: boolean
+          clinic_id: string
+          created_at?: string
+          financial_reports?: boolean
+          id?: string
+          push_cancellations?: boolean
+          push_new_appointments?: boolean
+          push_patient_messages?: boolean
+          quiet_hours_end?: string
+          quiet_hours_start?: string
+          system_updates?: boolean
+          updated_at?: string
+          user_id: string
+          weekend_quiet?: boolean
+        }
+        Update: {
+          appointment_cancellations?: boolean
+          appointment_confirmations?: boolean
+          appointment_reminders?: boolean
+          appointment_reschedules?: boolean
+          clinic_id?: string
+          created_at?: string
+          financial_reports?: boolean
+          id?: string
+          push_cancellations?: boolean
+          push_new_appointments?: boolean
+          push_patient_messages?: boolean
+          quiet_hours_end?: string
+          quiet_hours_start?: string
+          system_updates?: boolean
+          updated_at?: string
+          user_id?: string
+          weekend_quiet?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_queue: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          error_message: string | null
+          html_content: string
+          id: string
+          max_retries: number
+          metadata: Json
+          recipient_email: string
+          recipient_name: string | null
+          retry_count: number
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          template_type: string | null
+          text_content: string | null
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          error_message?: string | null
+          html_content: string
+          id?: string
+          max_retries?: number
+          metadata?: Json
+          recipient_email: string
+          recipient_name?: string | null
+          retry_count?: number
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template_type?: string | null
+          text_content?: string | null
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          error_message?: string | null
+          html_content?: string
+          id?: string
+          max_retries?: number
+          metadata?: Json
+          recipient_email?: string
+          recipient_name?: string | null
+          retry_count?: number
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_type?: string | null
+          text_content?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_queue_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       procedures: {
         Row: {
           clinic_id: string
@@ -658,6 +883,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "procedures_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smtp_config: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          from_email: string
+          from_name: string
+          host: string
+          id: string
+          is_active: boolean
+          password: string
+          port: number
+          secure: boolean
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          from_email: string
+          from_name: string
+          host: string
+          id?: string
+          is_active?: boolean
+          password: string
+          port?: number
+          secure?: boolean
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          from_email?: string
+          from_name?: string
+          host?: string
+          id?: string
+          is_active?: boolean
+          password?: string
+          port?: number
+          secure?: boolean
+          updated_at?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smtp_config_clinic_id_fkey"
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"

@@ -175,7 +175,15 @@ export class NotificationService {
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    
+    if (!data) return null;
+    
+    // Convert the data to our EmailTemplate interface
+    return {
+      ...data,
+      template_type: data.template_type as EmailTemplate['template_type'],
+      variables: Array.isArray(data.variables) ? data.variables : JSON.parse(data.variables as string)
+    };
   }
 
   static async saveEmailTemplate(template: EmailTemplate): Promise<EmailTemplate> {
@@ -195,7 +203,13 @@ export class NotificationService {
       .single();
 
     if (error) throw error;
-    return data;
+    
+    // Convert the data to our EmailTemplate interface
+    return {
+      ...data,
+      template_type: data.template_type as EmailTemplate['template_type'],
+      variables: Array.isArray(data.variables) ? data.variables : JSON.parse(data.variables as string)
+    };
   }
 
   // Notification Queue
@@ -220,7 +234,13 @@ export class NotificationService {
       .single();
 
     if (error) throw error;
-    return data;
+    
+    // Convert the data to our NotificationQueueItem interface
+    return {
+      ...data,
+      status: data.status as NotificationQueueItem['status'],
+      metadata: data.metadata as Record<string, any>
+    };
   }
 
   static async queueAppointmentNotification(

@@ -10,6 +10,7 @@ import { CheckCircle, AlertCircle, Mail, Send, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClinic } from '@/contexts/ClinicContext';
 import { NotificationService, SMTPConfig } from '@/utils/notification-service';
+import { EmailTemplateEditor } from '@/components/settings/EmailTemplateEditor';
 
 export const EmailSettings = () => {
   const { user } = useAuth();
@@ -17,6 +18,14 @@ export const EmailSettings = () => {
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
   const [smtpConfigured, setSmtpConfigured] = useState(false);
+  
+  // Template editor state
+  const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<{
+    type: string;
+    title: string;
+    description: string;
+  } | null>(null);
   
   const [smtpConfig, setSmtpConfig] = useState<SMTPConfig>({
     clinic_id: activeClinic?.id || '',
@@ -99,6 +108,39 @@ export const EmailSettings = () => {
       setTestLoading(false);
     }
   };
+
+  const handleEditTemplate = (type: string, title: string, description: string) => {
+    setSelectedTemplate({ type, title, description });
+    setTemplateEditorOpen(true);
+  };
+
+  const handleCloseTemplateEditor = () => {
+    setTemplateEditorOpen(false);
+    setSelectedTemplate(null);
+  };
+
+  const emailTemplates = [
+    {
+      type: 'appointment_confirmation',
+      title: 'Confirmação de agendamento',
+      description: 'Email enviado quando uma consulta é agendada'
+    },
+    {
+      type: 'appointment_reminder',
+      title: 'Lembrete de consulta',
+      description: 'Email enviado 24h antes da consulta'
+    },
+    {
+      type: 'appointment_cancellation',
+      title: 'Cancelamento',
+      description: 'Email enviado quando uma consulta é cancelada'
+    },
+    {
+      type: 'appointment_reschedule',
+      title: 'Reagendamento',
+      description: 'Email enviado quando uma consulta é reagendada'
+    }
+  ];
 
   if (!activeClinic) {
     return (
@@ -269,37 +311,15 @@ export const EmailSettings = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-2">Confirmação de agendamento</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Email enviado quando uma consulta é agendada
-              </p>
-              <Button variant="outline" size="sm">Editar template</Button>
-            </div>
-
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-2">Lembrete de consulta</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Email enviado 24h antes da consulta
-              </p>
-              <Button variant="outline" size="sm">Editar template</Button>
-            </div>
-
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-2">Cancelamento</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Email enviado quando uma consulta é cancelada
-              </p>
-              <Button variant="outline" size="sm">Editar template</Button>
-            </div>
-
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-2">Reagendamento</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Email enviado quando uma consulta é reagendada
-              </p>
-              <Button variant="outline" size="sm">Editar template</Button>
-            </div>
+            {emailTemplates.map((template) => (
+              <div key={template.type} className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">{template.title}</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {template.description}
+                </p>
+                <Button variant="outline" size="sm" onClick={() => handleEditTemplate(template.type, template.title, template.description)}>Editar template</Button>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -344,6 +364,17 @@ export const EmailSettings = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Template Editor Modal */}
+      {selectedTemplate && (
+        <EmailTemplateEditor
+          isOpen={templateEditorOpen}
+          onClose={handleCloseTemplateEditor}
+          templateType={selectedTemplate.type}
+          templateTitle={selectedTemplate.title}
+          templateDescription={selectedTemplate.description}
+        />
+      )}
     </div>
   );
 }; 
