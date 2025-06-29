@@ -81,15 +81,15 @@ export function FinancialWithCategories({
 
       try {
         setLoadingCategories(true);
-        const { data, error } = await supabase
-          .from('financial_categories')
-          .select('*')
-          .eq('clinic_id', activeClinic.id)
-          .eq('is_active', true)
-          .order('name');
-
-        if (error) throw error;
-        setCategories(data || []);
+        // Temporariamente usando categorias mockadas até a tabela ser criada
+        const mockCategories: FinancialCategory[] = [
+          { id: '1', clinic_id: activeClinic.id, name: 'Consultas', type: 'income', color: '#10B981', icon: 'UserCheck', is_active: true },
+          { id: '2', clinic_id: activeClinic.id, name: 'Procedimentos', type: 'income', color: '#3B82F6', icon: 'Activity', is_active: true },
+          { id: '3', clinic_id: activeClinic.id, name: 'Exames', type: 'income', color: '#8B5CF6', icon: 'FileText', is_active: true },
+          { id: '4', clinic_id: activeClinic.id, name: 'Aluguel', type: 'expense', color: '#EF4444', icon: 'Home', is_active: true },
+          { id: '5', clinic_id: activeClinic.id, name: 'Salários', type: 'expense', color: '#F59E0B', icon: 'Users', is_active: true },
+        ];
+        setCategories(mockCategories);
       } catch (error) {
         console.error('Error fetching categories:', error);
         toast.error('Erro ao carregar categorias');
@@ -139,15 +139,18 @@ export function FinancialWithCategories({
       const { data, error } = await supabase
         .from('transactions')
         .insert(newTransaction)
-        .select(`
-          *,
-          category:financial_categories(*)
-        `);
+        .select('*');
 
       if (error) throw error;
 
       if (data && data[0]) {
-        onTransactionAdded(data[0] as ExtendedTransaction);
+        // Temporariamente adicionando a categoria mockada
+        const category = categories.find(c => c.id === newTransactionCategoryId);
+        const transactionWithCategory = {
+          ...data[0],
+          category
+        };
+        onTransactionAdded(transactionWithCategory as ExtendedTransaction);
         
         // Reset form
         setNewTransactionDescription('');
