@@ -103,13 +103,13 @@ const Login = () => {
   };
 
   if (needsEmailConfirmation) {
-    return <div className="flex min-h-screen bg-[#FFFAE6] items-center justify-center p-4 sm:p-6">
+    return <div className="flex min-h-screen bg-[#FFFAE6] dark:bg-zinc-900 items-center justify-center p-4 sm:p-6">
         <EmailConfirmationMessage email={email} onResendEmail={handleResendConfirmation} onLogin={() => setNeedsEmailConfirmation(false)} />
       </div>;
   }
 
   if (needsMFA) {
-    return <div className="flex min-h-screen bg-[#FFFAE6] items-center justify-center p-4 sm:p-6">
+    return <div className="flex min-h-screen bg-[#FFFAE6] dark:bg-zinc-900 items-center justify-center p-4 sm:p-6">
         <TwoFactorVerification 
           onVerificationComplete={handleMFAVerificationComplete}
           onCancel={handleMFACancel}
@@ -117,27 +117,27 @@ const Login = () => {
       </div>;
   }
 
-  return <div className="flex min-h-screen bg-[#FFFAE6]">
+  return <div className="flex min-h-screen bg-[#FFFAE6] dark:bg-zinc-900">
       {/* Left side - Features (hidden on mobile) */}
-      <div className="flex-1 hidden lg:flex bg-[#FFD600] relative">
+      <div className="flex-1 hidden lg:flex bg-[#FFD600] dark:bg-zinc-800 relative">
         <div className="absolute inset-0 flex flex-col justify-center items-center text-black p-8 xl:p-12">
           <p className="text-lg xl:text-xl mb-6 xl:mb-8 max-w-md text-center">
             Uma plataforma completa para gestão da sua clínica e presença online.
           </p>
           <div className="grid grid-cols-2 gap-3 xl:gap-4 w-full max-w-lg">
-            <div className="bg-[#FFFAE6]/80 p-3 xl:p-4 rounded-lg">
+            <div className="bg-[#FFFAE6]/80 dark:bg-zinc-700/80 p-3 xl:p-4 rounded-lg">
               <h3 className="font-semibold mb-2 text-sm xl:text-base">Agendamentos</h3>
               <p className="text-xs xl:text-sm">Gerencie consultas com facilidade</p>
             </div>
-            <div className="bg-[#FFFAE6]/80 p-3 xl:p-4 rounded-lg">
+            <div className="bg-[#FFFAE6]/80 dark:bg-zinc-700/80 p-3 xl:p-4 rounded-lg">
               <h3 className="font-semibold mb-2 text-sm xl:text-base">Pacientes</h3>
               <p className="text-xs xl:text-sm">Mantenha todos os dados organizados</p>
             </div>
-            <div className="bg-[#FFFAE6]/80 p-3 xl:p-4 rounded-lg">
+            <div className="bg-[#FFFAE6]/80 dark:bg-zinc-700/80 p-3 xl:p-4 rounded-lg">
               <h3 className="font-semibold mb-2 text-sm xl:text-base">Presença Online</h3>
               <p className="text-xs xl:text-sm">Site profissional para sua clínica</p>
             </div>
-            <div className="bg-[#FFFAE6]/80 p-3 xl:p-4 rounded-lg">
+            <div className="bg-[#FFFAE6]/80 dark:bg-zinc-700/80 p-3 xl:p-4 rounded-lg">
               <h3 className="font-semibold mb-2 text-sm xl:text-base">Relatórios</h3>
               <p className="text-xs xl:text-sm">Dados para decisões estratégicas</p>
             </div>
