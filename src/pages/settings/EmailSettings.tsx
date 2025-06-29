@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +18,7 @@ export const EmailSettings = () => {
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
   const [smtpConfigured, setSmtpConfigured] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Template editor state
   const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
@@ -28,7 +29,7 @@ export const EmailSettings = () => {
   } | null>(null);
   
   const [smtpConfig, setSmtpConfig] = useState<SMTPConfig>({
-    clinic_id: activeClinic?.id || '',
+    clinic_id: '',
     host: '',
     port: 587,
     username: '',
@@ -39,37 +40,54 @@ export const EmailSettings = () => {
     is_active: true
   });
 
-  useEffect(() => {
-    if (activeClinic) {
-      loadSmtpConfig();
-    }
-  }, [activeClinic]);
-
-  const loadSmtpConfig = async () => {
-    if (!activeClinic) return;
+  // Use useCallback to prevent function recreation on every render
+  const loadSmtpConfig = useCallback(async () => {
+    if (!activeClinic?.id) return;
 
     try {
       const config = await NotificationService.getSmtpConfig(activeClinic.id);
       if (config) {
         setSmtpConfig(config);
         setSmtpConfigured(true);
+      } else {
+        // Initialize with clinic_id when no config exists
+        setSmtpConfig(prev => ({
+          ...prev,
+          clinic_id: activeClinic.id
+        }));
+        setSmtpConfigured(false);
       }
     } catch (error) {
       console.error('Error loading SMTP config:', error);
+      setSmtpConfigured(false);
+    } finally {
+      setIsInitialized(true);
     }
-  };
+  }, [activeClinic?.id]);
 
-  const handleSmtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Use useEffect with proper dependencies
+  useEffect(() => {
+    if (activeClinic?.id && !isInitialized) {
+      loadSmtpConfig();
+    }
+  }, [activeClinic?.id, isInitialized, loadSmtpConfig]);
+
+  // Reset initialization when clinic changes
+  useEffect(() => {
+    setIsInitialized(false);
+  }, [activeClinic?.id]);
+
+  const handleSmtpChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSmtpConfig(prev => ({
       ...prev,
       [name]: name === 'port' ? parseInt(value) || 587 : value
     }));
-  };
+  }, []);
 
-  const handleSaveSmtpConfig = async (e: React.FormEvent) => {
+  const handleSaveSmtpConfig = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeClinic) return;
+    if (!activeClinic?.id) return;
 
     setLoading(true);
     
@@ -88,10 +106,10 @@ export const EmailSettings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeClinic?.id, smtpConfig]);
 
-  const handleTestSmtp = async () => {
-    if (!activeClinic) return;
+  const handleTestSmtp = useCallback(async () => {
+    if (!activeClinic?.id) return;
 
     setTestLoading(true);
     try {
@@ -107,19 +125,20 @@ export const EmailSettings = () => {
     } finally {
       setTestLoading(false);
     }
-  };
+  }, [activeClinic?.id, smtpConfig]);
 
-  const handleEditTemplate = (type: string, title: string, description: string) => {
+  const handleEditTemplate = useCallback((type: string, title: string, description: string) => {
     setSelectedTemplate({ type, title, description });
     setTemplateEditorOpen(true);
-  };
+  }, []);
 
-  const handleCloseTemplateEditor = () => {
+  const handleCloseTemplateEditor = useCallback(() => {
     setTemplateEditorOpen(false);
     setSelectedTemplate(null);
-  };
+  }, []);
 
-  const emailTemplates = [
+  // Memoize email templates to prevent recreation
+  const emailTemplates = useMemo(() => [
     {
       type: 'appointment_confirmation',
       title: 'Confirmação de agendamento',
@@ -140,7 +159,7 @@ export const EmailSettings = () => {
       title: 'Reagendamento',
       description: 'Email enviado quando uma consulta é reagendada'
     }
-  ];
+  ], []);
 
   if (!activeClinic) {
     return (
@@ -268,7 +287,7 @@ export const EmailSettings = () => {
               <Switch 
                 id="secure" 
                 checked={smtpConfig.secure}
-                onCheckedChange={(checked) => setSmtpConfig({...smtpConfig, secure: checked})}
+                onCheckedChange={(checked) => setSmtpConfig(prev => ({...prev, secure: checked}))}
               />
               <Label htmlFor="secure">Usar conexão segura (TLS/SSL)</Label>
             </div>
@@ -277,7 +296,7 @@ export const EmailSettings = () => {
               <Switch 
                 id="is_active" 
                 checked={smtpConfig.is_active}
-                onCheckedChange={(checked) => setSmtpConfig({...smtpConfig, is_active: checked})}
+                onCheckedChange={(checked) => setSmtpConfig(prev => ({...prev, is_active: checked}))}
               />
               <Label htmlFor="is_active">Ativar envio de emails</Label>
             </div>
@@ -317,7 +336,13 @@ export const EmailSettings = () => {
                 <p className="text-sm text-muted-foreground mb-3">
                   {template.description}
                 </p>
-                <Button variant="outline" size="sm" onClick={() => handleEditTemplate(template.type, template.title, template.description)}>Editar template</Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleEditTemplate(template.type, template.title, template.description)}
+                >
+                  Editar template
+                </Button>
               </div>
             ))}
           </div>

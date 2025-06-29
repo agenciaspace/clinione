@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -264,18 +264,13 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
   templateDescription
 }) => {
   const { activeClinic } = useClinic();
-  const [loading, setLoading] = useState(false);
   const [template, setTemplate] = useState<EmailTemplate | null>(null);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('edit');
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && activeClinic) {
-      loadTemplate();
-    }
-  }, [isOpen, activeClinic, templateType]);
-
-  const loadTemplate = async () => {
-    if (!activeClinic) return;
+  const loadTemplate = useCallback(async () => {
+    if (!activeClinic?.id) return;
 
     try {
       const existingTemplate = await NotificationService.getEmailTemplate(activeClinic.id, templateType);
@@ -300,11 +295,32 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
     } catch (error) {
       console.error('Error loading template:', error);
       toast.error('Erro ao carregar template');
+    } finally {
+      setIsInitialized(true);
     }
-  };
+  }, [activeClinic?.id, templateType]);
 
-  const handleSave = async () => {
-    if (!template || !activeClinic) return;
+  useEffect(() => {
+    if (isOpen && activeClinic?.id && !isInitialized) {
+      loadTemplate();
+    }
+  }, [isOpen, activeClinic?.id, isInitialized, loadTemplate]);
+
+  // Reset initialization when dialog closes or template type changes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsInitialized(false);
+      setTemplate(null);
+      setActiveTab('edit');
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    setIsInitialized(false);
+  }, [templateType]);
+
+  const handleSave = useCallback(async () => {
+    if (!template || !activeClinic?.id) return;
 
     setLoading(true);
     try {
@@ -317,11 +333,11 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [template, activeClinic?.id, onClose]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     const defaultTemplate = DEFAULT_TEMPLATES[templateType as keyof typeof DEFAULT_TEMPLATES];
-    if (defaultTemplate && activeClinic) {
+    if (defaultTemplate && activeClinic?.id) {
       setTemplate({
         clinic_id: activeClinic.id,
         template_type: templateType as any,
@@ -333,18 +349,18 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
       });
       toast.success('Template resetado para o padrão');
     }
-  };
+  }, [templateType, activeClinic?.id]);
 
-  const handleInputChange = (field: keyof EmailTemplate, value: string) => {
+  const handleInputChange = useCallback((field: keyof EmailTemplate, value: string) => {
     if (!template) return;
     
-    setTemplate({
-      ...template,
+    setTemplate(prev => prev ? {
+      ...prev,
       [field]: value
-    });
-  };
+    } : null);
+  }, [template]);
 
-  const renderPreview = () => {
+  const renderPreview = useCallback(() => {
     if (!template) return null;
 
     // Create sample data for preview
@@ -370,7 +386,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
         <div dangerouslySetInnerHTML={{ __html: previewContent }} />
       </div>
     );
-  };
+  }, [template, activeClinic?.name]);
 
   if (!template) return null;
 
@@ -472,13 +488,12 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   </div>
 
                   <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <h5 className="font-medium text-blue-900 mb-2">Como usar:</h5>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• Digite <code>{`{{nome_da_variavel}}`}</code> no seu template</li>
-                      <li>• As variáveis são substituídas automaticamente</li>
-                      <li>• Use tanto no assunto quanto no conteúdo</li>
-                      <li>• Variáveis não encontradas aparecerão como texto normal</li>
-                    </ul>
+                    <h4 className="font-medium text-blue-900 mb-2">Como usar:</h4>
+                    <p className="text-sm text-blue-800">
+                      Para usar uma variável, digite <code className="bg-blue-100 px-1 rounded">{'{{nome_da_variavel}}'}</code> no 
+                      seu template. Por exemplo: <code className="bg-blue-100 px-1 rounded">{'{{patient_name}}'}</code> será 
+                      substituído pelo nome do paciente.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -487,18 +502,17 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
         </div>
 
         <DialogFooter className="flex justify-between">
-          <Button variant="outline" onClick={handleReset} className="flex items-center gap-2">
-            <RotateCcw className="h-4 w-4" />
-            Resetar para Padrão
+          <Button variant="outline" onClick={handleReset}>
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Resetar
           </Button>
-          
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={loading} className="flex items-center gap-2">
-              <Save className="h-4 w-4" />
-              {loading ? 'Salvando...' : 'Salvar Template'}
+            <Button onClick={handleSave} disabled={loading}>
+              <Save className="h-4 w-4 mr-2" />
+              {loading ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         </DialogFooter>
