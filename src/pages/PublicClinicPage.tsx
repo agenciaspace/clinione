@@ -198,12 +198,10 @@ const PublicClinicPage: React.FC = () => {
         </div>
         
         <div className={`${
-          isMobile 
-            ? 'flex flex-col space-y-6' 
-            : 'grid grid-cols-1 lg:grid-cols-3 gap-8'
+          isMobile ? 'flex flex-col space-y-6' : 'grid grid-cols-12 gap-8'
         }`}>
           {/* Main Content */}
-          <div className={`${isMobile ? 'order-1' : 'lg:col-span-2'} space-y-6 sm:space-y-8`}>
+          <div className={`${isMobile ? 'order-1' : 'lg:col-span-8'} space-y-6 sm:space-y-8`}>
             {/* About Section */}
             <section className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 p-4 sm:p-6 rounded-lg shadow-sm border-l-4 border-transparent dark:border-yellow-500">
               <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Sobre a Clínica</h2>
@@ -227,7 +225,7 @@ const PublicClinicPage: React.FC = () => {
           </div>
           
           {/* Sidebar */}
-          <div className={`${isMobile ? 'order-2' : 'lg:col-span-1'} space-y-4 sm:space-y-6`}>
+          <div className={`${isMobile ? 'order-2' : 'lg:col-span-4 lg:sticky lg:top-24'} space-y-4 sm:space-y-6`}>
             {/* Contact Section */}
             <section className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 p-4 sm:p-6 rounded-lg shadow-sm border-l-4 border-transparent dark:border-yellow-500">
               <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Contato</h2>

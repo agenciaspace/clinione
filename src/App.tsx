@@ -32,6 +32,7 @@ import PublicClinicPage from "./pages/PublicClinicPage";
 import NotFound from "./pages/NotFound";
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { DevToolToggle } from './components/dev/DevToolToggle';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +77,7 @@ const App = () => (
             <Sonner />
             <OfflineIndicator />
             <PWAInstallPrompt />
+            <DevToolToggle />
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Navigate to="/login" replace />} />

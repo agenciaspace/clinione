@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { supabase } from '@/integrations/supabase/client';
@@ -340,6 +339,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Permitir override de função de papéis em ambiente de desenvolvimento
+  const devRoleOverride = (typeof window !== 'undefined' && window.localStorage.getItem('devRoleOverride')) as UserRole | null;
+  const effectiveRoles = devRoleOverride ? [devRoleOverride] : userRoles;
+
+  const hasRoleWithOverride = (role: UserRole) => {
+    // Se houver override e for admin, sempre true
+    if (devRoleOverride === 'admin') {
+      return true;
+    }
+    if (devRoleOverride) {
+      return devRoleOverride === role;
+    }
+    // Se usuário é admin, também tem acesso total
+    if (userRoles.includes('admin')) {
+      return true;
+    }
+    return userRoles.includes(role);
+  };
+
   return (
     <AuthContext.Provider 
       value={{ 
@@ -351,8 +369,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         resetPassword,
         getAccessToken,
-        hasRole,
-        userRoles,
+        hasRole: hasRoleWithOverride,
+        userRoles: effectiveRoles,
         completeMFALogin
       }}
     >

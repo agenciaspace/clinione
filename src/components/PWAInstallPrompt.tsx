@@ -128,6 +128,28 @@ export function PWAInstallPrompt() {
     };
   }, []);
 
+  // NEW: Extra verification using getInstalledRelatedApps (Chrome / Edge)
+  useEffect(() => {
+    // Some browsers support querying related installed apps (including the current PWA)
+    const checkRelatedApps = async () => {
+      try {
+        const nav: any = navigator as any;
+        if (typeof nav.getInstalledRelatedApps === 'function') {
+          const related = await nav.getInstalledRelatedApps();
+          if (Array.isArray(related) && related.length > 0) {
+            setIsInstalled(true);
+            localStorage.setItem('pwaInstalled', 'true');
+          }
+        }
+      } catch (error) {
+        // Silently ignore – feature not available or other issue
+        console.debug('getInstalledRelatedApps check failed', error);
+      }
+    };
+
+    checkRelatedApps();
+  }, []);
+
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
 

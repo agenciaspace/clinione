@@ -19,7 +19,7 @@ interface ThemeContextType {
 }
 
 const defaultSettings: ThemeSettings = {
-  theme: 'light',
+  theme: 'system',
   language: 'pt-BR',
   fontSize: 'medium',
   serifFont: false,

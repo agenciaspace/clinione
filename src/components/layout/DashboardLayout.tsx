@@ -6,6 +6,8 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { toast } from '@/components/ui/sonner';
 import NoClinicSelected from '../clinic/NoClinicSelected';
+import { useBreakpoint } from '../../hooks/use-breakpoint';
+import { MobileBottomNav } from './MobileBottomNav';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -16,6 +18,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, requ
   const { isAuthenticated, isLoading } = useAuth();
   const { activeClinic, isLoadingClinics } = useClinic();
   const navigate = useNavigate();
+  const breakpoint = useBreakpoint();
 
   // Redirecionamento se não estiver autenticado
   React.useEffect(() => {
@@ -41,13 +44,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, requ
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar para desktop */}
-      <div className="hidden md:block md:w-64">
-        <Sidebar />
-      </div>
+      {/* Sidebar somente no desktop (≥1024px) */}
+      {breakpoint === 'desktop' && (
+        <div className="w-64 hidden lg:block">
+          <Sidebar />
+        </div>
+      )}
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-background">
           {requireClinic && !activeClinic ? (
             <NoClinicSelected />
           ) : (
@@ -55,6 +60,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, requ
           )}
         </main>
       </div>
+
+      {/* Navegação inferior apenas no mobile (<768px) */}
+      {breakpoint === 'mobile' && <MobileBottomNav />}
     </div>
   );
 };
