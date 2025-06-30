@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -76,24 +75,24 @@ const features = [
 
 export const FeaturesSection = () => {
   return (
-    <section id="features" className="py-12 md:py-16 bg-white">
+    <section id="features" className="py-12 md:py-16 bg-white dark:bg-zinc-900 dark:text-gray-100">
       <div className="container mx-auto px-4">
         <div className="text-center mb-10 md:mb-16">
           <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">
             Tudo que você precisa em um único lugar
           </h2>
-          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Nossa plataforma foi desenvolvida com foco nas necessidades reais de clínicas de pequeno e médio porte.
           </p>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {features.map((feature, index) => (
-            <Card key={index}>
+            <Card key={index} className="dark:bg-zinc-800">
               <CardHeader className="pb-2">
                 <feature.icon className="h-10 w-10 text-[#FFD400] mb-2" />
                 <CardTitle>{feature.title}</CardTitle>
-                <CardDescription>{feature.description}</CardDescription>
+                <CardDescription className="dark:text-gray-400">{feature.description}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">

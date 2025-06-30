@@ -27,7 +27,7 @@ export const DoctorWorkingHours = ({
         </Label>
       </div>
       
-      <div className="bg-gray-50 p-4 rounded-lg border">
+      <div className="bg-gray-50 dark:bg-zinc-800 p-4 rounded-lg border dark:border-zinc-700">
         <p className="text-xs text-gray-600 mb-3">
           Configure os horários individuais deste profissional. 
           Estes horários têm prioridade sobre os horários gerais da clínica.
@@ -39,7 +39,7 @@ export const DoctorWorkingHours = ({
         />
       </div>
       
-      <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded-md">
+      <div className="text-xs text-gray-400 dark:text-gray-400 bg-blue-50 dark:bg-zinc-800 p-3 rounded-md border dark:border-zinc-700">
         <strong>💡 Dica:</strong> Os horários padrão são das 09:00 às 18:00 (seg-sex) e 09:00 às 13:00 (sáb). 
         Você pode personalizar conforme necessário.
       </div>
