@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,20 @@ const Login = () => {
   } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  // Force light mode on login page
+  useEffect(() => {
+    const root = document.documentElement;
+    const originalClass = root.className;
+    
+    // Remove dark class to force light mode
+    root.classList.remove('dark');
+    
+    // Cleanup: restore original theme when component unmounts
+    return () => {
+      root.className = originalClass;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
