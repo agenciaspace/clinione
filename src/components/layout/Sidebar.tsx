@@ -30,55 +30,55 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'Dashboard',
       path: '/dashboard',
       icon: LayoutDashboard,
-      roles: ['owner', 'admin', 'doctor', 'staff', 'receptionist']
+      roles: ['super_admin', 'owner', 'admin', 'doctor', 'staff', 'receptionist']
     },
     {
       title: 'Calendário',
       path: '/dashboard/calendar',
       icon: Calendar,
-      roles: ['owner', 'admin', 'doctor', 'staff', 'receptionist']
+      roles: ['super_admin', 'owner', 'admin', 'doctor', 'staff', 'receptionist']
     },
     {
       title: 'Pacientes',
       path: '/dashboard/patients',
       icon: Users,
-      roles: ['owner', 'admin', 'doctor', 'staff', 'receptionist']
+      roles: ['super_admin', 'owner', 'admin', 'doctor', 'staff', 'receptionist']
     },
     {
       title: 'Profissionais',
       path: '/dashboard/doctors',
       icon: UserCircle,
-      roles: ['owner', 'admin']
+      roles: ['super_admin', 'owner', 'admin']
     },
     {
       title: 'Relatórios',
       path: '/dashboard/reports',
       icon: FileBarChart,
-      roles: ['owner', 'admin']
+      roles: ['super_admin', 'owner', 'admin']
     },
     {
       title: 'Financeiro',
       path: '/dashboard/financial',
       icon: DollarSign,
-      roles: ['owner', 'admin']
+      roles: ['super_admin', 'owner', 'admin']
     },
     {
       title: 'Clínica',
       path: '/dashboard/clinic',
       icon: Building2,
-      roles: ['owner', 'admin']
+      roles: ['super_admin', 'owner', 'admin']
     },
     {
       title: 'Página Pública',
       path: '/dashboard/public-page',
       icon: Globe,
-      roles: ['owner', 'admin']
+      roles: ['super_admin', 'owner', 'admin']
     },
     {
       title: 'Configurações',
       path: '/dashboard/settings',
       icon: Settings,
-      roles: ['owner', 'admin', 'doctor', 'staff', 'receptionist']
+      roles: ['super_admin', 'owner', 'admin', 'doctor', 'staff', 'receptionist']
     }
   ];
 

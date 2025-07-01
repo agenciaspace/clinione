@@ -25,6 +25,10 @@ export const isStaff = (roles: UserRole[]): boolean => {
   return roles.includes('staff');
 };
 
+export const isSuperAdmin = (roles: UserRole[]): boolean => {
+  return roles.includes('super_admin');
+};
+
 // Function to add a user role
 export const addUserRole = async (supabase: any, userId: string, role: UserRole): Promise<void> => {
   const { error } = await supabase
