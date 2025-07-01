@@ -17,6 +17,14 @@ export const isPatient = (roles: UserRole[]): boolean => {
   return roles.includes('patient');
 };
 
+export const isOwner = (roles: UserRole[]): boolean => {
+  return roles.includes('owner');
+};
+
+export const isStaff = (roles: UserRole[]): boolean => {
+  return roles.includes('staff');
+};
+
 // Function to add a user role
 export const addUserRole = async (supabase: any, userId: string, role: UserRole): Promise<void> => {
   const { error } = await supabase

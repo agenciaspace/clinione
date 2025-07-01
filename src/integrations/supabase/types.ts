@@ -1595,7 +1595,7 @@ export type Database = {
       }
     }
     Enums: {
-      user_role: "admin" | "doctor" | "receptionist" | "patient" | "owner"
+      user_role: "admin" | "doctor" | "receptionist" | "staff" | "patient" | "owner"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -1,10 +1,29 @@
 -- Manual migration to fix user_roles 401 errors
 -- Execute this SQL in the Supabase Dashboard -> SQL Editor
 
--- 1. Update the user_roles table constraint to include 'patient' role
+-- First, check if there's an ENUM type that needs to be updated
+DO $$
+BEGIN
+  -- Check if user_role ENUM exists and update it
+  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    -- Drop the ENUM type if it exists (this will fail if it's in use)
+    -- We'll need to handle this differently if the ENUM is already in use
+    RAISE NOTICE 'user_role ENUM type exists, will need to be handled carefully';
+    
+    -- Add new values to the existing ENUM
+    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'staff';
+    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'patient';
+    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'receptionist';
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'ENUM handling failed or not needed: %', SQLERRM;
+END $$;
+
+-- 1. Update the user_roles table constraint to include all roles
 ALTER TABLE public.user_roles DROP CONSTRAINT IF EXISTS user_roles_role_check;
 ALTER TABLE public.user_roles ADD CONSTRAINT user_roles_role_check 
-  CHECK (role IN ('owner', 'admin', 'doctor', 'staff', 'patient'));
+  CHECK (role IN ('owner', 'admin', 'doctor', 'staff', 'patient', 'receptionist'));
 
 -- 2. Make clinic_id nullable for users without clinics
 ALTER TABLE public.user_roles ALTER COLUMN clinic_id DROP NOT NULL;

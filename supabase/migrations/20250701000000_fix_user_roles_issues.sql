@@ -1,18 +1,26 @@
 -- Fix user_roles issues - Add 'patient' role and improve policies
 -- This migration fixes the 401 errors when creating clinics and accessing user roles
 
--- First, update the user_roles table to include 'patient' role
+-- First, update the user_roles table to include all required roles
 DO $$
 BEGIN
+  -- Check if there's an ENUM type that needs to be updated
+  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    -- Add new values to the existing ENUM
+    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'staff';
+    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'patient';
+    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'receptionist';
+  END IF;
+  
   -- Drop the existing check constraint
   ALTER TABLE public.user_roles DROP CONSTRAINT IF EXISTS user_roles_role_check;
   
-  -- Add the new constraint with 'patient' role included
+  -- Add the new constraint with all roles included
   ALTER TABLE public.user_roles ADD CONSTRAINT user_roles_role_check 
-    CHECK (role IN ('owner', 'admin', 'doctor', 'staff', 'patient'));
+    CHECK (role IN ('owner', 'admin', 'doctor', 'staff', 'patient', 'receptionist'));
 EXCEPTION
   WHEN OTHERS THEN
-    RAISE NOTICE 'Constraint already exists or other error: %', SQLERRM;
+    RAISE NOTICE 'Constraint update failed or other error: %', SQLERRM;
 END $$;
 
 -- Drop existing user_roles policies to recreate them
