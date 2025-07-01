@@ -3,9 +3,9 @@
 
 -- Step 1: Check what type of constraint we have
 SELECT 
-  constraint_name, 
-  constraint_type,
-  check_clause
+  tc.constraint_name, 
+  tc.constraint_type,
+  cc.check_clause
 FROM information_schema.table_constraints tc
 JOIN information_schema.check_constraints cc ON tc.constraint_name = cc.constraint_name
 WHERE tc.table_name = 'user_roles' AND tc.constraint_type = 'CHECK';
