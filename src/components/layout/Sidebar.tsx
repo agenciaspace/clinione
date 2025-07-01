@@ -91,13 +91,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   console.log('Current user roles:', userRoles);
   console.log('Menu items before filter:', menuItems.length);
   
+  // Fix: Ensure owner role has access to all items (emergency fix)
   const filteredMenuItems = userRoles.length === 0 ? menuItems : menuItems.filter(item => {
     const hasAccess = userRoles.some(role => item.roles.includes(role));
     console.log(`Menu "${item.title}": roles ${JSON.stringify(item.roles)}, user roles ${JSON.stringify(userRoles)}, access: ${hasAccess}`);
     return hasAccess;
   });
   
+  // Emergency fallback: if no items but user has 'owner' role, show all items
+  const finalMenuItems = filteredMenuItems.length === 0 && userRoles.includes('owner') ? menuItems : filteredMenuItems;
+  
   console.log('Filtered menu items:', filteredMenuItems.length);
+  console.log('Final menu items (with fallback):', finalMenuItems.length);
 
   return (
     <aside className="flex flex-col bg-card border-r border-border shadow-sm h-full">
@@ -111,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <nav className="flex-1 px-4 pb-4 overflow-y-auto">
         <ul className="space-y-1">
-          {filteredMenuItems.map(item => (
+          {finalMenuItems.map(item => (
             <li key={item.path}>
               <Link 
                 to={item.path} 
