@@ -89,9 +89,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   console.log('Current user roles:', userRoles);
-  const filteredMenuItems = userRoles.length === 0 ? menuItems : menuItems.filter(item => 
-    userRoles.some(role => item.roles.includes(role))
-  );
+  console.log('Menu items before filter:', menuItems.length);
+  
+  const filteredMenuItems = userRoles.length === 0 ? menuItems : menuItems.filter(item => {
+    const hasAccess = userRoles.some(role => item.roles.includes(role));
+    console.log(`Menu "${item.title}": roles ${JSON.stringify(item.roles)}, user roles ${JSON.stringify(userRoles)}, access: ${hasAccess}`);
+    return hasAccess;
+  });
+  
+  console.log('Filtered menu items:', filteredMenuItems.length);
 
   return (
     <aside className="flex flex-col bg-card border-r border-border shadow-sm h-full">
