@@ -30,55 +30,55 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'Dashboard',
       path: '/dashboard',
       icon: LayoutDashboard,
-      roles: ['admin', 'doctor', 'receptionist']
+      roles: ['owner', 'admin', 'doctor', 'staff', 'receptionist']
     },
     {
       title: 'Calendário',
       path: '/dashboard/calendar',
       icon: Calendar,
-      roles: ['admin', 'doctor', 'receptionist']
+      roles: ['owner', 'admin', 'doctor', 'staff', 'receptionist']
     },
     {
       title: 'Pacientes',
       path: '/dashboard/patients',
       icon: Users,
-      roles: ['admin', 'doctor', 'receptionist']
+      roles: ['owner', 'admin', 'doctor', 'staff', 'receptionist']
     },
     {
       title: 'Profissionais',
       path: '/dashboard/doctors',
       icon: UserCircle,
-      roles: ['admin']
+      roles: ['owner', 'admin']
     },
     {
       title: 'Relatórios',
       path: '/dashboard/reports',
       icon: FileBarChart,
-      roles: ['admin']
+      roles: ['owner', 'admin']
     },
     {
       title: 'Financeiro',
       path: '/dashboard/financial',
       icon: DollarSign,
-      roles: ['admin']
+      roles: ['owner', 'admin']
     },
     {
       title: 'Clínica',
       path: '/dashboard/clinic',
       icon: Building2,
-      roles: ['admin']
+      roles: ['owner', 'admin']
     },
     {
       title: 'Página Pública',
       path: '/dashboard/public-page',
       icon: Globe,
-      roles: ['admin']
+      roles: ['owner', 'admin']
     },
     {
       title: 'Configurações',
       path: '/dashboard/settings',
       icon: Settings,
-      roles: ['admin', 'doctor', 'receptionist']
+      roles: ['owner', 'admin', 'doctor', 'staff', 'receptionist']
     }
   ];
 

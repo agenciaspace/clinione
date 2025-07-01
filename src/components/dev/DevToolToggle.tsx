@@ -13,7 +13,7 @@ export const DevToolToggle: React.FC = () => {
   const [viewportOverride, setViewportOverride] = useState<Breakpoint | "">(() => {
     return (localStorage.getItem("devViewportOverride") as Breakpoint) || "";
   });
-  const [roleOverride, setRoleOverride] = useState<"" | "admin" | "doctor" | "receptionist">(() => {
+  const [roleOverride, setRoleOverride] = useState<"" | "owner" | "admin" | "doctor" | "staff" | "receptionist">(() => {
     return (localStorage.getItem("devRoleOverride") as any) || "";
   });
 
@@ -63,7 +63,7 @@ export const DevToolToggle: React.FC = () => {
           <div>
             <p className="mb-1 font-medium">Role override</p>
             <div className="flex gap-1 flex-wrap">
-              {["admin", "doctor", "receptionist"].map((role) => (
+              {["owner", "admin", "doctor", "staff", "receptionist"].map((role) => (
                 <Button
                   key={role}
                   size="sm"
