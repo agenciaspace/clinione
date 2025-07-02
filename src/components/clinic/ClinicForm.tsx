@@ -26,6 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { WorkingHoursConfig } from '../WorkingHoursConfig';
 import { toast } from '@/components/ui/sonner';
 import type { WorkingHours } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 const defaultWorkingHours: WorkingHours = {
   monday: [{ start: '08:00', end: '18:00' }],
@@ -78,6 +79,7 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
   const [photo, setPhoto] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isMobile = useIsMobile();
+  const { user, isAuthenticated } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -106,6 +108,13 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
       setSlugError('');
       return false;
     }
+
+    // Verificar se o usuário está autenticado
+    if (!isAuthenticated || !user) {
+      console.log('Usuário não autenticado, ignorando verificação de slug');
+      setSlugError('');
+      return true; // Permitir continuar sem verificação quando não autenticado
+    }
     
     setIsCheckingSlug(true);
     setSlugError('');
@@ -113,6 +122,7 @@ const ClinicForm: React.FC<ClinicFormProps> = ({
     try {
       console.log('Verificando disponibilidade do slug:', slug);
       console.log('ID da clínica editando:', editingClinicId);
+      console.log('Usuário autenticado:', user.id);
       
       let query = supabase
         .from('clinics')
