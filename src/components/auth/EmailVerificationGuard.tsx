@@ -43,11 +43,17 @@ export const EmailVerificationGuard: React.FC<EmailVerificationGuardProps> = ({ 
       toast.success('Email de confirmação reenviado!', {
         description: 'Verifique sua caixa de entrada e spam.'
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error resending confirmation:', error);
-      toast.error('Erro ao reenviar confirmação', {
-        description: 'Tente novamente em alguns minutos.'
-      });
+      if (error.status === 429 || error.message?.includes('rate limit') || error.message?.includes('Email rate limit exceeded')) {
+        toast.error('Limite de envio atingido', {
+          description: 'Muitos emails foram enviados. Aguarde alguns minutos antes de tentar novamente.'
+        });
+      } else {
+        toast.error('Erro ao reenviar confirmação', {
+          description: 'Tente novamente em alguns minutos.'
+        });
+      }
     } finally {
       setIsResending(false);
     }

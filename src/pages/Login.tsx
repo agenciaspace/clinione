@@ -110,9 +110,15 @@ const Login = () => {
       });
     } catch (error: any) {
       console.error('Error resending confirmation:', error);
-      toast.error("Erro ao reenviar e-mail", {
-        description: error.message || "Ocorreu um erro ao reenviar o e-mail de confirmação."
-      });
+      if (error.status === 429 || error.message?.includes('rate limit') || error.message?.includes('Email rate limit exceeded')) {
+        toast.error("Limite de envio atingido", {
+          description: "Muitos emails foram enviados. Aguarde alguns minutos antes de tentar novamente."
+        });
+      } else {
+        toast.error("Erro ao reenviar e-mail", {
+          description: error.message || "Ocorreu um erro ao reenviar o e-mail de confirmação."
+        });
+      }
     }
   };
 

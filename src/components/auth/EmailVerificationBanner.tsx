@@ -26,9 +26,15 @@ export const EmailVerificationBanner: React.FC = () => {
       toast.success('Email de confirmação reenviado!', {
         description: 'Verifique sua caixa de entrada e spam.'
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error resending confirmation:', error);
-      toast.error('Erro ao reenviar confirmação');
+      if (error.status === 429 || error.message?.includes('rate limit') || error.message?.includes('Email rate limit exceeded')) {
+        toast.error('Limite de envio atingido', {
+          description: 'Aguarde alguns minutos antes de tentar novamente.'
+        });
+      } else {
+        toast.error('Erro ao reenviar confirmação');
+      }
     } finally {
       setIsResending(false);
     }

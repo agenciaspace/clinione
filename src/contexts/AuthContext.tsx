@@ -322,8 +322,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserRoles([role]);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao registrar:", error);
+      
+      // Handle rate limiting errors specifically
+      if (error.status === 429 || error.message?.includes('rate limit') || error.message?.includes('too many requests')) {
+        throw new Error('Muitas tentativas de registro. Aguarde alguns minutos antes de tentar novamente.');
+      } else if (error.message?.includes('rate_limit_exceeded')) {
+        throw new Error('Limite de tentativas excedido. Tente novamente em alguns minutos.');
+      } else if (error.message?.includes('Email rate limit exceeded')) {
+        throw new Error('Muitos emails de confirmação enviados. Aguarde antes de tentar novamente.');
+      } else if (error.message?.includes('email rate limit exceeded')) {
+        throw new Error('Limite de envio de emails atingido. Aguarde alguns minutos antes de tentar novamente.');
+      }
+      
       throw error;
     } finally {
       setIsLoading(false);
