@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { MapPin } from 'lucide-react';
 import { AppointmentScheduler } from './AppointmentScheduler';
+import { ThemeTogglePublic } from './ThemeToggle';
 
 interface ClinicHeaderProps {
   name: string;
@@ -35,15 +35,16 @@ export const ClinicHeader = ({ name, logo, photo, address, id }: ClinicHeaderPro
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
-            <p className="text-gray-500 flex items-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{name}</h1>
+            <p className="text-gray-500 dark:text-gray-400 flex items-center">
               <MapPin className="h-4 w-4 mr-1" />
               {address ? address.split(',')[0] : "Endereço não disponível"}
             </p>
           </div>
         </div>
-        <div className="mt-4 md:mt-0">
+        <div className="mt-4 md:mt-0 flex items-center space-x-4">
           <AppointmentScheduler clinicId={id} />
+          <ThemeTogglePublic />
         </div>
       </div>
     </header>

@@ -23,9 +23,15 @@ const PatientRecordMain: React.FC<Props> = ({ patient, onClose, currentUser }) =
   const patientId = patient.id;
 
   // Query for record entries
-  const { data: recordEntries = [], isLoading: isLoadingRecords } = useQuery({
+  const { data: recordEntries = [], isLoading: isLoadingRecords, error: recordsError } = useQuery({
     queryKey: ['patientRecords', patientId],
     queryFn: async () => {
+      // Check authentication first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data, error } = await supabase
         .from('patient_records')
         .select('*')
@@ -34,10 +40,28 @@ const PatientRecordMain: React.FC<Props> = ({ patient, onClose, currentUser }) =
 
       if (error) {
         console.error('Erro ao buscar prontuário:', error);
-        toast.error('Falha ao carregar prontuário do paciente');
-        return [];
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        
+        // If it's a permission error, show a more specific message
+        if (error.code === '42501' || error.message.includes('403')) {
+          throw new Error('Sem permissão para acessar prontuários. Verifique suas credenciais.');
+        }
+        
+        throw error;
       }
-      return data;
+      return data || [];
+    },
+    retry: (failureCount, error) => {
+      // Don't retry permission errors
+      if (error?.message?.includes('403') || error?.message?.includes('permission')) {
+        return false;
+      }
+      return failureCount < 2;
     }
   });
 

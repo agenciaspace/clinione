@@ -1,0 +1,19 @@
+# ==== AIDER CONFIG =================================================
+# API key gerada em https://platform.deepseek.com
+DEEPSEEK_API_KEY=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
+
+# DeepSeek
+DEEPSEEK_API_KEY=COLE_SUA_CHAVE_AQUI
+
+# Modelo e provedor padrão para o Aider
+AIDER_PROVIDER=deepseek
+AIDER_MODEL=deepseek/deepseek-r1-0528
+
+# ----- ajustes opcionais -------------------------------------------
+#AIDER_REASONING_EFFORT=3
+#AIDER_MAX_CHAT_HISTORY_TOKENS=8192
+#HTTPS_PROXY=
+#HTTP_PROXY=
+#AIDER_WEAK_MODEL=gpt-3.5-turbo
+#AIDER_DARK_MODE=true     # ou AIDER_LIGHT_MODE=true
+# ====================================================================

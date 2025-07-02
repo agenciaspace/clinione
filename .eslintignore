@@ -1,0 +1,20 @@
+# Build outputs
+dist/
+dev-dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Test files
+src/test/
+*.test.tsx
+*.test.ts
+
+# Config files
+vite.config.ts
+vitest.config.ts
+tailwind.config.ts
+
+# Generated files
+src/integrations/supabase/types.ts 

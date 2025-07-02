@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { Mail, ArrowLeft } from 'lucide-react';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,7 +23,7 @@ const ForgotPassword = () => {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsLoading(true);
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -36,129 +36,102 @@ const ForgotPassword = () => {
 
       setEmailSent(true);
       toast.success("E-mail enviado", {
-        description: "Verifique sua caixa de entrada para o link de recuperação"
+        description: "Verifique sua caixa de entrada para o link de redefinição de senha."
       });
     } catch (error: any) {
-      console.error('Forgot password error:', error);
+      console.error('Password reset error:', error);
       toast.error("Erro ao enviar e-mail", {
-        description: "Verifique se o e-mail está correto e tente novamente"
+        description: error.message || "Ocorreu um erro ao enviar o e-mail de redefinição."
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   if (emailSent) {
     return (
-      <div className="flex min-h-screen bg-[#FFFAE6] items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center bg-[#FFFAE6] p-6">
         <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1 text-center">
+          <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <Mail className="h-8 w-8 text-green-600" />
+              <div className="bg-green-100 p-3 rounded-full">
+                <Mail className="h-6 w-6 text-green-600" />
               </div>
             </div>
-            <CardTitle className="text-2xl">E-mail enviado!</CardTitle>
-            <CardDescription className="text-center">
-              Enviamos um link de recuperação para <strong>{email}</strong>
+            <CardTitle className="text-xl">E-mail enviado!</CardTitle>
+            <CardDescription>
+              Enviamos um link de redefinição de senha para{' '}
+              <span className="font-semibold">{email}</span>
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600 text-center">
-              Verifique sua caixa de entrada e clique no link para redefinir sua senha. 
-              O link expira em 1 hora.
+          <CardContent className="text-center space-y-4">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-blue-700">
+                Verifique sua caixa de entrada e clique no link para redefinir sua senha. 
+                O link expira em 1 hora.
+              </p>
+            </div>
+            <p className="text-gray-500 text-sm">
+              Não encontrou o e-mail? Verifique sua pasta de spam.
             </p>
-            <p className="text-xs text-gray-500 text-center">
-              Não recebeu o e-mail? Verifique sua pasta de spam ou tente novamente.
-            </p>
+            <div className="pt-4">
+              <Link to="/login">
+                <Button variant="outline" className="w-full">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar para o login
+                </Button>
+              </Link>
+            </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-2">
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => setEmailSent(false)}
-            >
-              Tentar outro e-mail
-            </Button>
-            <Link to="/login" className="w-full">
-              <Button variant="ghost" className="w-full">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar ao login
-              </Button>
-            </Link>
-          </CardFooter>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-[#FFFAE6]">
-      <div className="flex-1 hidden lg:block bg-[#FFD600] relative">
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-black p-12">
-          <h1 className="text-4xl font-bold mb-4">Recuperar Senha</h1>
-          <p className="text-xl mb-8 max-w-md text-center">
-            Não se preocupe! Digite seu e-mail e enviaremos um link para redefinir sua senha.
-          </p>
-          <div className="grid grid-cols-1 gap-4 w-full max-w-lg">
-            <div className="bg-[#FFFAE6]/80 p-6 rounded-lg text-center">
-              <Mail className="h-8 w-8 mx-auto mb-3" />
-              <h3 className="font-semibold mb-2">Processo Seguro</h3>
-              <p className="text-sm">
-                Enviamos um link seguro para seu e-mail que expira em 1 hora
-              </p>
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#FFFAE6] p-6">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
+              alt="Clini.One Logo" 
+              className="h-16 w-auto min-h-[130px] min-w-[400px] max-w-[250px] aspect-[4/1] object-scale-down" 
+            />
           </div>
-        </div>
-      </div>
-      
-      <div className="flex-1 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-4">
-              <img 
-                src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
-                alt="Clini.One Logo" 
-                className="h-16 w-auto min-h-[130px] min-w-[400px] max-w-[250px] aspect-[4/1] object-scale-down" 
+          <CardTitle className="text-2xl">Esqueceu sua senha?</CardTitle>
+          <CardDescription className="text-center">
+            Digite seu e-mail e enviaremos um link para redefinir sua senha
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="exemplo@clinica.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
-            <CardTitle className="text-2xl">Esqueceu sua senha?</CardTitle>
-            <CardDescription className="text-center">
-              Digite seu e-mail para receber um link de recuperação
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="exemplo@clinica.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full bg-[#FFD600] hover:bg-[#E6C000] text-black" 
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Enviando...' : 'Enviar link de recuperação'}
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="flex flex-col">
-            <div className="text-center text-sm">
-              Lembrou da senha?{" "}
-              <Link to="/login" className="text-[#FFD600] hover:underline">
-                Fazer login
-              </Link>
-            </div>
-          </CardFooter>
-        </Card>
-      </div>
+            <Button 
+              type="submit" 
+              className="w-full bg-[#FFD600] hover:bg-[#E6C000] text-black" 
+              disabled={isLoading}
+            >
+              {isLoading ? 'Enviando...' : 'Enviar link de redefinição'}
+            </Button>
+          </form>
+          <div className="mt-4 text-center">
+            <Link to="/login" className="text-sm text-[#FFD600] hover:underline">
+              Lembrou da senha? Faça login
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

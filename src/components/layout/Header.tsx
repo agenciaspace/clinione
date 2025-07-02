@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useClinic } from '../../contexts/ClinicContext';
@@ -28,7 +27,7 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm">
+    <header className="bg-card border-b border-border shadow-sm">
       <div className="px-4 py-3 flex items-center justify-between">
         {/* Mobile toggle */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -132,10 +131,10 @@ export const Header: React.FC = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="p-1 flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-[#FFFDF5] flex items-center justify-center text-[#FFD400] font-medium">
+                <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-primary font-medium">
                   {user?.name?.charAt(0) || 'U'}
                 </div>
-                <span className="hidden md:inline text-sm font-medium">
+                <span className="hidden md:inline text-sm font-medium text-foreground">
                   {user?.name || 'Usuário'}
                 </span>
               </Button>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFinancialQueries } from '@/hooks/queries/useFinancialQueries';
@@ -20,11 +19,13 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FileText, Check, X, Send, FilePlus2 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const TissLotManager = () => {
   const { activeClinic } = useClinic();
   const { forecasts, insuranceCompanies, tissBatches, isLoading } = useFinancialQueries(activeClinic?.id);
   const { createTissBatch, processInsuranceResponse } = useFinancialMutations(activeClinic?.id);
+  const isMobile = useIsMobile();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isResponseDialogOpen, setIsResponseDialogOpen] = useState(false);
   const [selectedInsurance, setSelectedInsurance] = useState<string>('');
@@ -100,86 +101,179 @@ export const TissLotManager = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className={`${
+          isMobile 
+            ? 'flex flex-col space-y-4' 
+            : 'flex flex-row items-center justify-between space-y-0'
+        }`}>
           <div>
-            <CardTitle>Lotes TISS</CardTitle>
-            <CardDescription>Gerencie os lotes de envio para convênios</CardDescription>
+            <CardTitle className={isMobile ? 'text-lg' : 'text-xl'}>Lotes TISS</CardTitle>
+            <CardDescription className={isMobile ? 'text-sm' : 'text-base'}>
+              Gerencie os lotes de envio para convênios
+            </CardDescription>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)}>
+          <Button 
+            onClick={() => setIsDialogOpen(true)}
+            size={isMobile ? "sm" : "default"}
+            className={isMobile ? 'w-full' : 'w-auto'}
+          >
             <FilePlus2 className="h-4 w-4 mr-2" /> Criar Lote
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className={isMobile ? 'p-4' : 'p-6'}>
           {tissBatches.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Número do Lote</TableHead>
-                  <TableHead>Convênio</TableHead>
-                  <TableHead>Data de Envio</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Valor Total</TableHead>
-                  <TableHead>Valor Aprovado</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tissBatches.map((batch) => (
-                  <TableRow key={batch.id}>
-                    <TableCell className="font-medium">{batch.batch_number}</TableCell>
-                    <TableCell>{batch.insurance?.name || '-'}</TableCell>
-                    <TableCell>
-                      {format(new Date(batch.submission_date), 'dd/MM/yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        batch.status === 'preparing' ? 'outline' : 
-                        batch.status === 'sent' ? 'secondary' : 
-                        batch.status === 'processed' ? 'default' : 
-                        'default'  // Changed from 'success' to 'default'
-                      }>
-                        {batch.status === 'preparing' ? 'Em Preparação' : 
-                         batch.status === 'sent' ? 'Enviado' : 
-                         batch.status === 'processed' ? 'Processado' : 
-                         'Finalizado'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>R$ {batch.total_value.toFixed(2)}</TableCell>
-                    <TableCell>
-                      {batch.approved_value !== null 
-                        ? `R$ ${batch.approved_value.toFixed(2)}`
-                        : '-'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {batch.status === 'sent' && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            setSelectedBatch(batch.id);
-                            setIsResponseDialogOpen(true);
-                          }}
-                        >
-                          Informar Retorno
-                        </Button>
-                      )}
-                      {batch.response_file_url && (
-                        <Button variant="ghost" size="sm">
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className={isMobile ? 'space-y-4' : ''}>
+              {isMobile ? (
+                // Mobile: Card layout
+                <div className="space-y-4">
+                  {tissBatches.map((batch) => (
+                    <Card key={batch.id} className="border">
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium text-sm">Lote #{batch.batch_number}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {batch.insurance?.name || '-'}
+                              </p>
+                            </div>
+                            <Badge variant={
+                              batch.status === 'preparing' ? 'outline' : 
+                              batch.status === 'sent' ? 'secondary' : 
+                              batch.status === 'processed' ? 'default' : 
+                              'default'
+                            } className="text-xs">
+                              {batch.status === 'preparing' ? 'Em Preparação' : 
+                               batch.status === 'sent' ? 'Enviado' : 
+                               batch.status === 'processed' ? 'Processado' : 
+                               'Finalizado'}
+                            </Badge>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 text-xs">
+                            <div>
+                              <p className="text-muted-foreground">Data de Envio</p>
+                              <p className="font-medium">
+                                {format(new Date(batch.submission_date), 'dd/MM/yyyy')}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Valor Total</p>
+                              <p className="font-medium">R$ {batch.total_value.toFixed(2)}</p>
+                            </div>
+                          </div>
+                          
+                          {batch.approved_value !== null && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">Valor Aprovado</p>
+                              <p className="text-sm font-medium">R$ {batch.approved_value.toFixed(2)}</p>
+                            </div>
+                          )}
+                          
+                          <div className="flex gap-2 pt-2">
+                            {batch.status === 'sent' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="flex-1 text-xs"
+                                onClick={() => {
+                                  setSelectedBatch(batch.id);
+                                  setIsResponseDialogOpen(true);
+                                }}
+                              >
+                                Informar Retorno
+                              </Button>
+                            )}
+                            {batch.response_file_url && (
+                              <Button variant="ghost" size="sm" className="px-2">
+                                <FileText className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                // Desktop: Table layout
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Número do Lote</TableHead>
+                        <TableHead>Convênio</TableHead>
+                        <TableHead>Data de Envio</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Valor Total</TableHead>
+                        <TableHead>Valor Aprovado</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tissBatches.map((batch) => (
+                        <TableRow key={batch.id}>
+                          <TableCell className="font-medium">{batch.batch_number}</TableCell>
+                          <TableCell>{batch.insurance?.name || '-'}</TableCell>
+                          <TableCell>
+                            {format(new Date(batch.submission_date), 'dd/MM/yyyy')}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              batch.status === 'preparing' ? 'outline' : 
+                              batch.status === 'sent' ? 'secondary' : 
+                              batch.status === 'processed' ? 'default' : 
+                              'default'
+                            }>
+                              {batch.status === 'preparing' ? 'Em Preparação' : 
+                               batch.status === 'sent' ? 'Enviado' : 
+                               batch.status === 'processed' ? 'Processado' : 
+                               'Finalizado'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>R$ {batch.total_value.toFixed(2)}</TableCell>
+                          <TableCell>
+                            {batch.approved_value !== null 
+                              ? `R$ ${batch.approved_value.toFixed(2)}`
+                              : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                              {batch.status === 'sent' && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedBatch(batch.id);
+                                    setIsResponseDialogOpen(true);
+                                  }}
+                                >
+                                  Informar Retorno
+                                </Button>
+                              )}
+                              {batch.response_file_url && (
+                                <Button variant="ghost" size="sm">
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
           ) : (
-            <div className="py-8 text-center">
-              <FileText className="h-12 w-12 mx-auto text-gray-300 mb-2" />
-              <p className="text-muted-foreground">Nenhum lote TISS encontrado.</p>
-              <p className="text-sm text-muted-foreground mt-1">
+            <div className={`py-8 text-center ${isMobile ? 'py-6' : ''}`}>
+              <FileText className={`${isMobile ? 'h-8 w-8' : 'h-12 w-12'} mx-auto text-gray-300 mb-2`} />
+              <p className={`text-muted-foreground ${isMobile ? 'text-sm' : ''}`}>
+                Nenhum lote TISS encontrado.
+              </p>
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground mt-1`}>
                 Clique em "Criar Lote" para gerar um novo lote TISS.
               </p>
             </div>
@@ -189,26 +283,26 @@ export const TissLotManager = () => {
 
       {/* Dialog para criar novo lote */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className={`${
+          isMobile 
+            ? 'max-w-[95vw] max-h-[90vh] overflow-y-auto' 
+            : 'max-w-2xl'
+        }`}>
           <DialogHeader>
-            <DialogTitle>Criar Novo Lote TISS</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className={isMobile ? 'text-lg' : 'text-xl'}>
+              Criar Novo Lote TISS
+            </DialogTitle>
+            <DialogDescription className={isMobile ? 'text-sm' : ''}>
               Selecione o convênio e as consultas que serão incluídas no lote.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-6 py-4">
+          <div className={`space-y-4 ${isMobile ? 'py-2' : 'py-4'}`}>
             <div className="space-y-2">
               <Label htmlFor="insurance">Convênio</Label>
-              <Select 
-                value={selectedInsurance} 
-                onValueChange={(value) => {
-                  setSelectedInsurance(value);
-                  setSelectedForecasts([]);
-                }}
-              >
-                <SelectTrigger id="insurance">
-                  <SelectValue placeholder="Selecione o convênio" />
+              <Select value={selectedInsurance} onValueChange={setSelectedInsurance}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um convênio" />
                 </SelectTrigger>
                 <SelectContent>
                   {insuranceCompanies.map((insurance) => (
@@ -220,137 +314,142 @@ export const TissLotManager = () => {
               </Select>
             </div>
 
-            {selectedInsurance && (
+            {selectedInsurance && filteredForecasts.length > 0 && (
               <div className="space-y-2">
-                <Label>Selecione as previsões a incluir no lote</Label>
-                <Card>
-                  <CardContent className="p-0">
-                    {filteredForecasts.length > 0 ? (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[50px]"></TableHead>
-                            <TableHead>Descrição</TableHead>
-                            <TableHead>Data Prevista</TableHead>
-                            <TableHead className="text-right">Valor</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredForecasts.map((forecast) => (
-                            <TableRow key={forecast.id}>
-                              <TableCell>
-                                <Checkbox
-                                  checked={selectedForecasts.includes(forecast.id)}
-                                  onCheckedChange={() => toggleForecastSelection(forecast.id)}
-                                />
-                              </TableCell>
-                              <TableCell>{forecast.description}</TableCell>
-                              <TableCell>
-                                {format(new Date(forecast.expected_payment_date), 'dd/MM/yyyy')}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                R$ {forecast.value.toFixed(2)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <div className="py-6 text-center">
-                        <p className="text-muted-foreground">
-                          Não há previsões elegíveis para este convênio.
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-                <div className="flex justify-between items-center text-sm text-muted-foreground">
-                  <span>Total selecionado: {selectedForecasts.length} item(ns)</span>
-                  <span>
-                    Valor total: R$ {
-                      filteredForecasts
-                        .filter(f => selectedForecasts.includes(f.id))
-                        .reduce((sum, f) => sum + f.value, 0)
-                        .toFixed(2)
-                    }
-                  </span>
+                <Label>Consultas para incluir no lote</Label>
+                <div className={`border rounded-lg p-3 max-h-64 overflow-y-auto ${
+                  isMobile ? 'max-h-48' : ''
+                }`}>
+                  {filteredForecasts.map((forecast) => (
+                    <div key={forecast.id} className="flex items-center space-x-2 py-2">
+                      <Checkbox
+                        id={forecast.id}
+                        checked={selectedForecasts.includes(forecast.id)}
+                        onCheckedChange={() => toggleForecastSelection(forecast.id)}
+                      />
+                      <Label 
+                        htmlFor={forecast.id} 
+                        className={`flex-1 ${isMobile ? 'text-sm' : ''}`}
+                      >
+                        <div className="flex justify-between">
+                          <span>{forecast.description}</span>
+                          <span className="font-medium">R$ {forecast.value.toFixed(2)}</span>
+                        </div>
+                        <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                          Vencimento: {format(new Date(forecast.expected_payment_date), 'dd/MM/yyyy')}
+                        </div>
+                      </Label>
+                    </div>
+                  ))}
                 </div>
+                
+                {selectedForecasts.length > 0 && (
+                  <div className={`p-3 bg-muted rounded-lg ${isMobile ? 'text-sm' : ''}`}>
+                    <div className="flex justify-between">
+                      <span>Total selecionado:</span>
+                      <span className="font-medium">
+                        R$ {filteredForecasts
+                          .filter(f => selectedForecasts.includes(f.id))
+                          .reduce((sum, f) => sum + f.value, 0)
+                          .toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Consultas:</span>
+                      <span>{selectedForecasts.length}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {selectedInsurance && filteredForecasts.length === 0 && (
+              <div className={`text-center py-4 text-muted-foreground ${isMobile ? 'text-sm' : ''}`}>
+                Nenhuma consulta elegível encontrada para este convênio.
               </div>
             )}
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              <X className="h-4 w-4 mr-2" /> Cancelar
+          <DialogFooter className={isMobile ? 'flex-col space-y-2' : ''}>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDialogOpen(false)}
+              className={isMobile ? 'w-full' : ''}
+            >
+              Cancelar
             </Button>
             <Button 
               onClick={handleCreateBatch}
               disabled={!selectedInsurance || selectedForecasts.length === 0}
+              className={isMobile ? 'w-full' : ''}
             >
-              <Send className="h-4 w-4 mr-2" /> Criar Lote
+              <Send className="h-4 w-4 mr-2" />
+              Criar Lote
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para informar retorno do convênio */}
+      {/* Dialog para processar resposta do convênio */}
       <Dialog open={isResponseDialogOpen} onOpenChange={setIsResponseDialogOpen}>
-        <DialogContent>
+        <DialogContent className={isMobile ? 'max-w-[95vw]' : 'max-w-md'}>
           <DialogHeader>
-            <DialogTitle>Informar Retorno do Convênio</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className={isMobile ? 'text-lg' : 'text-xl'}>
+              Informar Retorno do Convênio
+            </DialogTitle>
+            <DialogDescription className={isMobile ? 'text-sm' : ''}>
               Informe os valores aprovados e glosados pelo convênio.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
+          <div className={`space-y-4 ${isMobile ? 'py-2' : 'py-4'}`}>
             <div className="space-y-2">
-              <Label htmlFor="approvedValue">Valor Aprovado (R$)</Label>
+              <Label htmlFor="approved">Valor Aprovado (R$)</Label>
               <Input
-                id="approvedValue"
+                id="approved"
                 type="number"
                 step="0.01"
                 min="0"
                 value={responseValues.approvedValue}
-                onChange={(e) => setResponseValues(prev => ({ 
-                  ...prev, 
-                  approvedValue: parseFloat(e.target.value) || 0 
+                onChange={(e) => setResponseValues(prev => ({
+                  ...prev,
+                  approvedValue: Number(e.target.value)
                 }))}
+                placeholder="0.00"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="deniedValue">Valor Glosado (R$)</Label>
+              <Label htmlFor="denied">Valor Glosado (R$)</Label>
               <Input
-                id="deniedValue"
+                id="denied"
                 type="number"
                 step="0.01"
                 min="0"
                 value={responseValues.deniedValue}
-                onChange={(e) => setResponseValues(prev => ({ 
-                  ...prev, 
-                  deniedValue: parseFloat(e.target.value) || 0 
+                onChange={(e) => setResponseValues(prev => ({
+                  ...prev,
+                  deniedValue: Number(e.target.value)
                 }))}
+                placeholder="0.00"
               />
             </div>
-
-            {responseValues.deniedValue > 0 && (
-              <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-800">
-                <p>
-                  Valores glosados serão registrados e poderão ser analisados para 
-                  recurso. Na implementação completa, seria possível registrar detalhes específicos 
-                  para cada glosa.
-                </p>
-              </div>
-            )}
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsResponseDialogOpen(false)}>
-              <X className="h-4 w-4 mr-2" /> Cancelar
+          <DialogFooter className={isMobile ? 'flex-col space-y-2' : ''}>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsResponseDialogOpen(false)}
+              className={isMobile ? 'w-full' : ''}
+            >
+              Cancelar
             </Button>
-            <Button onClick={handleProcessResponse}>
-              <Check className="h-4 w-4 mr-2" /> Confirmar
+            <Button 
+              onClick={handleProcessResponse}
+              className={isMobile ? 'w-full' : ''}
+            >
+              <Check className="h-4 w-4 mr-2" />
+              Confirmar
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(npm install)",
+      "Bash(rm:*)",
+      "Bash(npx vite:*)",
+      "Bash(yarn install)",
+      "Bash(npm cache clean:*)",
+      "Bash(npm install:*)",
+      "Bash(sudo rm:*)"
+    ],
+    "deny": []
+  }
+}

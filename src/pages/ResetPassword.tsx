@@ -1,70 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff, Lock } from 'lucide-react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(true);
   const [isValidToken, setIsValidToken] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const checkSession = async () => {
+    const verifyToken = async () => {
+      const accessToken = searchParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token');
+      const type = searchParams.get('type');
+
+      if (!accessToken || type !== 'recovery') {
+        setIsValidToken(false);
+        setIsVerifying(false);
+        return;
+      }
+
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
+        // Define a sessão usando os tokens de recuperação
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || ''
+        });
+
         if (error) {
-          console.error('Error checking session:', error);
+          console.error('Token verification error:', error);
           setIsValidToken(false);
-        } else if (session) {
-          setIsValidToken(true);
         } else {
-          // Try to get session from URL parameters
-          const accessToken = searchParams.get('access_token');
-          const refreshToken = searchParams.get('refresh_token');
-          
-          if (accessToken && refreshToken) {
-            const { error: setSessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-            
-            if (setSessionError) {
-              console.error('Error setting session:', setSessionError);
-              setIsValidToken(false);
-            } else {
-              setIsValidToken(true);
-            }
-          } else {
-            setIsValidToken(false);
-          }
+          setIsValidToken(true);
         }
       } catch (error) {
-        console.error('Error in checkSession:', error);
+        console.error('Error verifying token:', error);
         setIsValidToken(false);
       } finally {
-        setIsLoading(false);
+        setIsVerifying(false);
       }
     };
 
-    checkSession();
+    verifyToken();
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!password || !confirmPassword) {
       toast.error("Erro de validação", {
         description: "Por favor, preencha todos os campos"
@@ -72,22 +63,22 @@ const ResetPassword = () => {
       return;
     }
 
+    if (password !== confirmPassword) {
+      toast.error("Erro de validação", {
+        description: "As senhas não coincidem"
+      });
+      return;
+    }
+
     if (password.length < 6) {
-      toast.error("Senha muito curta", {
+      toast.error("Erro de validação", {
         description: "A senha deve ter pelo menos 6 caracteres"
       });
       return;
     }
 
-    if (password !== confirmPassword) {
-      toast.error("Senhas não coincidem", {
-        description: "As senhas digitadas não são iguais"
-      });
-      return;
-    }
+    setIsLoading(true);
 
-    setIsSubmitting(true);
-    
     try {
       const { error } = await supabase.auth.updateUser({
         password: password
@@ -98,56 +89,70 @@ const ResetPassword = () => {
       }
 
       toast.success("Senha redefinida", {
-        description: "Sua senha foi alterada com sucesso"
+        description: "Sua senha foi redefinida com sucesso!"
       });
-      
-      // Redirect to login after successful password reset
+
+      // Redireciona para o login após 2 segundos
       setTimeout(() => {
         navigate('/login');
       }, 2000);
-      
+
     } catch (error: any) {
-      console.error('Reset password error:', error);
+      console.error('Password update error:', error);
       toast.error("Erro ao redefinir senha", {
-        description: error.message || "Não foi possível redefinir sua senha. Tente novamente."
+        description: error.message || "Ocorreu um erro ao redefinir sua senha."
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  if (isLoading) {
+  if (isVerifying) {
     return (
-      <div className="flex min-h-screen bg-[#FFFAE6] items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FFD600]"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FFFAE6] p-6">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex items-center justify-center p-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FFD600] mx-auto mb-4"></div>
+              <p className="text-gray-600">Verificando link de redefinição...</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (!isValidToken) {
     return (
-      <div className="flex min-h-screen bg-[#FFFAE6] items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center bg-[#FFFAE6] p-6">
         <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1 text-center">
+          <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                <Lock className="h-8 w-8 text-red-600" />
+              <div className="bg-red-100 p-3 rounded-full">
+                <AlertCircle className="h-6 w-6 text-red-600" />
               </div>
             </div>
-            <CardTitle className="text-2xl">Link inválido</CardTitle>
-            <CardDescription className="text-center">
-              Este link de recuperação é inválido ou expirou
+            <CardTitle className="text-xl">Link inválido ou expirado</CardTitle>
+            <CardDescription>
+              O link de redefinição de senha é inválido ou já expirou.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600 text-center">
-              Os links de recuperação expiram em 1 hora por motivos de segurança.
+          <CardContent className="text-center space-y-4">
+            <p className="text-gray-500 text-sm">
+              Solicite um novo link de redefinição de senha.
             </p>
             <Button 
-              onClick={() => navigate('/forgot-password')} 
+              onClick={() => navigate('/forgot-password')}
               className="w-full bg-[#FFD600] hover:bg-[#E6C000] text-black"
             >
               Solicitar novo link
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/login')}
+              className="w-full"
+            >
+              Voltar para o login
             </Button>
           </CardContent>
         </Card>
@@ -156,107 +161,62 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#FFFAE6]">
-      <div className="flex-1 hidden lg:block bg-[#FFD600] relative">
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-black p-12">
-          <h1 className="text-4xl font-bold mb-4">Nova Senha</h1>
-          <p className="text-xl mb-8 max-w-md text-center">
-            Escolha uma senha forte e segura para proteger sua conta.
-          </p>
-          <div className="grid grid-cols-1 gap-4 w-full max-w-lg">
-            <div className="bg-[#FFFAE6]/80 p-6 rounded-lg text-center">
-              <Lock className="h-8 w-8 mx-auto mb-3" />
-              <h3 className="font-semibold mb-2">Senha Segura</h3>
-              <p className="text-sm">
-                Use pelo menos 6 caracteres com letras, números e símbolos
-              </p>
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#FFFAE6] p-6">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
+              alt="Clini.One Logo" 
+              className="h-16 w-auto min-h-[130px] min-w-[400px] max-w-[250px] aspect-[4/1] object-scale-down" 
+            />
           </div>
-        </div>
-      </div>
-      
-      <div className="flex-1 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-4">
-              <img 
-                src="/lovable-uploads/1424b683-055d-4b5c-bccc-84cd26273e7a.png" 
-                alt="Clini.One Logo" 
-                className="h-16 w-auto min-h-[130px] min-w-[400px] max-w-[250px] aspect-[4/1] object-scale-down" 
+          <CardTitle className="text-2xl">Redefinir senha</CardTitle>
+          <CardDescription className="text-center">
+            Digite sua nova senha abaixo
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Nova senha</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
               />
             </div>
-            <CardTitle className="text-2xl">Redefinir senha</CardTitle>
-            <CardDescription className="text-center">
-              Digite sua nova senha
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">Nova senha</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-[#FFD600] hover:bg-[#E6C000] text-black" 
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Redefinindo...' : 'Redefinir senha'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-xs text-blue-700">
+                A senha deve ter pelo menos 6 caracteres.
+              </p>
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full bg-[#FFD600] hover:bg-[#E6C000] text-black" 
+              disabled={isLoading}
+            >
+              {isLoading ? 'Redefinindo...' : 'Redefinir senha'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

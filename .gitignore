@@ -37,3 +37,7 @@ deploy-*.log
 # Environment variables
 .env.local
 .env.production
+
+.aider*
+.claude/
+supabase/.temp/
