@@ -1,8 +1,9 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Edit, ExternalLink, Globe, Trash2, Loader2 } from 'lucide-react';
+import { Check, Edit, ExternalLink, Globe, Trash2, Loader2, Mail } from 'lucide-react';
 import { Clinic } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ClinicCardProps {
   clinic: Clinic;
@@ -27,6 +28,7 @@ const ClinicCard: React.FC<ClinicCardProps> = ({
   isDeleting,
   getPublicUrl
 }) => {
+  const { isEmailVerified } = useAuth();
   return (
     <Card 
       className={`flex flex-col min-h-[260px] overflow-hidden ${isActive ? 'border-primary' : ''}`}
@@ -88,33 +90,40 @@ const ClinicCard: React.FC<ClinicCardProps> = ({
               size="sm"
               className="text-xs"
               onClick={() => onPublishToggle(clinic)}
-              disabled={isPublishing || isDeleting}
+              disabled={isPublishing || isDeleting || !isEmailVerified}
+              title={!isEmailVerified ? "Confirme seu email primeiro" : undefined}
             >
               {isPublishing ? (
                 <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : !isEmailVerified ? (
+                <Mail className="h-3 w-3 mr-1" />
               ) : (
                 <Globe className="h-3 w-3 mr-1" />
               )}
-              {clinic.is_published ? "Despublicar" : "Publicar"}
+              {!isEmailVerified ? "Email" : clinic.is_published ? "Despublicar" : "Publicar"}
             </Button>
           )}
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => onEdit(clinic)}
-            disabled={isDeleting}
+            disabled={isDeleting || !isEmailVerified}
+            title={!isEmailVerified ? "Confirme seu email primeiro" : "Editar clínica"}
           >
-            <Edit className="h-4 w-4" />
+            {!isEmailVerified ? <Mail className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
           </Button>
           <Button 
             variant="ghost" 
             size="icon" 
             className="text-red-500"
             onClick={() => onDelete(clinic.id)}
-            disabled={isDeleting}
+            disabled={isDeleting || !isEmailVerified}
+            title={!isEmailVerified ? "Confirme seu email primeiro" : "Excluir clínica"}
           >
             {isDeleting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : !isEmailVerified ? (
+              <Mail className="h-4 w-4" />
             ) : (
               <Trash2 className="h-4 w-4" />
             )}

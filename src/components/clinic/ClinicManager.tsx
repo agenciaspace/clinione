@@ -22,7 +22,7 @@ interface ClinicFormData {
 
 const ClinicManager: React.FC = () => {
   const { clinics, activeClinic, setActiveClinic, refreshClinics } = useClinic();
-  const { user } = useAuth();
+  const { user, isEmailVerified } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingClinicId, setEditingClinicId] = useState<string | null>(null);
@@ -31,12 +31,24 @@ const ClinicManager: React.FC = () => {
   const baseUrl = "https://clini.one";
 
   const handleAddClinic = () => {
+    if (!isEmailVerified) {
+      toast.error('Email não confirmado', {
+        description: 'Confirme seu email antes de criar clínicas.'
+      });
+      return;
+    }
     setIsEditing(false);
     setEditingClinicId(null);
     setIsDialogOpen(true);
   };
 
   const handleEditClinic = (clinic: Clinic) => {
+    if (!isEmailVerified) {
+      toast.error('Email não confirmado', {
+        description: 'Confirme seu email antes de editar clínicas.'
+      });
+      return;
+    }
     setIsEditing(true);
     setEditingClinicId(clinic.id);
     setIsDialogOpen(true);
@@ -51,8 +63,7 @@ const ClinicManager: React.FC = () => {
     }
 
     // Verificar se o email foi confirmado
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    if (!currentUser?.email_confirmed_at) {
+    if (!isEmailVerified) {
       toast.error('Email não confirmado', {
         description: 'Você precisa confirmar seu email antes de criar ou editar clínicas.'
       });
@@ -106,6 +117,13 @@ const ClinicManager: React.FC = () => {
   };
 
   const handleDeleteClinic = async (id: string) => {
+    if (!isEmailVerified) {
+      toast.error('Email não confirmado', {
+        description: 'Confirme seu email antes de excluir clínicas.'
+      });
+      return;
+    }
+    
     if (!confirm('Tem certeza que deseja excluir esta clínica? Esta ação não pode ser desfeita.')) {
       return;
     }
@@ -229,6 +247,13 @@ const ClinicManager: React.FC = () => {
   };
 
   const handlePublishToggle = async (clinic: Clinic) => {
+    if (!isEmailVerified) {
+      toast.error('Email não confirmado', {
+        description: 'Confirme seu email antes de publicar clínicas.'
+      });
+      return;
+    }
+    
     if (!clinic.slug) {
       toast.error("URL personalizada necessária", {
         description: "Por favor, defina uma URL personalizada antes de publicar."

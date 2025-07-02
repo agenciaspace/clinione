@@ -12,7 +12,7 @@ interface EmailVerificationGuardProps {
 }
 
 export const EmailVerificationGuard: React.FC<EmailVerificationGuardProps> = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isEmailVerified } = useAuth();
   const [isResending, setIsResending] = useState(false);
   const [resendCount, setResendCount] = useState(0);
   const [lastResendTime, setLastResendTime] = useState<Date | null>(null);
@@ -80,7 +80,7 @@ export const EmailVerificationGuard: React.FC<EmailVerificationGuardProps> = ({ 
   }
 
   // Show verification required if user exists but email is not confirmed
-  if (user && !user.email_confirmed_at) {
+  if (user && !isEmailVerified) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <Card className="w-full max-w-md">

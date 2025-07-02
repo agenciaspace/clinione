@@ -8,6 +8,7 @@ import { toast } from '@/components/ui/sonner';
 import NoClinicSelected from '../clinic/NoClinicSelected';
 import { useBreakpoint } from '../../hooks/use-breakpoint';
 import { MobileBottomNav } from './MobileBottomNav';
+import { EmailVerificationBanner } from '../auth/EmailVerificationBanner';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -53,6 +54,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, requ
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-background">
+          <EmailVerificationBanner />
           {requireClinic && !activeClinic ? (
             <NoClinicSelected />
           ) : (
