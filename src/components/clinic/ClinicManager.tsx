@@ -49,6 +49,15 @@ const ClinicManager: React.FC = () => {
       toast.error('Usuário não autenticado');
       return;
     }
+
+    // Verificar se o email foi confirmado
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser?.email_confirmed_at) {
+      toast.error('Email não confirmado', {
+        description: 'Você precisa confirmar seu email antes de criar ou editar clínicas.'
+      });
+      return;
+    }
     
     try {
       if (isEditing && editingClinicId) {

@@ -32,15 +32,17 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      await register(formData.name, formData.email, formData.password, 'patient');
+      await register(formData.name, formData.email, formData.password, 'owner');
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         await supabase.from('user_roles').insert({
           user_id: session.user.id,
-          role: 'patient'
+          role: 'owner'
         });
       }
-      navigate('/dashboard');
+      
+      // Redirect to email confirmation page instead of dashboard
+      navigate('/email-confirmation');
     } catch (error: any) {
       console.error('Registration error:', error);
       setError(error.message || 'Erro ao registrar. Tente novamente.');

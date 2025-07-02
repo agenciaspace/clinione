@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isEmailVerified: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ requiresMFA?: boolean }>;
   logout: () => void;
@@ -19,6 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
+  isEmailVerified: false,
   isLoading: true,
   login: async () => ({}),
   logout: () => {},
@@ -36,6 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   // Fetch user roles from the database
   const fetchUserRoles = async (userId: string) => {
@@ -136,11 +139,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           
           setUser(userData);
+          setIsEmailVerified(!!session.user.email_confirmed_at);
           fetchUserRoles(session.user.id);
           console.log("ID do usuário definido:", session.user.id);
+          console.log("Email verificado:", !!session.user.email_confirmed_at);
         } else {
           setUser(null);
           setUserRoles([]);
+          setIsEmailVerified(false);
           console.log("Usuário definido como null");
         }
         setIsLoading(false);
@@ -162,6 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         
         setUser(userData);
+        setIsEmailVerified(!!session.user.email_confirmed_at);
         fetchUserRoles(session.user.id);
       }
       setIsLoading(false);
@@ -363,6 +370,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{ 
         user, 
         isAuthenticated: !!user, 
+        isEmailVerified,
         isLoading,
         login,
         logout,

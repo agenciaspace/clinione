@@ -7,11 +7,13 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ClinicProvider } from "./contexts/ClinicContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { RoleBasedRoute } from "./components/auth/RoleBasedRoute";
+import { EmailVerificationGuard } from "./components/auth/EmailVerificationGuard";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import EmailConfirmation from "./pages/EmailConfirmation";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
 import Patients from "./pages/Patients";
@@ -72,19 +74,21 @@ const App = () => (
     <TooltipProvider>
       <ThemeProvider>
         <AuthProvider>
-          <ClinicProvider>
-            <Toaster />
-            <Sonner />
-            <OfflineIndicator />
-            <PWAInstallPrompt />
-            <DevToolToggle />
-            <BrowserRouter>
-              <Routes>
+          <EmailVerificationGuard>
+            <ClinicProvider>
+              <Toaster />
+              <Sonner />
+              <OfflineIndicator />
+              <PWAInstallPrompt />
+              <DevToolToggle />
+              <BrowserRouter>
+                <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/email-confirmation" element={<EmailConfirmation />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/dashboard/calendar" element={<Calendar />} />
                 <Route path="/dashboard/patients" element={<Patients />} />
@@ -112,9 +116,10 @@ const App = () => (
                 {/* Redirect from old format to new format - only for specific patterns */}
                 <Route path="/:slug" element={<RedirectToNewFormat />} />
                 <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </ClinicProvider>
+                </Routes>
+              </BrowserRouter>
+            </ClinicProvider>
+          </EmailVerificationGuard>
         </AuthProvider>
       </ThemeProvider>
     </TooltipProvider>
