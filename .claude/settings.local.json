@@ -9,7 +9,10 @@
       "Bash(npm cache clean:*)",
       "Bash(npm install:*)",
       "Bash(sudo rm:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(ls:*)",
+      "Bash(npx supabase:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }

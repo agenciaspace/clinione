@@ -7,7 +7,7 @@ import { Patient } from '@/types';
 import { PatientActions } from './PatientActions';
 import { Card, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { User, Mail, Phone, Calendar, MoreHorizontal } from 'lucide-react';
+import { User, Mail, Phone, Calendar, MoreHorizontal, FileText } from 'lucide-react';
 
 interface PatientListProps {
   patients: Patient[];
@@ -110,6 +110,13 @@ export const PatientList = ({
                       </div>
                     )}
                     
+                    {patient.cpf && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <span>{patient.cpf}</span>
+                      </div>
+                    )}
+                    
                     <div className="flex items-center text-sm text-gray-500">
                       <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
                       <span>{format(new Date(patient.birthDate), 'dd/MM/yyyy')}</span>
@@ -158,6 +165,7 @@ export const PatientList = ({
             <TableHead className="min-w-[150px]">Nome</TableHead>
             <TableHead className="hidden md:table-cell min-w-[200px]">Email</TableHead>
             <TableHead className="min-w-[120px]">Telefone</TableHead>
+            <TableHead className="hidden lg:table-cell min-w-[130px]">CPF</TableHead>
             <TableHead className="hidden lg:table-cell min-w-[100px]">Nascimento</TableHead>
             <TableHead className="hidden lg:table-cell min-w-[100px]">Status</TableHead>
             <TableHead className="w-[100px]">Ações</TableHead>
@@ -176,6 +184,9 @@ export const PatientList = ({
                 <div className="truncate max-w-[200px]">{patient.email}</div>
               </TableCell>
               <TableCell>{patient.phone}</TableCell>
+              <TableCell className="hidden lg:table-cell">
+                {patient.cpf || '-'}
+              </TableCell>
               <TableCell className="hidden lg:table-cell">
                 {format(new Date(patient.birthDate), 'dd/MM/yyyy')}
               </TableCell>

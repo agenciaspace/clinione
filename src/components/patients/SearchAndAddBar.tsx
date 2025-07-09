@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { PatientFormData } from '@/types';
+import { maskCPF, validateCPF } from '@/utils/cpf-validation';
 
 interface SearchAndAddBarProps {
   searchTerm: string;
@@ -23,6 +24,7 @@ interface SearchAndAddBarProps {
   patientForm: PatientFormData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleAddPatient: (e: React.FormEvent) => void;
+  isCreating?: boolean;
 }
 
 export const SearchAndAddBar = ({
@@ -33,7 +35,44 @@ export const SearchAndAddBar = ({
   patientForm,
   handleInputChange,
   handleAddPatient,
+  isCreating = false,
 }: SearchAndAddBarProps) => {
+  const [cpfError, setCpfError] = useState<string | null>(null);
+
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    const maskedValue = maskCPF(value);
+    
+    // Update the form with masked CPF
+    handleInputChange({
+      ...e,
+      target: {
+        ...e.target,
+        name: 'cpf',
+        value: maskedValue,
+      }
+    });
+    
+    // Validate CPF
+    const error = validateCPF(maskedValue);
+    setCpfError(error);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate CPF before submission
+    const cpfValidationError = validateCPF(patientForm.cpf);
+    if (cpfValidationError) {
+      setCpfError(cpfValidationError);
+      return;
+    }
+    
+    // Clear CPF error if validation passed
+    setCpfError(null);
+    
+    handleAddPatient(e);
+  };
   return (
     <div className="flex gap-2">
       <div className="relative flex-1">
@@ -60,7 +99,7 @@ export const SearchAndAddBar = ({
               Preencha os dados do paciente para cadastrá-lo no sistema.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddPatient}>
+          <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="name">Nome completo</Label>
@@ -107,12 +146,27 @@ export const SearchAndAddBar = ({
                   required 
                 />
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="cpf">CPF *</Label>
+                <Input 
+                  id="cpf" 
+                  name="cpf"
+                  value={patientForm.cpf || ''}
+                  onChange={handleCpfChange}
+                  placeholder="000.000.000-00" 
+                  required 
+                  className={cpfError ? 'border-red-500' : ''}
+                />
+                {cpfError && <span className="text-sm text-red-500">{cpfError}</span>}
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsAddPatientOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit">Cadastrar Paciente</Button>
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? 'Cadastrando...' : 'Cadastrar Paciente'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

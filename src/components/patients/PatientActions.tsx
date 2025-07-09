@@ -32,6 +32,7 @@ export const PatientActions = ({
     email: '',
     phone: '',
     birthDate: '',
+    cpf: '',
   });
 
   // Atualizar o formulário quando o paciente ou o estado do diálogo mudar
@@ -46,6 +47,7 @@ export const PatientActions = ({
         email: patient.email || '',
         phone: patient.phone || '',
         birthDate: formattedDate,
+        cpf: patient.cpf || '',
       });
     }
   }, [patient, isEditDialogOpen]);
@@ -70,6 +72,7 @@ export const PatientActions = ({
       email: editForm.email?.trim() || '',
       phone: editForm.phone?.trim() || '',
       birthDate: editForm.birthDate || patient.birthDate,
+      cpf: editForm.cpf?.trim() || '',
       status: patient.status as 'active' | 'inactive', // Explicitly type the status
     };
     
@@ -102,6 +105,7 @@ export const PatientActions = ({
       email: '',
       phone: '',
       birthDate: '',
+      cpf: '',
     });
   };
 

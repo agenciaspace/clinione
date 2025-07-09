@@ -13,6 +13,7 @@ interface PatientsFilterProps {
   patientForm: PatientFormData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleAddPatient: (e: React.FormEvent) => void;
+  isCreating?: boolean;
 }
 
 export const PatientsFilter: React.FC<PatientsFilterProps> = ({
@@ -23,6 +24,7 @@ export const PatientsFilter: React.FC<PatientsFilterProps> = ({
   patientForm,
   handleInputChange,
   handleAddPatient,
+  isCreating = false,
 }) => {
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
@@ -40,6 +42,7 @@ export const PatientsFilter: React.FC<PatientsFilterProps> = ({
         patientForm={patientForm}
         handleInputChange={handleInputChange}
         handleAddPatient={handleAddPatient}
+        isCreating={isCreating}
       />
     </div>
   );

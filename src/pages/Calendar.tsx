@@ -5,11 +5,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useClinic } from '@/contexts/ClinicContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppointmentDetails } from '@/components/appointments/AppointmentDetails';
-import { AppointmentForm } from '@/components/appointments/AppointmentForm';
+import { AppointmentFormSimple } from '@/components/appointments/AppointmentFormSimple';
 import { useAppointments } from '@/hooks/useAppointments';
 import { AppointmentCalendar } from '@/components/dashboard/AppointmentCalendar';
 import { AppointmentList } from '@/components/dashboard/AppointmentList';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { usePatients } from '@/hooks/usePatients';
 import { Calendar as CalendarIcon, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +40,8 @@ const Calendar = () => {
     deleteAppointment,
     updateAppointmentNotes 
   } = useAppointments(selectedDate, selectedDoctor);
+
+  const { patients } = usePatients(activeClinic?.id);
 
   useEffect(() => {
     if (activeClinic) {
@@ -98,8 +101,10 @@ const Calendar = () => {
   };
   
   const handleCreateAppointment = async (formData: any) => {
-    let doctorName;
-    if (formData.doctor_id) {
+    console.log('Calendar: handleCreateAppointment called with:', formData);
+    
+    let doctorName = formData.doctor_name;
+    if (formData.doctor_id && !doctorName) {
       const selectedDoctor = doctors.find(d => d.id === formData.doctor_id);
       doctorName = selectedDoctor?.name;
     }
@@ -108,6 +113,7 @@ const Calendar = () => {
       patient_name: formData.patient_name,
       patient_phone: formData.patient_phone,
       patient_email: formData.patient_email,
+      patient_cpf: formData.patient_cpf,
       doctor_id: formData.doctor_id,
       doctor_name: doctorName,
       date: formData.date,
@@ -294,12 +300,13 @@ const Calendar = () => {
         onUpdateNotes={handleUpdateNotes}
       />
 
-      <AppointmentForm
+      <AppointmentFormSimple
         isOpen={isFormOpen}
         onClose={handleCloseForm}
         onSubmit={handleCreateAppointment}
         doctors={doctors}
         selectedDate={selectedDate}
+        patients={patients}
       />
     </DashboardLayout>
   );

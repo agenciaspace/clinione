@@ -18,11 +18,12 @@ export const usePatientManagement = () => {
     name: '',
     email: '',
     phone: '',
-    birthDate: new Date().toISOString().split('T')[0]
+    birthDate: new Date().toISOString().split('T')[0],
+    cpf: ''
   });
 
   const { patients, isLoading } = usePatients(activeClinic?.id);
-  const { updatePatient, deletePatient, isUpdating, isDeleting } = usePatientMutations(activeClinic?.id);
+  const { createPatient, updatePatient, deletePatient, isCreating, isUpdating, isDeleting } = usePatientMutations(activeClinic?.id);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,6 +39,24 @@ export const usePatientManagement = () => {
     if (!activeClinic) {
       toast.error("Selecione uma clínica para adicionar um paciente");
       return;
+    }
+
+    try {
+      await createPatient(patientForm);
+      
+      // Reset form and close modal
+      setPatientForm({
+        name: '',
+        email: '',
+        phone: '',
+        birthDate: new Date().toISOString().split('T')[0],
+        cpf: ''
+      });
+      setIsAddPatientOpen(false);
+      
+    } catch (error) {
+      console.error('Erro ao adicionar paciente:', error);
+      // Error already handled by the mutation
     }
   };
 
@@ -126,5 +145,6 @@ export const usePatientManagement = () => {
     handleCloseRecordModal,
     filteredPatients,
     isLoading,
+    isCreating,
   };
 };

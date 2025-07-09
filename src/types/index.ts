@@ -61,6 +61,7 @@ export interface PatientFormData {
   email: string;
   phone: string;
   birthDate: string;
+  cpf: string;
 }
 
 export interface Patient {
@@ -70,6 +71,7 @@ export interface Patient {
   email: string;
   phone: string;
   birthDate: string;
+  cpf: string;
   address?: string;
   medicalHistory?: string;
   clinicId?: string;

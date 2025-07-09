@@ -27,6 +27,7 @@ export const usePatients = (clinicId?: string) => {
         email: patient.email || '',
         phone: patient.phone || '',
         birthDate: patient.birth_date,
+        cpf: patient.cpf || '',
         created_at: patient.created_at,
         updated_at: patient.updated_at,
         clinic_id: patient.clinic_id,

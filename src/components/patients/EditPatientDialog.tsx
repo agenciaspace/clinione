@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { maskCPF, validateCPF } from '@/utils/cpf-validation';
 
 interface EditPatientDialogProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface EditPatientDialogProps {
     email: string;
     phone: string;
     birthDate: string;
+    cpf: string;
   };
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSave: () => void;
@@ -28,8 +30,38 @@ export const EditPatientDialog = ({
   onSave,
   isLoading = false,
 }: EditPatientDialogProps) => {
+  const [cpfError, setCpfError] = useState<string | null>(null);
+
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    const maskedValue = maskCPF(value);
+    
+    // Update the form with masked CPF
+    onInputChange({
+      ...e,
+      target: {
+        ...e.target,
+        name: 'cpf',
+        value: maskedValue,
+      }
+    });
+    
+    // Validate CPF
+    const error = validateCPF(maskedValue);
+    setCpfError(error);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate CPF before submission
+    const cpfValidationError = validateCPF(formData.cpf);
+    if (cpfValidationError) {
+      setCpfError(cpfValidationError);
+      return;
+    }
+    
+    setCpfError(null);
     onSave();
   };
 
@@ -84,6 +116,21 @@ export const EditPatientDialog = ({
                 className="w-full"
                 autoComplete="off"
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="cpf">CPF *</Label>
+              <Input 
+                id="cpf" 
+                name="cpf"
+                value={formData.cpf || ''}
+                onChange={handleCpfChange}
+                placeholder="000.000.000-00"
+                required
+                disabled={isLoading}
+                className={`w-full ${cpfError ? 'border-red-500' : ''}`}
+                autoComplete="off"
+              />
+              {cpfError && <span className="text-sm text-red-500">{cpfError}</span>}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="birthDate">Data de nascimento</Label>
