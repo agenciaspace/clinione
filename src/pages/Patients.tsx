@@ -32,6 +32,9 @@ const Patients = () => {
   const { doctors } = useDoctors();
   const createAppointmentMutation = useCreateAppointment(activeClinic?.id);
   
+  // Debug: Track re-renders
+  console.log('Patients.tsx: Component rendered with isAppointmentFormOpen:', isAppointmentFormOpen, 'selectedPatient:', selectedPatientForAppointment?.name);
+  
   const {
     searchTerm,
     setSearchTerm,
@@ -51,14 +54,24 @@ const Patients = () => {
     isLoading,
   } = usePatientManagement();
 
+  // Debug: Track state changes
+  useEffect(() => {
+    console.log('Patients.tsx: isAppointmentFormOpen changed to:', isAppointmentFormOpen);
+  }, [isAppointmentFormOpen]);
+  
+  useEffect(() => {
+    console.log('Patients.tsx: selectedPatientForAppointment changed to:', selectedPatientForAppointment?.name);
+  }, [selectedPatientForAppointment]);
+
   // Appointment handling functions
   const handleScheduleAppointment = (patient: Patient) => {
     console.log('Patients.tsx: handleScheduleAppointment called for:', patient.name);
     console.log('Patients.tsx: Current doctors:', doctors);
     console.log('Patients.tsx: Current activeClinic:', activeClinic);
+    console.log('Patients.tsx: Before setState - isAppointmentFormOpen:', isAppointmentFormOpen);
     setSelectedPatientForAppointment(patient);
     setIsAppointmentFormOpen(true);
-    console.log('Patients.tsx: Modal should be open now');
+    console.log('Patients.tsx: After setState - should be open now');
   };
 
   const handleCreateAppointment = async (appointmentData: any) => {

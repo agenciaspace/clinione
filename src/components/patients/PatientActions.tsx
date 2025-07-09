@@ -113,7 +113,10 @@ export const PatientActions = ({
         onToggleStatus={onToggleStatus}
         onDelete={onDelete}
         onOpenRecord={onOpenRecord}
-        onScheduleAppointment={onScheduleAppointment}
+        onScheduleAppointment={(patient) => {
+          console.log('PatientActions: onScheduleAppointment called for:', patient.name);
+          onScheduleAppointment(patient);
+        }}
       />
 
       <EditPatientDialog

@@ -30,7 +30,10 @@ export const PatientsTabContent = ({
       onDelete={onDelete}
       onOpenRecord={onOpenRecord}
       onUpdatePatient={onUpdatePatient}
-      onScheduleAppointment={onScheduleAppointment}
+      onScheduleAppointment={(patient) => {
+        console.log('PatientsTabContent: onScheduleAppointment called for:', patient.name);
+        onScheduleAppointment(patient);
+      }}
     />
   );
 };

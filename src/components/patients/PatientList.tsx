@@ -134,7 +134,10 @@ export const PatientList = ({
                       onDelete={onDelete}
                       onOpenRecord={onOpenRecord}
                       onUpdatePatient={onUpdatePatient}
-                      onScheduleAppointment={onScheduleAppointment}
+                      onScheduleAppointment={(patient) => {
+                        console.log('PatientList (mobile): onScheduleAppointment called for:', patient.name);
+                        onScheduleAppointment(patient);
+                      }}
                     />
                   </div>
                 </div>
@@ -198,7 +201,10 @@ export const PatientList = ({
                   onDelete={onDelete}
                   onOpenRecord={onOpenRecord}
                   onUpdatePatient={onUpdatePatient}
-                  onScheduleAppointment={onScheduleAppointment}
+                  onScheduleAppointment={(patient) => {
+                    console.log('PatientList (desktop): onScheduleAppointment called for:', patient.name);
+                    onScheduleAppointment(patient);
+                  }}
                 />
               </TableCell>
             </TableRow>
