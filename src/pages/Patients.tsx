@@ -31,6 +31,7 @@ const Patients = () => {
   // Hooks for appointment functionality
   const { doctors } = useDoctors();
   const createAppointmentMutation = useCreateAppointment(activeClinic?.id);
+  
   const {
     searchTerm,
     setSearchTerm,
@@ -260,6 +261,12 @@ const Patients = () => {
         onSubmit={handleCreateAppointment}
         doctors={doctors}
         selectedDate={new Date()}
+        preFilledPatient={selectedPatientForAppointment ? {
+          name: selectedPatientForAppointment.name,
+          phone: selectedPatientForAppointment.phone,
+          email: selectedPatientForAppointment.email
+        } : undefined}
+        key={selectedPatientForAppointment?.id || 'new'}
       />
     </DashboardLayout>
   );
