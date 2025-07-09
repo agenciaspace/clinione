@@ -13,6 +13,7 @@ interface PatientActionsProps {
   onDelete: (id: string) => void;
   onOpenRecord: (patient: Patient) => void;
   onUpdatePatient?: (patient: Patient) => void;
+  onScheduleAppointment: (patient: Patient) => void;
 }
 
 export const PatientActions = ({
@@ -21,6 +22,7 @@ export const PatientActions = ({
   onDelete,
   onOpenRecord,
   onUpdatePatient,
+  onScheduleAppointment,
 }: PatientActionsProps) => {
   const { activeClinic } = useClinic();
   const { updatePatient, isUpdating } = usePatientMutations(activeClinic?.id);
@@ -111,6 +113,7 @@ export const PatientActions = ({
         onToggleStatus={onToggleStatus}
         onDelete={onDelete}
         onOpenRecord={onOpenRecord}
+        onScheduleAppointment={onScheduleAppointment}
       />
 
       <EditPatientDialog

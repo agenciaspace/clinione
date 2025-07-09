@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -8,7 +8,10 @@ import { PageHeader } from '@/components/patients/PageHeader';
 import { PatientsFilter } from '@/components/patients/PatientsFilter';
 import { PatientsTabContent } from '@/components/patients/PatientsTabContent';
 import { PatientRecordModal } from '@/components/patients/PatientRecordModal';
+import { AppointmentForm } from '@/components/appointments/AppointmentForm';
 import { usePatientManagement } from '@/hooks/mutations/usePatientManagement';
+import { useCreateAppointment } from '@/hooks/mutations/appointments/useCreateAppointment';
+import { useDoctors } from '@/hooks/useDoctors';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useClinic } from '@/contexts/ClinicContext';
@@ -20,6 +23,14 @@ const Patients = () => {
   const { activeClinic } = useClinic();
   const queryClient = useQueryClient();
   const patientChannelRef = useRef<RealtimeChannel | null>(null);
+  
+  // Appointment form state
+  const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false);
+  const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
+  
+  // Hooks for appointment functionality
+  const { doctors } = useDoctors();
+  const createAppointmentMutation = useCreateAppointment(activeClinic?.id);
   const {
     searchTerm,
     setSearchTerm,
@@ -38,6 +49,34 @@ const Patients = () => {
     filteredPatients,
     isLoading,
   } = usePatientManagement();
+
+  // Appointment handling functions
+  const handleScheduleAppointment = (patient: Patient) => {
+    setSelectedPatientForAppointment(patient);
+    setIsAppointmentFormOpen(true);
+  };
+
+  const handleCreateAppointment = async (appointmentData: any) => {
+    try {
+      await createAppointmentMutation.mutateAsync({
+        ...appointmentData,
+        patient_name: selectedPatientForAppointment?.name || appointmentData.patient_name,
+        patient_phone: selectedPatientForAppointment?.phone || appointmentData.patient_phone,
+        patient_email: selectedPatientForAppointment?.email || appointmentData.patient_email,
+      });
+      
+      // Close the appointment form
+      setIsAppointmentFormOpen(false);
+      setSelectedPatientForAppointment(null);
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+    }
+  };
+
+  const handleCloseAppointmentForm = () => {
+    setIsAppointmentFormOpen(false);
+    setSelectedPatientForAppointment(null);
+  };
 
   // Configurar escuta em tempo real para atualizações na tabela de pacientes
   useEffect(() => {
@@ -177,6 +216,7 @@ const Patients = () => {
                 onDelete={handleDeletePatient}
                 onOpenRecord={handleOpenRecordModal}
                 onUpdatePatient={handleUpdatePatient}
+                onScheduleAppointment={handleScheduleAppointment}
               />
             </TabsContent>
             
@@ -188,6 +228,7 @@ const Patients = () => {
                 onDelete={handleDeletePatient}
                 onOpenRecord={handleOpenRecordModal}
                 onUpdatePatient={handleUpdatePatient}
+                onScheduleAppointment={handleScheduleAppointment}
               />
             </TabsContent>
             
@@ -199,6 +240,7 @@ const Patients = () => {
                 onDelete={handleDeletePatient}
                 onOpenRecord={handleOpenRecordModal}
                 onUpdatePatient={handleUpdatePatient}
+                onScheduleAppointment={handleScheduleAppointment}
               />
             </TabsContent>
           </Tabs>
@@ -210,6 +252,14 @@ const Patients = () => {
         onOpenChange={handleCloseRecordModal}
         patient={selectedPatient}
         currentUser={user}
+      />
+
+      <AppointmentForm
+        isOpen={isAppointmentFormOpen}
+        onClose={handleCloseAppointmentForm}
+        onSubmit={handleCreateAppointment}
+        doctors={doctors}
+        selectedDate={new Date()}
       />
     </DashboardLayout>
   );

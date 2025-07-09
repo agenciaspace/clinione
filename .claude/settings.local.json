@@ -8,7 +8,8 @@
       "Bash(yarn install)",
       "Bash(npm cache clean:*)",
       "Bash(npm install:*)",
-      "Bash(sudo rm:*)"
+      "Bash(sudo rm:*)",
+      "Bash(npm run:*)"
     ],
     "deny": []
   }

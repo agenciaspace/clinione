@@ -16,6 +16,7 @@ interface PatientListProps {
   onDelete: (id: string) => void;
   onOpenRecord: (patient: Patient) => void;
   onUpdatePatient?: (patient: Patient) => void;
+  onScheduleAppointment: (patient: Patient) => void;
 }
 
 export const PatientList = ({
@@ -25,6 +26,7 @@ export const PatientList = ({
   onDelete,
   onOpenRecord,
   onUpdatePatient,
+  onScheduleAppointment,
 }: PatientListProps) => {
   const isMobile = useIsMobile();
 
@@ -132,6 +134,7 @@ export const PatientList = ({
                       onDelete={onDelete}
                       onOpenRecord={onOpenRecord}
                       onUpdatePatient={onUpdatePatient}
+                      onScheduleAppointment={onScheduleAppointment}
                     />
                   </div>
                 </div>
@@ -195,6 +198,7 @@ export const PatientList = ({
                   onDelete={onDelete}
                   onOpenRecord={onOpenRecord}
                   onUpdatePatient={onUpdatePatient}
+                  onScheduleAppointment={onScheduleAppointment}
                 />
               </TableCell>
             </TableRow>
