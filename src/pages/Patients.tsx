@@ -53,8 +53,12 @@ const Patients = () => {
 
   // Appointment handling functions
   const handleScheduleAppointment = (patient: Patient) => {
+    console.log('Patients.tsx: handleScheduleAppointment called for:', patient.name);
+    console.log('Patients.tsx: Current doctors:', doctors);
+    console.log('Patients.tsx: Current activeClinic:', activeClinic);
     setSelectedPatientForAppointment(patient);
     setIsAppointmentFormOpen(true);
+    console.log('Patients.tsx: Modal should be open now');
   };
 
   const handleCreateAppointment = async (appointmentData: any) => {

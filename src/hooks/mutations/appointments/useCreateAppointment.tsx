@@ -9,8 +9,22 @@ import { addDays } from 'date-fns';
 
 export const useCreateAppointment = (clinicId: string | undefined) => {
   const queryClient = useQueryClient();
-  const { createFinancialForecast } = useFinancialMutations(clinicId);
-  const { financialSettings, procedures } = useFinancialQueries(clinicId);
+  
+  // Make financial queries optional to avoid blocking appointment creation
+  let createFinancialForecast: any = null;
+  let financialSettings: any = null;
+  let procedures: any[] = [];
+  
+  try {
+    const financialMutations = useFinancialMutations(clinicId);
+    createFinancialForecast = financialMutations.createFinancialForecast;
+    
+    const financialQueries = useFinancialQueries(clinicId);
+    financialSettings = financialQueries.financialSettings;
+    procedures = financialQueries.procedures;
+  } catch (error) {
+    console.warn('Financial features not available:', error);
+  }
 
   return useMutation({
     mutationFn: async ({
@@ -125,27 +139,33 @@ export const useCreateAppointment = (clinicId: string | undefined) => {
         // Não interromper o fluxo se falhar a criação do paciente
       }
 
-      if (procedure_id && appointmentValue) {
-        let expectedPaymentDate: Date;
-        
-        if (payment_type === 'private') {
-          expectedPaymentDate = new Date(appointmentDate);
-        } else {
-          const paymentTerm = financialSettings?.default_insurance_payment_term || 30;
-          expectedPaymentDate = addDays(appointmentDate, paymentTerm);
+      // Create financial forecast if available and configured
+      if (procedure_id && appointmentValue && createFinancialForecast) {
+        try {
+          let expectedPaymentDate: Date;
+          
+          if (payment_type === 'private') {
+            expectedPaymentDate = new Date(appointmentDate);
+          } else {
+            const paymentTerm = financialSettings?.default_insurance_payment_term || 30;
+            expectedPaymentDate = addDays(appointmentDate, paymentTerm);
+          }
+          
+          await createFinancialForecast({
+            appointment_id: data.id,
+            payment_type,
+            description: `Consulta: ${patient_name} - ${new Date(data.date).toLocaleDateString()}`,
+            value: appointmentValue,
+            expected_payment_date: expectedPaymentDate.toISOString(),
+            status: 'forecast',
+            procedure_id,
+            insurance_company_id,
+            doctor_id
+          });
+        } catch (error) {
+          console.warn('Failed to create financial forecast:', error);
+          // Continue with appointment creation even if forecast fails
         }
-        
-        await createFinancialForecast({
-          appointment_id: data.id,
-          payment_type,
-          description: `Consulta: ${patient_name} - ${new Date(data.date).toLocaleDateString()}`,
-          value: appointmentValue,
-          expected_payment_date: expectedPaymentDate.toISOString(),
-          status: 'forecast',
-          procedure_id,
-          insurance_company_id,
-          doctor_id
-        });
       }
 
       // Enviar notificação de confirmação de agendamento

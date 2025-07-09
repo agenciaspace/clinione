@@ -71,6 +71,10 @@ export function AppointmentForm({
 }: AppointmentFormProps) {
   const isMobile = useIsMobile();
   
+  console.log('AppointmentForm: Rendering with isOpen:', isOpen);
+  console.log('AppointmentForm: preFilledPatient:', preFilledPatient);
+  console.log('AppointmentForm: doctors count:', doctors.length);
+  
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {

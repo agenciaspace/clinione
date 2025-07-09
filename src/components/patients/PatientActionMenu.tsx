@@ -33,7 +33,10 @@ export const PatientActionMenu = ({
       <DropdownMenuContent align="end">
         <DropdownMenuItem 
           className="cursor-pointer"
-          onClick={() => onScheduleAppointment(patient)}
+          onClick={() => {
+            console.log('PatientActionMenu: Clicou em Agendar consulta para:', patient.name);
+            onScheduleAppointment(patient);
+          }}
         >
           <Calendar className="mr-2 h-4 w-4" />
           <span>Agendar consulta</span>
