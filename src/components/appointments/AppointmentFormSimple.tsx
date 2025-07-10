@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,13 +6,13 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  ResponsiveDialog as Dialog,
+  ResponsiveDialogContent as DialogContent,
+  ResponsiveDialogDescription as DialogDescription,
+  ResponsiveDialogFooter as DialogFooter,
+  ResponsiveDialogHeader as DialogHeader,
+  ResponsiveDialogTitle as DialogTitle,
+} from '@/components/ui/responsive-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -77,13 +77,17 @@ export function AppointmentFormSimple({
   onSubmit, 
   doctors, 
   selectedDate,
+  patients = [],
   preFilledPatient 
 }: AppointmentFormSimpleProps) {
   const isMobile = useIsMobile();
+  const [selectedPatientId, setSelectedPatientId] = useState<string>('');
+  const [isNewPatient, setIsNewPatient] = useState(!preFilledPatient);
   
   console.log('AppointmentFormSimple: Rendering with isOpen:', isOpen);
   console.log('AppointmentFormSimple: preFilledPatient:', preFilledPatient);
   console.log('AppointmentFormSimple: doctors count:', doctors.length);
+  console.log('AppointmentFormSimple: patients count:', patients.length);
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
@@ -118,6 +122,42 @@ export function AppointmentFormSimple({
     }
   }, [preFilledPatient, selectedDate, form]);
 
+  // Handle patient selection
+  const handlePatientSelection = (patientId: string) => {
+    setSelectedPatientId(patientId);
+    
+    if (patientId === 'new') {
+      setIsNewPatient(true);
+      form.reset({
+        patient_name: '',
+        patient_phone: '',
+        patient_email: '',
+        patient_cpf: '',
+        doctor_id: form.getValues('doctor_id'),
+        date: form.getValues('date'),
+        time: form.getValues('time'),
+        type: form.getValues('type'),
+        notes: form.getValues('notes'),
+      });
+    } else {
+      setIsNewPatient(false);
+      const selectedPatient = patients.find(p => p.id === patientId);
+      if (selectedPatient) {
+        form.reset({
+          patient_name: selectedPatient.name,
+          patient_phone: selectedPatient.phone,
+          patient_email: selectedPatient.email,
+          patient_cpf: selectedPatient.cpf,
+          doctor_id: form.getValues('doctor_id'),
+          date: form.getValues('date'),
+          time: form.getValues('time'),
+          type: form.getValues('type'),
+          notes: form.getValues('notes'),
+        });
+      }
+    }
+  };
+
   function handleSubmit(data: AppointmentFormValues) {
     console.log('AppointmentFormSimple: Submitting data:', data);
     
@@ -149,7 +189,7 @@ export function AppointmentFormSimple({
       console.log('AppointmentFormSimple: Dialog onOpenChange called with:', open);
       if (!open) onClose();
     }}>
-      <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[90vh] overflow-y-auto' : 'sm:max-w-[500px]'}`}>
+      <DialogContent size="lg">
         <DialogHeader className="pb-4">
           <DialogTitle className="text-lg sm:text-xl">Novo Agendamento</DialogTitle>
           <DialogDescription className="text-sm">
@@ -159,6 +199,27 @@ export function AppointmentFormSimple({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            {/* Patient Selection */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Selecionar Paciente</label>
+              <Select
+                value={selectedPatientId}
+                onValueChange={handlePatientSelection}
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Selecione um paciente ou crie um novo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">+ Novo Paciente</SelectItem>
+                  {patients.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {patient.name} - {patient.cpf}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <FormField
               control={form.control}
               name="patient_name"
@@ -166,7 +227,12 @@ export function AppointmentFormSimple({
                 <FormItem>
                   <FormLabel className="text-sm">Nome do Paciente</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome completo" {...field} className="h-10" />
+                    <Input 
+                      placeholder="Nome completo" 
+                      {...field} 
+                      className="h-10" 
+                      disabled={!isNewPatient}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -184,6 +250,7 @@ export function AppointmentFormSimple({
                       placeholder="000.000.000-00" 
                       {...field} 
                       className="h-10"
+                      disabled={!isNewPatient}
                       onChange={(e) => {
                         const maskedValue = maskCPF(e.target.value);
                         field.onChange(maskedValue);
@@ -203,7 +270,12 @@ export function AppointmentFormSimple({
                   <FormItem>
                     <FormLabel className="text-sm">Telefone (opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="(00) 00000-0000" {...field} className="h-10" />
+                      <Input 
+                        placeholder="(00) 00000-0000" 
+                        {...field} 
+                        className="h-10" 
+                        disabled={!isNewPatient}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -217,7 +289,13 @@ export function AppointmentFormSimple({
                   <FormItem>
                     <FormLabel className="text-sm">E-mail (opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="email@exemplo.com" type="email" {...field} className="h-10" />
+                      <Input 
+                        placeholder="email@exemplo.com" 
+                        type="email" 
+                        {...field} 
+                        className="h-10" 
+                        disabled={!isNewPatient}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

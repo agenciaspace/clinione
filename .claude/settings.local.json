@@ -12,7 +12,11 @@
       "Bash(npm run:*)",
       "Bash(ls:*)",
       "Bash(npx supabase:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(npx eslint:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
