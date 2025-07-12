@@ -17,6 +17,7 @@ import EmailConfirmation from "./pages/EmailConfirmation";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
 import Patients from "./pages/Patients";
+import MedicalRecords from "./pages/MedicalRecords";
 import Doctors from "./pages/Doctors";
 import Reports from "./pages/Reports";
 import Financial from "./pages/Financial";
@@ -29,12 +30,14 @@ import { NotificationsSettings } from "./pages/settings/NotificationsSettings";
 import { AppearanceSettings } from "./pages/settings/AppearanceSettings";
 import { EmailSettings } from "./pages/settings/EmailSettings";
 import { WebhooksSettings } from "./pages/settings/WebhooksSettings";
+import { ArchivedDataSettings } from "./pages/settings/ArchivedDataSettings";
 import ClinicProfile from "./pages/ClinicProfile";
 import PublicClinicPage from "./pages/PublicClinicPage";
 import NotFound from "./pages/NotFound";
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { DevToolToggle } from './components/dev/DevToolToggle';
+import { useCleanupOldDrafts } from './hooks/useCleanupOldDrafts';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,19 +73,23 @@ const RedirectToNewFormat = () => {
   return <NotFound />;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <EmailVerificationGuard>
-            <ClinicProvider>
-              <Toaster />
-              <Sonner />
-              <OfflineIndicator />
-              <PWAInstallPrompt />
-              <DevToolToggle />
-              <BrowserRouter>
+const App = () => {
+  // Initialize cleanup of old drafts
+  useCleanupOldDrafts();
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <EmailVerificationGuard>
+              <ClinicProvider>
+                <Toaster />
+                <Sonner />
+                <OfflineIndicator />
+                <PWAInstallPrompt />
+                <DevToolToggle />
+                <BrowserRouter>
                 <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
@@ -93,13 +100,14 @@ const App = () => (
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/dashboard/calendar" element={<Calendar />} />
                 <Route path="/dashboard/patients" element={<Patients />} />
+                <Route path="/dashboard/medical-records" element={<MedicalRecords />} />
                 <Route path="/dashboard/doctors" element={<Doctors />} />
                 <Route path="/dashboard/reports" element={<Reports />} />
                 <Route path="/dashboard/financial" element={<Financial />} />
                 <Route path="/dashboard/clinic" element={<ClinicProfile />} />
                 
                 {/* Settings routes with subroutes */}
-                <Route path="/dashboard/settings" element={<SettingsLayout />}>
+                <Route path="/dashboard/settings/*" element={<SettingsLayout />}>
                   <Route index element={<Navigate to="/dashboard/settings/profile" replace />} />
                   <Route path="profile" element={<ProfileSettings />} />
                   <Route path="security" element={<SecuritySettings />} />
@@ -107,6 +115,7 @@ const App = () => (
                   <Route path="appearance" element={<AppearanceSettings />} />
                   <Route path="email" element={<EmailSettings />} />
                   <Route path="webhooks" element={<WebhooksSettings />} />
+                  <Route path="archived-data" element={<ArchivedDataSettings />} />
                 </Route>
                 {/* Public clinic routes */}
                 <Route path="/c/:slug" element={<PublicClinicPage />} />
@@ -125,6 +134,7 @@ const App = () => (
       </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

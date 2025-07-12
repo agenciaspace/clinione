@@ -16,7 +16,13 @@
       "Bash(npx tsc:*)",
       "Bash(grep:*)",
       "Bash(npx eslint:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(find:*)",
+      "Bash(mv:*)",
+      "Bash(psql:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(PGPASSWORD=postgres psql -h localhost -p 54322 -U postgres -d postgres -f scripts/fix-auth-simple.sql)"
     ],
     "deny": []
   }

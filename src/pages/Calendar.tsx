@@ -7,17 +7,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { AppointmentDetails } from '@/components/appointments/AppointmentDetails';
 import { AppointmentFormSimple } from '@/components/appointments/AppointmentFormSimple';
 import { useAppointments } from '@/hooks/useAppointments';
-import { AppointmentCalendar } from '@/components/dashboard/AppointmentCalendar';
-import { AppointmentList } from '@/components/dashboard/AppointmentList';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePatients } from '@/hooks/usePatients';
 import { useScheduleBlocks } from '@/hooks/useScheduleBlocks';
-import { Calendar as CalendarIcon, Plus, ChevronDown, ChevronUp, Shield, Grid, List } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ScheduleBlockManager } from '@/components/appointments/ScheduleBlockManager';
-import { ScheduleBlocksList } from '@/components/appointments/ScheduleBlocksList';
 import { GoogleCalendarView } from '@/components/calendar/GoogleCalendarView';
 import { toast } from '@/components/ui/sonner';
 
@@ -26,8 +20,6 @@ const Calendar = () => {
   const { activeClinic } = useClinic();
   const isMobile = useIsMobile();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [view, setView] = useState<'day' | 'week' | 'all'>('day');
-  const [calendarView, setCalendarView] = useState<'compact' | 'expanded'>('compact');
   const [selectedDoctor, setSelectedDoctor] = useState<string | undefined>(undefined);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -219,235 +211,30 @@ const Calendar = () => {
           </div>
           
           {activeClinic && (
-            <div className="flex items-center space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                size={isMobile ? "default" : "lg"}
-                onClick={() => setCalendarView(calendarView === 'compact' ? 'expanded' : 'compact')}
-              >
-                {calendarView === 'compact' ? (
-                  <>
-                    <Grid className="h-4 w-4 mr-2" />
-                    {!isMobile && 'Expandir'}
-                  </>
-                ) : (
-                  <>
-                    <List className="h-4 w-4 mr-2" />
-                    {!isMobile && 'Compacto'}
-                  </>
-                )}
-              </Button>
-              <Button type="button" onClick={handleOpenForm} size={isMobile ? "default" : "lg"}>
-                <Plus className="h-5 w-5 mr-2" />
-                {isMobile ? 'Novo Agendamento' : 'Novo Agendamento'}
-              </Button>
-            </div>
+            <Button type="button" onClick={handleOpenForm} size={isMobile ? "default" : "lg"}>
+              <Plus className="h-5 w-5 mr-2" />
+              Novo Agendamento
+            </Button>
           )}
         </div>
       </div>
       
-      {/* Layout with maximum calendar focus */}
-      <div className="space-y-6">
-        {/* Expanded Calendar View */}
-        {calendarView === 'expanded' && activeClinic && (
-          <GoogleCalendarView
-            selectedDate={selectedDate || new Date()}
-            onDateSelect={setSelectedDate}
-            appointments={allAppointments}
-            scheduleBlocks={scheduleBlocks}
-            doctors={doctors}
-            clinicId={activeClinic.id}
-            selectedDoctorId={selectedDoctor}
-            onNewAppointment={handleOpenForm}
-            onEditAppointment={handleOpenDetails}
-            onDeleteAppointment={handleDeleteAppointment}
-            onDeleteBlock={handleDeleteBlock}
-          />
-        )}
-
-        {/* Compact Calendar View */}
-        {calendarView === 'compact' && (
-          <div>
-        {/* Calendar Section - Takes full width and prominence */}
-        <div className="w-full">
-          <Card className="shadow-lg border-2">
-            <CardContent className="p-6 sm:p-8">
-              <div className={`${
-                isMobile 
-                  ? 'space-y-6' 
-                  : 'grid grid-cols-1 lg:grid-cols-3 gap-8 items-start'
-              }`}>
-                {/* Calendar takes center stage */}
-                <div className={`${isMobile ? 'order-1' : 'lg:col-span-2'} flex justify-center`}>
-                  <div className="w-full max-w-md lg:max-w-lg">
-                    <AppointmentCalendar
-                      selectedDate={selectedDate}
-                      setSelectedDate={setSelectedDate}
-                      selectedDoctor={selectedDoctor}
-                      setSelectedDoctor={setSelectedDoctor}
-                      doctors={doctors}
-                      view={view}
-                      setView={setView}
-                      hasAppointmentsOnDate={hasAppointmentsOnDate}
-                      hasScheduleBlocksOnDate={hasScheduleBlocksOnDate}
-                    />
-                  </div>
-                </div>
-
-                {/* Quick stats and info */}
-                <div className={`${isMobile ? 'order-2' : 'lg:col-span-1'} space-y-4`}>
-                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-lg border">
-                    <h3 className="font-semibold text-lg mb-3">Resumo do Dia</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Total de agendamentos:</span>
-                        <span className="font-semibold text-lg">{appointments.length}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Profissionais ativos:</span>
-                        <span className="font-semibold text-lg">{doctors.length}</span>
-                      </div>
-                      {selectedDate && (
-                        <div className="pt-2 border-t">
-                          <p className="text-sm font-medium text-primary">
-                            {selectedDate.toLocaleDateString('pt-BR', { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
-                            })}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Quick actions */}
-                  <div className="space-y-2">
-                    <Button 
-                      type="button"
-                      onClick={handleOpenForm} 
-                      className="w-full" 
-                      size="lg"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Novo Agendamento
-                    </Button>
-                    <Button 
-                      type="button"
-                      onClick={() => setIsScheduleBlocksOpen(!isScheduleBlocksOpen)} 
-                      className="w-full" 
-                      variant="outline"
-                      size="lg"
-                    >
-                      <Shield className="h-4 w-4 mr-2" />
-                      Bloqueios de Agenda
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Appointments List - Collapsible on mobile, always visible on desktop */}
-        <Collapsible 
-          open={isAppointmentsOpen} 
-          onOpenChange={setIsAppointmentsOpen}
-          className="w-full"
-        >
-          <Card>
-            <CardHeader className="pb-3">
-              <CollapsibleTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-between p-0 h-auto hover:bg-transparent"
-                >
-                  <CardTitle className="flex items-center text-xl">
-                    Agendamentos
-                    {selectedDate && (
-                      <span className="ml-2 text-base font-normal text-muted-foreground">
-                        ({appointments.length} {view === 'day' ? 'hoje' : view === 'week' ? 'esta semana' : 'total'})
-                      </span>
-                    )}
-                  </CardTitle>
-                  {isMobile && (
-                    isAppointmentsOpen ? 
-                      <ChevronUp className="h-5 w-5" /> : 
-                      <ChevronDown className="h-5 w-5" />
-                  )}
-                </Button>
-              </CollapsibleTrigger>
-            </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="pt-0">
-                <AppointmentList
-                  appointments={appointments}
-                  allAppointments={allAppointments}
-                  isLoading={isLoading}
-                  view={view}
-                  onOpenForm={handleOpenForm}
-                  onOpenDetails={handleOpenDetails}
-                  onConfirm={confirmAppointment}
-                  onCancel={cancelAppointment}
-                  selectedDate={selectedDate}
-                />
-                
-                {/* Show active schedule blocks for selected date */}
-                {selectedDate && activeClinic && (
-                  <ScheduleBlocksList
-                    clinicId={activeClinic.id}
-                    selectedDate={selectedDate}
-                    selectedDoctor={selectedDoctor}
-                    doctors={doctors}
-                  />
-                )}
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-
-        {/* Schedule Blocks Section */}
-        <Collapsible 
-          open={isScheduleBlocksOpen} 
-          onOpenChange={setIsScheduleBlocksOpen}
-          className="w-full"
-        >
-          <Card>
-            <CardHeader className="pb-3">
-              <CollapsibleTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-between p-0 h-auto hover:bg-transparent"
-                >
-                  <CardTitle className="flex items-center text-xl">
-                    <Shield className="h-5 w-5 mr-2" />
-                    Bloqueios de Agenda
-                  </CardTitle>
-                  {isScheduleBlocksOpen ? 
-                    <ChevronUp className="h-5 w-5" /> : 
-                    <ChevronDown className="h-5 w-5" />
-                  }
-                </Button>
-              </CollapsibleTrigger>
-            </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="pt-0">
-                {activeClinic && (
-                  <ScheduleBlockManager
-                    clinicId={activeClinic.id}
-                    doctors={doctors}
-                    selectedDoctorId={selectedDoctor}
-                  />
-                )}
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-        </div>
-        )}
-      </div>
+      {/* Google Calendar View - Full Screen */}
+      {activeClinic && (
+        <GoogleCalendarView
+          selectedDate={selectedDate || new Date()}
+          onDateSelect={setSelectedDate}
+          appointments={allAppointments}
+          scheduleBlocks={scheduleBlocks}
+          doctors={doctors}
+          clinicId={activeClinic.id}
+          selectedDoctorId={selectedDoctor}
+          onNewAppointment={handleOpenForm}
+          onEditAppointment={handleOpenDetails}
+          onDeleteAppointment={handleDeleteAppointment}
+          onDeleteBlock={handleDeleteBlock}
+        />
+      )}
 
       <AppointmentDetails
         appointment={selectedAppointment}

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { Calendar, Users, UserCircle, FileBarChart, DollarSign, Settings, Building2, LucideIcon, MessageSquare, Globe, LayoutDashboard } from 'lucide-react';
+import { Calendar, Users, UserCircle, FileBarChart, DollarSign, Settings, Building2, LucideIcon, MessageSquare, Globe, LayoutDashboard, FileText } from 'lucide-react';
 
 interface MenuItem {
   title: string;
@@ -45,6 +45,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       path: '/dashboard/patients',
       icon: Users,
       roles: ['super_admin', 'owner', 'admin', 'doctor', 'staff', 'receptionist']
+    },
+    {
+      title: 'Prontuário',
+      path: '/dashboard/medical-records',
+      icon: FileText,
+      roles: ['super_admin', 'owner', 'admin', 'doctor', 'staff']
     },
     {
       title: 'Profissionais',

@@ -86,7 +86,7 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
   };
 
   return (
-    <div className={`${isMobile ? 'space-y-4' : 'flex h-full gap-6'}`}>
+    <div className={`${isMobile ? 'space-y-4' : 'flex gap-6'} ${!isMobile ? 'h-[calc(100vh-200px)] min-h-[600px]' : ''}`}>
       {/* Main Calendar View */}
       <div className="flex-1 min-w-0">
         <ExpandedCalendarView
@@ -101,7 +101,7 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
       </div>
 
       {/* Sidebar with day details */}
-      <div className={`${isMobile ? 'w-full' : 'w-80 flex-shrink-0'}`}>
+      <div className={`${isMobile ? 'w-full' : 'w-80 flex-shrink-0'} ${!isMobile ? 'h-full' : ''}`}>
         <DayDetailsSidebar
           selectedDate={selectedDate}
           appointments={selectedDayAppointments}

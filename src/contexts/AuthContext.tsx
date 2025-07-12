@@ -365,8 +365,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       return {};
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao fazer login:", error);
+      
+      // Handle specific authentication errors
+      if (error.message?.includes('Invalid login credentials')) {
+        throw new Error('Credenciais inválidas. Verifique seu email e senha.');
+      } else if (error.message?.includes('Email not confirmed')) {
+        throw new Error('Email não confirmado. Verifique sua caixa de entrada.');
+      } else if (error.message?.includes('Too many requests')) {
+        throw new Error('Muitas tentativas de login. Tente novamente em alguns minutos.');
+      } else if (error.message?.includes('Invalid email')) {
+        throw new Error('Email inválido. Verifique se o email está correto.');
+      } else if (error.message?.includes('Signups not allowed')) {
+        throw new Error('Login não permitido. Entre em contato com o suporte.');
+      }
+      
       throw error;
     } finally {
       setIsLoadingAuth(false);
@@ -479,6 +493,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Muitos emails de confirmação enviados. Aguarde antes de tentar novamente.');
       } else if (error.message?.includes('email rate limit exceeded')) {
         throw new Error('Limite de envio de emails atingido. Aguarde alguns minutos antes de tentar novamente.');
+      } else if (error.message?.includes('User already registered')) {
+        throw new Error('Este email já está registrado. Tente fazer login ou use outro email.');
+      } else if (error.message?.includes('Password should be at least 6 characters')) {
+        throw new Error('A senha deve ter pelo menos 6 caracteres.');
+      } else if (error.message?.includes('Invalid email')) {
+        throw new Error('Email inválido. Verifique se o email está correto.');
+      } else if (error.message?.includes('Signup is disabled')) {
+        throw new Error('Registro de novos usuários está temporariamente desabilitado.');
       }
       
       throw error;
