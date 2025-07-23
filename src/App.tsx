@@ -38,6 +38,7 @@ import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { DevToolToggle } from './components/dev/DevToolToggle';
 import { useCleanupOldDrafts } from './hooks/useCleanupOldDrafts';
+import { isSubdomain } from './utils/subdomain';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,7 +86,10 @@ const RedirectToNewFormat = () => {
   
   // Only redirect if it looks like a clinic slug (avoid conflicts with other routes)
   if (slug && !slug.includes('/') && slug.length > 2) {
-    return <Navigate to={`/c/${slug}`} replace />;
+    // Redirect to subdomain format
+    const newUrl = `${window.location.protocol}//${slug}.clini.one${window.location.pathname}${window.location.search}`;
+    window.location.href = newUrl;
+    return null;
   }
   
   // If it doesn't look like a valid slug, show 404
@@ -95,6 +99,34 @@ const RedirectToNewFormat = () => {
 const App = () => {
   // Initialize cleanup of old drafts
   useCleanupOldDrafts();
+  
+  // If we're on a subdomain, show the public clinic page
+  if (isSubdomain()) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <EmailVerificationGuard>
+                <ClinicProvider>
+                  <Toaster />
+                  <Sonner />
+                  <OfflineIndicator />
+                  <PWAInstallPrompt />
+                  <DevToolToggle />
+                  <BrowserRouter>
+                    <Routes>
+                      <Route path="*" element={<PublicClinicPage />} />
+                    </Routes>
+                  </BrowserRouter>
+                </ClinicProvider>
+              </EmailVerificationGuard>
+            </AuthProvider>
+          </ThemeProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
   
   return (
     <QueryClientProvider client={queryClient}>
@@ -147,8 +179,8 @@ const App = () => {
                 <Route path="/dashboard/public-page/:clinicId" element={<PublicClinicPage />} />
                 {/* Landing page route for marketing purposes */}
                 <Route path="/landing" element={<LandingPage />} />
-                {/* TEMPORARILY DISABLED - CAUSING ISSUES */}
-                {/* <Route path="/:slug" element={<RedirectToNewFormat />} /> */}
+                {/* Legacy clinic pages - redirect to subdomain */}
+                <Route path="/:slug" element={<RedirectToNewFormat />} />
                 <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
