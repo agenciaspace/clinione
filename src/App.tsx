@@ -67,30 +67,30 @@ const RedirectToNewFormat = () => {
   
   console.log('🔍 RedirectToNewFormat called with slug:', slug);
   console.log('🔍 Current URL:', window.location.href);
+  console.log('🔍 Full pathname:', window.location.pathname);
   
-  // Exclude specific routes that should not be treated as clinic slugs
+  // CRITICAL: These routes should NEVER reach this component - they have their own routes
   const excludedRoutes = ['redefinir-senha', 'reset-password', 'login', 'register', 'forgot-password', 'email-confirmation'];
   
-  // CRITICAL: Block these routes completely - they should never reach this component
   if (slug && excludedRoutes.includes(slug)) {
-    console.log(`🛑 Blocked excluded route: ${slug} - redirecting to appropriate handler`);
+    console.error(`❌ UNEXPECTED: Auth route "${slug}" reached RedirectToNewFormat! This indicates a routing problem.`);
+    console.log('🔄 Attempting to redirect back to proper route...');
     
-    // Redirect to the correct route handler with query params preserved
+    // This should not happen, but if it does, redirect back
     const searchParams = new URLSearchParams(window.location.search);
     const queryString = searchParams.toString();
     const targetUrl = `/${slug}${queryString ? '?' + queryString : ''}`;
     
-    console.log('🔀 Redirecting to:', targetUrl);
     return <Navigate to={targetUrl} replace />;
   }
   
-  // Only redirect if it looks like a clinic slug (avoid conflicts with other routes)
-  if (slug && !slug.includes('/') && slug.length > 2) {
-    // Redirect to /c/ format
+  // Only redirect valid clinic slugs (letters, numbers, hyphens, reasonable length)
+  if (slug && /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(slug) && slug.length >= 3 && slug.length <= 50) {
+    console.log(`✅ Valid clinic slug detected: ${slug} - redirecting to /c/${slug}`);
     return <Navigate to={`/c/${slug}`} replace />;
   }
   
-  // If it doesn't look like a valid slug, show 404
+  console.log(`🚫 Invalid or unrecognized slug: ${slug} - showing 404`);
   return <NotFound />;
 };
 
@@ -150,7 +150,8 @@ const App = () => {
                 <Route path="/dashboard/public-page/:clinicId" element={<PublicClinicPage />} />
                 {/* Landing page route for marketing purposes */}
                 <Route path="/landing" element={<LandingPage />} />
-                {/* Legacy redirect for SEO */}
+                
+                {/* Legacy redirect for SEO - MUST BE LAST before catch-all */}
                 <Route path="/:slug" element={<RedirectToNewFormat />} />
                 <Route path="*" element={<NotFound />} />
                 </Routes>
