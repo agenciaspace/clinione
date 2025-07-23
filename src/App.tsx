@@ -147,8 +147,8 @@ const App = () => {
                 <Route path="/dashboard/public-page/:clinicId" element={<PublicClinicPage />} />
                 {/* Landing page route for marketing purposes */}
                 <Route path="/landing" element={<LandingPage />} />
-                {/* Redirect from old format to new format - only for specific patterns */}
-                <Route path="/:slug" element={<RedirectToNewFormat />} />
+                {/* TEMPORARILY DISABLED - CAUSING ISSUES */}
+                {/* <Route path="/:slug" element={<RedirectToNewFormat />} /> */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
