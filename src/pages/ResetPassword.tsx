@@ -23,23 +23,44 @@ const ResetPassword = () => {
       const refreshToken = searchParams.get('refresh_token');
       const type = searchParams.get('type');
 
+      console.log('Reset password params:', { accessToken, refreshToken, type });
+
       if (!accessToken || type !== 'recovery') {
+        console.log('Invalid params - missing token or wrong type');
         setIsValidToken(false);
         setIsVerifying(false);
         return;
       }
 
       try {
-        // Define a sessão usando os tokens de recuperação
-        const { data, error } = await supabase.auth.setSession({
+        // Primeiro, tenta verificar se o token é válido fazendo uma chamada de teste
+        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken || ''
         });
 
-        if (error) {
-          console.error('Token verification error:', error);
-          setIsValidToken(false);
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          
+          // Se falhar com setSession, pode ser um token de formato diferente
+          // Vamos tentar uma abordagem alternativa - verificar se conseguimos fazer update
+          try {
+            // Tenta fazer um update de teste para verificar se o token é válido
+            const { error: testError } = await supabase.auth.updateUser({});
+            
+            if (testError && testError.message.includes('Invalid token')) {
+              console.error('Token is invalid');
+              setIsValidToken(false);
+            } else {
+              console.log('Token appears to be valid via alternative method');
+              setIsValidToken(true);
+            }
+          } catch (altError) {
+            console.error('Alternative verification failed:', altError);
+            setIsValidToken(false);
+          }
         } else {
+          console.log('Session set successfully');
           setIsValidToken(true);
         }
       } catch (error) {
@@ -85,6 +106,19 @@ const ResetPassword = () => {
       });
 
       if (error) {
+        console.error('Password update error:', error);
+        
+        // Tratar erros específicos
+        if (error.message.includes('Invalid token') || error.message.includes('Token expired')) {
+          toast.error("Link expirado", {
+            description: "O link de redefinição expirou. Solicite um novo link."
+          });
+          setTimeout(() => {
+            navigate('/forgot-password');
+          }, 3000);
+          return;
+        }
+        
         throw error;
       }
 

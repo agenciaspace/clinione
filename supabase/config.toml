@@ -183,6 +183,11 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# Template for password recovery
+[auth.email.template.recovery]
+subject = "Redefinir sua senha - Clini.One"
+content_path = "./supabase/templates/reset-password.html"
+
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
 enable_signup = false
