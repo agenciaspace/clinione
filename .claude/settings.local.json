@@ -30,7 +30,10 @@
       "Bash(supabase link:*)",
       "Bash(supabase start:*)",
       "Bash(supabase stop:*)",
-      "Bash(PGPASSWORD=postgres psql -h localhost -p 54322 -U postgres -d postgres -f /Users/leonhatori/Documents/GitHub/clinio/backups/real-prod-backup-20250716-015332.sql)"
+      "Bash(PGPASSWORD=postgres psql -h localhost -p 54322 -U postgres -d postgres -f /Users/leonhatori/Documents/GitHub/clinio/backups/real-prod-backup-20250716-015332.sql)",
+      "Bash(git push:*)",
+      "Bash(npx vercel:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

@@ -144,7 +144,12 @@ const ResetPassword = () => {
           throw verifyError;
         }
 
-        console.log('Token verified, updating password...');
+        console.log('Token verified, updating password...', data);
+
+        // Estabelecer sessão se retornada
+        if (data.session) {
+          await supabase.auth.setSession(data.session);
+        }
         
         // Após verificação bem-sucedida, atualizar senha
         const { error: updateError } = await supabase.auth.updateUser({
