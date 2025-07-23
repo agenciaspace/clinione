@@ -67,8 +67,25 @@ const RedirectToNewFormat = () => {
   // Exclude specific routes that should not be treated as clinic slugs
   const excludedRoutes = ['redefinir-senha', 'reset-password', 'login', 'register', 'forgot-password', 'email-confirmation'];
   
+  // CRITICAL: Block these routes completely - they should never reach this component
   if (slug && excludedRoutes.includes(slug)) {
-    return <NotFound />;
+    console.log(`🛑 Blocked excluded route: ${slug} - redirecting to appropriate handler`);
+    
+    // Redirect to the correct route handler
+    switch (slug) {
+      case 'redefinir-senha':
+        return <Navigate to="/redefinir-senha" replace />;
+      case 'login':
+        return <Navigate to="/login" replace />;
+      case 'register':
+        return <Navigate to="/register" replace />;
+      case 'forgot-password':
+        return <Navigate to="/forgot-password" replace />;
+      case 'email-confirmation':
+        return <Navigate to="/email-confirmation" replace />;
+      default:
+        return <NotFound />;
+    }
   }
   
   // Only redirect if it looks like a clinic slug (avoid conflicts with other routes)
@@ -99,11 +116,11 @@ const App = () => {
                 <BrowserRouter>
                 <Routes>
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/redefinir-senha" element={<ResetPassword />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/email-confirmation" element={<EmailConfirmation />} />
-                <Route path="/redefinir-senha" element={<ResetPassword />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/dashboard/calendar" element={<Calendar />} />
                 <Route path="/dashboard/patients" element={<Patients />} />
