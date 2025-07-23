@@ -150,8 +150,6 @@ const App = () => {
                 <Route path="/dashboard/public-page/:clinicId" element={<PublicClinicPage />} />
                 {/* Landing page route for marketing purposes */}
                 <Route path="/landing" element={<LandingPage />} />
-                {/* Public clinic pages */}
-                <Route path="/c/:slug" element={<PublicClinicPage />} />
                 {/* Legacy redirect for SEO */}
                 <Route path="/:slug" element={<RedirectToNewFormat />} />
                 <Route path="*" element={<NotFound />} />

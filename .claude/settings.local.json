@@ -41,7 +41,8 @@
       "Bash(git add .)",
       "Bash(git commit -m \"debug: add logging to RedirectToNewFormat to track routing issue\")",
       "Bash(git push origin clarissa)",
-      "Bash(git commit -m \"fix: move auth routes to highest priority to prevent /:slug capture\")"
+      "Bash(git commit -m \"fix: move auth routes to highest priority to prevent /:slug capture\")",
+      "Bash(nslookup:*)"
     ],
     "deny": []
   }
