@@ -110,12 +110,16 @@ const App = () => {
                 <DevToolToggle />
                 <BrowserRouter>
                 <Routes>
-                <Route path="/" element={<LandingPage />} />
+                {/* AUTH ROUTES - HIGHEST PRIORITY */}
                 <Route path="/redefinir-senha" element={<ResetPassword />} />
+                <Route path="/redefinir-senha/*" element={<ResetPassword />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/email-confirmation" element={<EmailConfirmation />} />
+                
+                {/* MAIN ROUTES */}
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/dashboard/calendar" element={<Calendar />} />
                 <Route path="/dashboard/patients" element={<Patients />} />
