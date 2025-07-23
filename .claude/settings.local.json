@@ -22,7 +22,15 @@
       "Bash(psql:*)",
       "Bash(curl:*)",
       "Bash(pkill:*)",
-      "Bash(PGPASSWORD=postgres psql -h localhost -p 54322 -U postgres -d postgres -f scripts/fix-auth-simple.sql)"
+      "Bash(PGPASSWORD=postgres psql -h localhost -p 54322 -U postgres -d postgres -f scripts/fix-auth-simple.sql)",
+      "Bash(open:*)",
+      "Bash(chmod:*)",
+      "Bash(mkdir:*)",
+      "Bash(supabase status:*)",
+      "Bash(supabase link:*)",
+      "Bash(supabase start:*)",
+      "Bash(supabase stop:*)",
+      "Bash(PGPASSWORD=postgres psql -h localhost -p 54322 -U postgres -d postgres -f /Users/leonhatori/Documents/GitHub/clinio/backups/real-prod-backup-20250716-015332.sql)"
     ],
     "deny": []
   }
