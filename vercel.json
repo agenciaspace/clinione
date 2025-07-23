@@ -17,5 +17,10 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
+  ],
+  "domains": [
+    "clini.one",
+    "www.clini.one",
+    "*.clini.one"
   ]
-} 
+}
