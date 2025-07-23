@@ -18,16 +18,14 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const verifyToken = async () => {
+    const verifyToken = () => {
       const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
       const type = searchParams.get('type');
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
       console.log('Reset password params:', { 
-        accessToken: accessToken ? `${accessToken.slice(0, 10)}...` : null, 
-        refreshToken: refreshToken ? `${refreshToken.slice(0, 10)}...` : null, 
+        accessToken: accessToken ? `${accessToken.slice(0, 10)}...` : null,
         type, 
         error, 
         errorDescription 
@@ -57,57 +55,39 @@ const ResetPassword = () => {
         return;
       }
 
+      // Para tokens em formato hash (hexadecimal), aceitar diretamente
+      if (/^[a-f0-9]+$/i.test(accessToken) && accessToken.length >= 32) {
+        console.log('✅ Token appears to be valid hash format');
+        setIsValidToken(true);
+        setIsVerifying(false);
+        return;
+      }
+
+      // Para tokens JWT, tentar validar formato
       try {
-        // Estratégia 1: Tentar setSession primeiro
-        console.log('Attempting setSession...');
-        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken || ''
-        });
-
-        if (!sessionError && sessionData?.session) {
-          console.log('✅ Session set successfully');
-          setIsValidToken(true);
-          setIsVerifying(false);
-          return;
-        }
-
-        console.log('❌ setSession failed:', sessionError?.message);
-
-        // Estratégia 2: Verificar se o token parece ser um JWT válido
-        try {
-          const tokenParts = accessToken.split('.');
-          if (tokenParts.length === 3) {
-            // Parece ser um JWT, tentar decodificar o header
-            const header = JSON.parse(atob(tokenParts[0]));
-            console.log('Token appears to be JWT:', { alg: header.alg });
-            
-            // Se é um JWT mas setSession falhou, pode ser expirado
-            const payload = JSON.parse(atob(tokenParts[1]));
-            const now = Math.floor(Date.now() / 1000);
-            
-            if (payload.exp && payload.exp < now) {
-              console.log('Token is expired:', new Date(payload.exp * 1000));
-              setIsValidToken(false);
-            } else {
-              console.log('Token format seems valid, allowing proceed');
-              setIsValidToken(true);
-            }
-          } else {
-            console.log('Token is not JWT format');
+        const tokenParts = accessToken.split('.');
+        if (tokenParts.length === 3) {
+          // Parece ser um JWT, tentar decodificar
+          const payload = JSON.parse(atob(tokenParts[1]));
+          const now = Math.floor(Date.now() / 1000);
+          
+          if (payload.exp && payload.exp < now) {
+            console.log('JWT token is expired:', new Date(payload.exp * 1000));
             setIsValidToken(false);
+          } else {
+            console.log('✅ JWT token format seems valid');
+            setIsValidToken(true);
           }
-        } catch (jwtError) {
-          console.log('Token is not valid JWT:', jwtError.message);
+        } else {
+          console.log('❌ Token is not in expected format');
           setIsValidToken(false);
         }
-
-      } catch (error) {
-        console.error('Error in token verification:', error);
+      } catch (jwtError) {
+        console.log('❌ Token validation failed:', jwtError.message);
         setIsValidToken(false);
-      } finally {
-        setIsVerifying(false);
       }
+
+      setIsVerifying(false);
     };
 
     verifyToken();
@@ -141,30 +121,41 @@ const ResetPassword = () => {
 
     try {
       const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
 
-      // Estratégia 1: Tentar definir a sessão novamente antes de atualizar
-      if (accessToken && refreshToken) {
-        console.log('Attempting to set session before password update...');
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
-        });
-        
-        if (sessionError) {
-          console.log('Failed to set session:', sessionError.message);
-        } else {
-          console.log('Session set successfully before update');
+      console.log('Attempting password update with token...');
+
+      // Usar o endpoint de reset de senha com token
+      const { error } = await supabase.auth.updateUser(
+        { password: password },
+        { 
+          emailRedirectTo: window.location.origin + '/login'
         }
-      }
+      );
 
-      // Estratégia 2: Tentar atualizar a senha
-      console.log('Attempting password update...');
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      });
+      // Se falhar com updateUser, tentar abordagem alternativa
+      if (error && error.message.includes('session')) {
+        console.log('Trying alternative approach with verifyOtp...');
+        
+        // Tentar usar verifyOtp para tokens de hash
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: accessToken,
+          type: 'recovery'
+        });
 
-      if (error) {
+        if (verifyError) {
+          console.error('VerifyOtp error:', verifyError);
+          throw verifyError;
+        }
+
+        // Se verificação funcionou, tentar atualizar senha novamente
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: password
+        });
+
+        if (updateError) {
+          throw updateError;
+        }
+      } else if (error) {
         console.error('Password update error:', error);
         
         // Tratar erros específicos
@@ -212,9 +203,11 @@ const ResetPassword = () => {
       
       if (error.message.includes('network') || error.message.includes('fetch')) {
         errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
-      } else if (error.message.includes('rate limit')) {
+      } else if (error.message.includes('rate limit') || error.message.includes('429')) {
         errorMessage = "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
       } else if (error.message.includes('Invalid token')) {
+        errorMessage = "Link inválido ou expirado. Solicite um novo link.";
+      } else if (error.message.includes('403')) {
         errorMessage = "Link inválido ou expirado. Solicite um novo link.";
       }
       
