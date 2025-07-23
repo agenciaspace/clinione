@@ -10,9 +10,11 @@ import { useAppointments } from '@/hooks/useAppointments';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePatients } from '@/hooks/usePatients';
 import { useScheduleBlocks } from '@/hooks/useScheduleBlocks';
-import { Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GoogleCalendarView } from '@/components/calendar/GoogleCalendarView';
+import { AppointmentCalendar } from '@/components/dashboard/AppointmentCalendar';
+import { AppointmentList } from '@/components/dashboard/AppointmentList';
 import { toast } from '@/components/ui/sonner';
 
 const Calendar = () => {
@@ -27,6 +29,8 @@ const Calendar = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isAppointmentsOpen, setIsAppointmentsOpen] = useState(!isMobile); // Fechado por padrão no mobile
   const [isScheduleBlocksOpen, setIsScheduleBlocksOpen] = useState(false);
+  const [calendarView, setCalendarView] = useState<'compact' | 'expanded'>('expanded');
+  const [view, setView] = useState<'day' | 'week' | 'all'>('day');
   
   const { 
     appointments, 
@@ -211,29 +215,82 @@ const Calendar = () => {
           </div>
           
           {activeClinic && (
-            <Button type="button" onClick={handleOpenForm} size={isMobile ? "default" : "lg"}>
-              <Plus className="h-5 w-5 mr-2" />
-              Novo Agendamento
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => setCalendarView(calendarView === 'expanded' ? 'compact' : 'expanded')}
+                size={isMobile ? "default" : "lg"}
+                title={calendarView === 'expanded' ? 'Visualização Compacta' : 'Visualização Expandida'}
+              >
+                {calendarView === 'expanded' ? (
+                  <Minimize2 className="h-5 w-5" />
+                ) : (
+                  <Maximize2 className="h-5 w-5" />
+                )}
+                {!isMobile && (
+                  <span className="ml-2">
+                    {calendarView === 'expanded' ? 'Compacta' : 'Expandida'}
+                  </span>
+                )}
+              </Button>
+              <Button type="button" onClick={handleOpenForm} size={isMobile ? "default" : "lg"}>
+                <Plus className="h-5 w-5 mr-2" />
+                Novo Agendamento
+              </Button>
+            </div>
           )}
         </div>
       </div>
       
-      {/* Google Calendar View - Full Screen */}
+      {/* Calendar Views */}
       {activeClinic && (
-        <GoogleCalendarView
-          selectedDate={selectedDate || new Date()}
-          onDateSelect={setSelectedDate}
-          appointments={allAppointments}
-          scheduleBlocks={scheduleBlocks}
-          doctors={doctors}
-          clinicId={activeClinic.id}
-          selectedDoctorId={selectedDoctor}
-          onNewAppointment={handleOpenForm}
-          onEditAppointment={handleOpenDetails}
-          onDeleteAppointment={handleDeleteAppointment}
-          onDeleteBlock={handleDeleteBlock}
-        />
+        <>
+          {calendarView === 'expanded' ? (
+            /* Google Calendar View - Full Screen */
+            <GoogleCalendarView
+              selectedDate={selectedDate || new Date()}
+              onDateSelect={setSelectedDate}
+              appointments={allAppointments}
+              scheduleBlocks={scheduleBlocks}
+              doctors={doctors}
+              clinicId={activeClinic.id}
+              selectedDoctorId={selectedDoctor}
+              onNewAppointment={handleOpenForm}
+              onEditAppointment={handleOpenDetails}
+              onDeleteAppointment={handleDeleteAppointment}
+              onDeleteBlock={handleDeleteBlock}
+            />
+          ) : (
+            /* Compact Calendar View */
+            <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-6`}>
+              <div className={`${isMobile ? '' : 'lg:col-span-1'}`}>
+                <AppointmentCalendar
+                  selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
+                  selectedDoctor={selectedDoctor || 'all'}
+                  setSelectedDoctor={(value) => setSelectedDoctor(value === 'all' ? undefined : value)}
+                  doctors={doctors}
+                  view={view}
+                  setView={setView}
+                  hasAppointmentsOnDate={hasAppointmentsOnDate}
+                  hasScheduleBlocksOnDate={hasScheduleBlocksOnDate}
+                />
+              </div>
+              <div className={`${isMobile ? '' : 'lg:col-span-2'}`}>
+                <AppointmentList
+                  appointments={appointments}
+                  selectedDate={selectedDate}
+                  view={view}
+                  onOpenDetails={handleOpenDetails}
+                  doctors={doctors}
+                  isLoading={isLoading}
+                  hasScheduleBlocksOnDate={hasScheduleBlocksOnDate}
+                />
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <AppointmentDetails
