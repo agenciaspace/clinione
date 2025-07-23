@@ -64,6 +64,9 @@ const queryClient = new QueryClient({
 const RedirectToNewFormat = () => {
   const { slug } = useParams<{ slug: string }>();
   
+  console.log('🔍 RedirectToNewFormat called with slug:', slug);
+  console.log('🔍 Current URL:', window.location.href);
+  
   // Exclude specific routes that should not be treated as clinic slugs
   const excludedRoutes = ['redefinir-senha', 'reset-password', 'login', 'register', 'forgot-password', 'email-confirmation'];
   
@@ -71,21 +74,13 @@ const RedirectToNewFormat = () => {
   if (slug && excludedRoutes.includes(slug)) {
     console.log(`🛑 Blocked excluded route: ${slug} - redirecting to appropriate handler`);
     
-    // Redirect to the correct route handler
-    switch (slug) {
-      case 'redefinir-senha':
-        return <Navigate to="/redefinir-senha" replace />;
-      case 'login':
-        return <Navigate to="/login" replace />;
-      case 'register':
-        return <Navigate to="/register" replace />;
-      case 'forgot-password':
-        return <Navigate to="/forgot-password" replace />;
-      case 'email-confirmation':
-        return <Navigate to="/email-confirmation" replace />;
-      default:
-        return <NotFound />;
-    }
+    // Redirect to the correct route handler with query params preserved
+    const searchParams = new URLSearchParams(window.location.search);
+    const queryString = searchParams.toString();
+    const targetUrl = `/${slug}${queryString ? '?' + queryString : ''}`;
+    
+    console.log('🔀 Redirecting to:', targetUrl);
+    return <Navigate to={targetUrl} replace />;
   }
   
   // Only redirect if it looks like a clinic slug (avoid conflicts with other routes)

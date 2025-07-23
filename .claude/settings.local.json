@@ -37,7 +37,10 @@
       "Bash(git commit:*)",
       "Bash(supabase db remote:*)",
       "Bash(supabase db reset:*)",
-      "Bash(supabase db push:*)"
+      "Bash(supabase db push:*)",
+      "Bash(git add .)",
+      "Bash(git commit -m \"debug: add logging to RedirectToNewFormat to track routing issue\")",
+      "Bash(git push origin clarissa)"
     ],
     "deny": []
   }
