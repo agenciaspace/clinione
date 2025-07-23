@@ -57,7 +57,10 @@ const ResetPassword = () => {
 
       // Para tokens em formato hash (hexadecimal), aceitar diretamente
       if (/^[a-f0-9]+$/i.test(accessToken) && accessToken.length >= 32) {
-        console.log('✅ Token appears to be valid hash format');
+        console.log('✅ Token appears to be valid hash format', {
+          length: accessToken.length,
+          sample: accessToken.slice(0, 20) + '...'
+        });
         setIsValidToken(true);
         setIsVerifying(false);
         return;
@@ -122,22 +125,16 @@ const ResetPassword = () => {
     try {
       const accessToken = searchParams.get('access_token');
 
-      console.log('Attempting password update with token...');
+      console.log('Attempting password update with token...', {
+        tokenLength: accessToken?.length,
+        isHexFormat: /^[a-f0-9]+$/i.test(accessToken || '')
+      });
 
-      // Usar o endpoint de reset de senha com token
-      const { error } = await supabase.auth.updateUser(
-        { password: password },
-        { 
-          emailRedirectTo: window.location.origin + '/login'
-        }
-      );
-
-      // Se falhar com updateUser, tentar abordagem alternativa
-      if (error && error.message.includes('session')) {
-        console.log('Trying alternative approach with verifyOtp...');
+      // Para tokens em formato hash, usar verifyOtp primeiro
+      if (accessToken && /^[a-f0-9]+$/i.test(accessToken) && accessToken.length >= 32) {
+        console.log('Using verifyOtp approach for hash token...');
         
-        // Tentar usar verifyOtp para tokens de hash
-        const { error: verifyError } = await supabase.auth.verifyOtp({
+        const { data, error: verifyError } = await supabase.auth.verifyOtp({
           token_hash: accessToken,
           type: 'recovery'
         });
@@ -147,39 +144,32 @@ const ResetPassword = () => {
           throw verifyError;
         }
 
-        // Se verificação funcionou, tentar atualizar senha novamente
+        console.log('Token verified, updating password...');
+        
+        // Após verificação bem-sucedida, atualizar senha
         const { error: updateError } = await supabase.auth.updateUser({
           password: password
         });
 
         if (updateError) {
+          console.error('Password update error after verification:', updateError);
           throw updateError;
         }
-      } else if (error) {
-        console.error('Password update error:', error);
+      } else {
+        // Para tokens JWT, usar updateUser diretamente
+        console.log('Using updateUser approach for JWT token...');
         
-        // Tratar erros específicos
-        if (error.message.includes('Invalid token') || error.message.includes('Token expired')) {
-          toast.error("Link expirado", {
-            description: "O link de redefinição expirou. Solicite um novo link."
-          });
-          setTimeout(() => {
-            navigate('/forgot-password');
-          }, 3000);
-          return;
-        }
+        const { error } = await supabase.auth.updateUser(
+          { password: password },
+          { 
+            emailRedirectTo: window.location.origin + '/login'
+          }
+        );
 
-        if (error.message.includes('Auth session missing')) {
-          toast.error("Sessão expirada", {
-            description: "Sua sessão expirou. Tente solicitar um novo link de redefinição."
-          });
-          setTimeout(() => {
-            navigate('/forgot-password');
-          }, 3000);
-          return;
+        if (error) {
+          console.error('Password update error:', error);
+          throw error;
         }
-        
-        throw error;
       }
 
       console.log('✅ Password updated successfully');
@@ -198,6 +188,27 @@ const ResetPassword = () => {
     } catch (error: any) {
       console.error('Password update error:', error);
       
+      // Tratar erros específicos primeiro
+      if (error.message.includes('Invalid token') || error.message.includes('Token expired')) {
+        toast.error("Link expirado", {
+          description: "O link de redefinição expirou. Solicite um novo link."
+        });
+        setTimeout(() => {
+          navigate('/forgot-password');
+        }, 3000);
+        return;
+      }
+
+      if (error.message.includes('Auth session missing')) {
+        toast.error("Sessão expirada", {
+          description: "Sua sessão expirou. Tente solicitar um novo link de redefinição."
+        });
+        setTimeout(() => {
+          navigate('/forgot-password');
+        }, 3000);
+        return;
+      }
+
       // Mensagens de erro mais específicas
       let errorMessage = "Ocorreu um erro ao redefinir sua senha.";
       
