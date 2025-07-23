@@ -64,6 +64,13 @@ const queryClient = new QueryClient({
 const RedirectToNewFormat = () => {
   const { slug } = useParams<{ slug: string }>();
   
+  // Exclude specific routes that should not be treated as clinic slugs
+  const excludedRoutes = ['redefinir-senha', 'reset-password', 'login', 'register', 'forgot-password', 'email-confirmation'];
+  
+  if (slug && excludedRoutes.includes(slug)) {
+    return <NotFound />;
+  }
+  
   // Only redirect if it looks like a clinic slug (avoid conflicts with other routes)
   if (slug && !slug.includes('/') && slug.length > 2) {
     return <Navigate to={`/c/${slug}`} replace />;
@@ -95,8 +102,8 @@ const App = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/redefinir-senha" element={<ResetPassword />} />
                 <Route path="/email-confirmation" element={<EmailConfirmation />} />
+                <Route path="/redefinir-senha" element={<ResetPassword />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/dashboard/calendar" element={<Calendar />} />
                 <Route path="/dashboard/patients" element={<Patients />} />
