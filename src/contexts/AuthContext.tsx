@@ -512,9 +512,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Reset de senha com Supabase
   const resetPassword = async (email: string) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/redefinir-senha`,
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
       
       if (error) {
         throw error;
