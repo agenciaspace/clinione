@@ -18,7 +18,7 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const verifyToken = () => {
+    const processToken = async () => {
       const accessToken = searchParams.get('access_token');
       const type = searchParams.get('type');
       const error = searchParams.get('error');
@@ -55,15 +55,39 @@ const ResetPassword = () => {
         return;
       }
 
-      // Para tokens em formato hash (hexadecimal), aceitar diretamente
+      // Para tokens em formato hash, verificar com o Supabase
       if (/^[a-f0-9]+$/i.test(accessToken) && accessToken.length >= 32) {
-        console.log('✅ Token appears to be valid hash format', {
-          length: accessToken.length,
-          sample: accessToken.slice(0, 20) + '...'
-        });
-        setIsValidToken(true);
-        setIsVerifying(false);
-        return;
+        console.log('Verifying hash token with Supabase...');
+        
+        try {
+          const { data, error: verifyError } = await supabase.auth.verifyOtp({
+            token_hash: accessToken,
+            type: 'recovery'
+          });
+
+          if (verifyError) {
+            console.error('Token verification failed:', verifyError);
+            setIsValidToken(false);
+            setIsVerifying(false);
+            return;
+          }
+
+          console.log('✅ Token verified successfully');
+          
+          // Estabelecer sessão se retornada
+          if (data.session) {
+            await supabase.auth.setSession(data.session);
+          }
+          
+          setIsValidToken(true);
+          setIsVerifying(false);
+          return;
+        } catch (error) {
+          console.error('Token verification error:', error);
+          setIsValidToken(false);
+          setIsVerifying(false);
+          return;
+        }
       }
 
       // Para tokens JWT, tentar validar formato
@@ -93,7 +117,7 @@ const ResetPassword = () => {
       setIsVerifying(false);
     };
 
-    verifyToken();
+    processToken();
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,58 +147,16 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      const accessToken = searchParams.get('access_token');
-
-      console.log('Attempting password update with token...', {
-        tokenLength: accessToken?.length,
-        isHexFormat: /^[a-f0-9]+$/i.test(accessToken || '')
+      console.log('Updating password...');
+      
+      // Como a sessão já foi estabelecida no useEffect, apenas atualizar a senha
+      const { error } = await supabase.auth.updateUser({
+        password: password
       });
 
-      // Para tokens em formato hash, usar verifyOtp primeiro
-      if (accessToken && /^[a-f0-9]+$/i.test(accessToken) && accessToken.length >= 32) {
-        console.log('Using verifyOtp approach for hash token...');
-        
-        const { data, error: verifyError } = await supabase.auth.verifyOtp({
-          token_hash: accessToken,
-          type: 'recovery'
-        });
-
-        if (verifyError) {
-          console.error('VerifyOtp error:', verifyError);
-          throw verifyError;
-        }
-
-        console.log('Token verified, updating password...', data);
-
-        // Estabelecer sessão se retornada
-        if (data.session) {
-          await supabase.auth.setSession(data.session);
-        }
-        
-        // Após verificação bem-sucedida, atualizar senha
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: password
-        });
-
-        if (updateError) {
-          console.error('Password update error after verification:', updateError);
-          throw updateError;
-        }
-      } else {
-        // Para tokens JWT, usar updateUser diretamente
-        console.log('Using updateUser approach for JWT token...');
-        
-        const { error } = await supabase.auth.updateUser(
-          { password: password },
-          { 
-            emailRedirectTo: window.location.origin + '/login'
-          }
-        );
-
-        if (error) {
-          console.error('Password update error:', error);
-          throw error;
-        }
+      if (error) {
+        console.error('Password update error:', error);
+        throw error;
       }
 
       console.log('✅ Password updated successfully');
