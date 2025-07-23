@@ -35,7 +35,8 @@
       "Bash(npx vercel:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(supabase db remote:*)"
+      "Bash(supabase db remote:*)",
+      "Bash(supabase db reset:*)"
     ],
     "deny": []
   }
