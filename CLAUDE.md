@@ -24,11 +24,15 @@ Este é um sistema de gestão de clínicas médicas (Clinio) usando:
 ### Reset de Senha
 **Problema**: Tokens de reset aparecem como 6 dígitos em vez de JWT
 **Causa**: Template do Supabase usando `{{ .Token }}` em vez de `{{ .TokenHash }}`
-**Solução**: Modificar template para usar `{{ .TokenHash }}`
+**Solução**: ✅ Modificar template para usar `{{ .TokenHash }}`
 
 **Problema**: Rate limit 429 e erro 403 no reset
-**Causa**: Muitas tentativas de reset de senha
-**Solução**: Aguardar reset do rate limit (1 hora) OU resetar manualmente no dashboard do Supabase
+**Causa**: Muitas tentativas de reset de senha + redirect automático do Supabase
+**Solução**: ✅ Interceptar token imediatamente na página e limpar URL para evitar redirect automático
+
+**Problema**: AuthSessionMissingError ao tentar alterar senha
+**Causa**: Token hash não estabelece sessão automaticamente
+**Solução**: ✅ Usar verifyOtp + setSession no useEffect antes de qualquer interação do usuário
 
 ### Comandos Úteis
 ```bash
