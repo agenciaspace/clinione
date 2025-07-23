@@ -3,7 +3,7 @@
 
 -- Atualizar senha para leonhatori@gmail.com
 UPDATE auth.users 
-SET encrypted_password = crypt('SUA_SENHA_AQUI', gen_salt('bf'))
+SET encrypted_password = crypt('euteamo12!', gen_salt('bf'))
 WHERE email = 'leonhatori@gmail.com';
 
 -- Verificar que a senha foi atualizada
