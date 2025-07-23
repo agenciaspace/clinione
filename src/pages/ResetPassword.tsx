@@ -19,98 +19,98 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const processToken = async () => {
-      const accessToken = searchParams.get('access_token');
-      const type = searchParams.get('type');
-      const error = searchParams.get('error');
-      const errorDescription = searchParams.get('error_description');
+      // Interceptar imediatamente para evitar redirect automático do Supabase
+      const currentUrl = window.location.href;
+      const url = new URL(currentUrl);
+      const accessToken = url.searchParams.get('access_token');
+      const type = url.searchParams.get('type');
+      const error = url.searchParams.get('error');
 
-      console.log('Reset password params:', { 
+      console.log('Processing reset token immediately:', { 
         accessToken: accessToken ? `${accessToken.slice(0, 10)}...` : null,
         type, 
-        error, 
-        errorDescription 
+        error
       });
 
-      // Se há erro nos parâmetros da URL, mostrar como inválido
+      // Limpar URL para evitar reprocessamento
+      if (accessToken) {
+        window.history.replaceState({}, document.title, '/reset-password');
+      }
+
       if (error) {
-        console.error('URL contains error:', error, errorDescription);
+        console.error('URL contains error:', error);
         setIsValidToken(false);
         setIsVerifying(false);
         return;
       }
 
-      // Verificação básica de parâmetros
       if (!accessToken || type !== 'recovery') {
-        console.log('Invalid params - missing token or wrong type');
+        console.log('Invalid params');
         setIsValidToken(false);
         setIsVerifying(false);
         return;
       }
 
-      // Para tokens muito curtos (como "629480"), assumir como inválido
       if (accessToken.length < 20) {
-        console.log('Token too short, likely invalid:', accessToken.length);
+        console.log('Token too short');
         setIsValidToken(false);
         setIsVerifying(false);
         return;
       }
 
-      // Para tokens em formato hash, verificar com o Supabase
+      // Processar token hash
       if (/^[a-f0-9]+$/i.test(accessToken) && accessToken.length >= 32) {
-        console.log('Verifying hash token with Supabase...');
-        
         try {
+          console.log('Verifying hash token...');
+          
           const { data, error: verifyError } = await supabase.auth.verifyOtp({
             token_hash: accessToken,
             type: 'recovery'
           });
 
           if (verifyError) {
-            console.error('Token verification failed:', verifyError);
+            console.error('Verification failed:', verifyError.message);
             setIsValidToken(false);
             setIsVerifying(false);
             return;
           }
 
-          console.log('✅ Token verified successfully');
+          console.log('Token verified, establishing session...');
           
-          // Estabelecer sessão se retornada
           if (data.session) {
             await supabase.auth.setSession(data.session);
+            console.log('Session established successfully');
           }
           
           setIsValidToken(true);
           setIsVerifying(false);
           return;
-        } catch (error) {
-          console.error('Token verification error:', error);
+        } catch (error: any) {
+          console.error('Token processing error:', error.message);
           setIsValidToken(false);
           setIsVerifying(false);
           return;
         }
       }
 
-      // Para tokens JWT, tentar validar formato
+      // JWT tokens
       try {
         const tokenParts = accessToken.split('.');
         if (tokenParts.length === 3) {
-          // Parece ser um JWT, tentar decodificar
           const payload = JSON.parse(atob(tokenParts[1]));
           const now = Math.floor(Date.now() / 1000);
           
           if (payload.exp && payload.exp < now) {
-            console.log('JWT token is expired:', new Date(payload.exp * 1000));
+            console.log('JWT expired');
             setIsValidToken(false);
           } else {
-            console.log('✅ JWT token format seems valid');
+            console.log('JWT valid');
             setIsValidToken(true);
           }
         } else {
-          console.log('❌ Token is not in expected format');
           setIsValidToken(false);
         }
-      } catch (jwtError) {
-        console.log('❌ Token validation failed:', jwtError.message);
+      } catch {
         setIsValidToken(false);
       }
 
@@ -118,7 +118,7 @@ const ResetPassword = () => {
     };
 
     processToken();
-  }, [searchParams]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
