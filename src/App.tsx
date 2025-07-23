@@ -86,10 +86,8 @@ const RedirectToNewFormat = () => {
   
   // Only redirect if it looks like a clinic slug (avoid conflicts with other routes)
   if (slug && !slug.includes('/') && slug.length > 2) {
-    // Redirect to subdomain format
-    const newUrl = `${window.location.protocol}//${slug}.clini.one${window.location.pathname}${window.location.search}`;
-    window.location.href = newUrl;
-    return null;
+    // Redirect to /c/ format
+    return <Navigate to={`/c/${slug}`} replace />;
   }
   
   // If it doesn't look like a valid slug, show 404
@@ -100,33 +98,6 @@ const App = () => {
   // Initialize cleanup of old drafts
   useCleanupOldDrafts();
   
-  // If we're on a subdomain, show the public clinic page
-  if (isSubdomain()) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ThemeProvider>
-            <AuthProvider>
-              <EmailVerificationGuard>
-                <ClinicProvider>
-                  <Toaster />
-                  <Sonner />
-                  <OfflineIndicator />
-                  <PWAInstallPrompt />
-                  <DevToolToggle />
-                  <BrowserRouter>
-                    <Routes>
-                      <Route path="*" element={<PublicClinicPage />} />
-                    </Routes>
-                  </BrowserRouter>
-                </ClinicProvider>
-              </EmailVerificationGuard>
-            </AuthProvider>
-          </ThemeProvider>
-        </TooltipProvider>
-      </QueryClientProvider>
-    );
-  }
   
   return (
     <QueryClientProvider client={queryClient}>
@@ -179,7 +150,9 @@ const App = () => {
                 <Route path="/dashboard/public-page/:clinicId" element={<PublicClinicPage />} />
                 {/* Landing page route for marketing purposes */}
                 <Route path="/landing" element={<LandingPage />} />
-                {/* Legacy clinic pages - redirect to subdomain */}
+                {/* Public clinic pages */}
+                <Route path="/c/:slug" element={<PublicClinicPage />} />
+                {/* Legacy redirect for SEO */}
                 <Route path="/:slug" element={<RedirectToNewFormat />} />
                 <Route path="*" element={<NotFound />} />
                 </Routes>
