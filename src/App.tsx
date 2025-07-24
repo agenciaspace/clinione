@@ -67,30 +67,55 @@ const RedirectToNewFormat = () => {
   
   console.log('🔍 RedirectToNewFormat called with slug:', slug);
   console.log('🔍 Current URL:', window.location.href);
-  console.log('🔍 Full pathname:', window.location.pathname);
   
-  // CRITICAL: These routes should NEVER reach this component - they have their own routes
-  const excludedRoutes = ['redefinir-senha', 'reset-password', 'reset-pwd', 'login', 'register', 'forgot-password', 'email-confirmation'];
+  // COMPREHENSIVE list of ALL auth and system routes that should NEVER be treated as clinic slugs
+  const PROTECTED_ROUTES = [
+    // Auth routes
+    'redefinir-senha', 'reset-password', 'reset-pwd', 'login', 'register', 
+    'forgot-password', 'email-confirmation', 'auth',
+    // System routes  
+    'dashboard', 'api', 'admin', 'app', 'www',
+    // Static assets
+    'assets', 'static', 'public', 'images', 'css', 'js',
+    // Common reserved words
+    'help', 'support', 'contact', 'about', 'terms', 'privacy', 'legal',
+    // Technical routes
+    'robots.txt', 'sitemap.xml', 'favicon.ico', '.well-known'
+  ];
   
-  if (slug && excludedRoutes.includes(slug)) {
-    console.error(`❌ UNEXPECTED: Auth route "${slug}" reached RedirectToNewFormat! This indicates a routing problem.`);
-    console.log('🔄 Attempting to redirect back to proper route...');
+  // ABSOLUTE PROTECTION: These routes should NEVER reach this component
+  if (slug && PROTECTED_ROUTES.includes(slug.toLowerCase())) {
+    console.error(`🚨 CRITICAL: Protected route "${slug}" reached RedirectToNewFormat!`);
+    console.error('🚨 This should be impossible with correct route ordering!');
     
-    // This should not happen, but if it does, redirect back
+    // Emergency redirect back to proper route
     const searchParams = new URLSearchParams(window.location.search);
     const queryString = searchParams.toString();
     const targetUrl = `/${slug}${queryString ? '?' + queryString : ''}`;
     
+    console.log(`🔄 Emergency redirect to: ${targetUrl}`);
     return <Navigate to={targetUrl} replace />;
   }
   
-  // Only redirect valid clinic slugs (letters, numbers, hyphens, reasonable length)
-  if (slug && /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(slug) && slug.length >= 3 && slug.length <= 50) {
+  // Additional safety: reject slugs that look like file extensions or technical paths
+  if (slug && (
+    slug.includes('.') || // files like favicon.ico
+    slug.startsWith('_') || // _next, _app, etc
+    slug.startsWith('-') || // invalid clinic names
+    slug.length < 2 || slug.length > 50 || // unreasonable lengths
+    /[^a-zA-Z0-9-]/.test(slug) // invalid characters
+  )) {
+    console.log(`🚫 Invalid slug format: ${slug} - showing 404`);
+    return <NotFound />;
+  }
+  
+  // Only redirect valid clinic slugs
+  if (slug && /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(slug)) {
     console.log(`✅ Valid clinic slug detected: ${slug} - redirecting to /c/${slug}`);
     return <Navigate to={`/c/${slug}`} replace />;
   }
   
-  console.log(`🚫 Invalid or unrecognized slug: ${slug} - showing 404`);
+  console.log(`🚫 Unrecognized slug: ${slug} - showing 404`);
   return <NotFound />;
 };
 
@@ -154,8 +179,8 @@ const App = () => {
                 {/* Landing page route for marketing purposes */}
                 <Route path="/landing" element={<LandingPage />} />
                 
-                {/* Legacy redirect for SEO - TEMPORARILY COMPLETELY DISABLED */}
-                {/* <Route path="/:slug" element={<RedirectToNewFormat />} /> */}
+                {/* Legacy redirect for SEO - MUST BE LAST before catch-all */}
+                <Route path="/:slug" element={<RedirectToNewFormat />} />
                 <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
