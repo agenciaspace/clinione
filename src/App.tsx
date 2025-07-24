@@ -70,7 +70,7 @@ const RedirectToNewFormat = () => {
   console.log('🔍 Full pathname:', window.location.pathname);
   
   // CRITICAL: These routes should NEVER reach this component - they have their own routes
-  const excludedRoutes = ['redefinir-senha', 'reset-password', 'login', 'register', 'forgot-password', 'email-confirmation'];
+  const excludedRoutes = ['redefinir-senha', 'reset-password', 'reset-pwd', 'login', 'register', 'forgot-password', 'email-confirmation'];
   
   if (slug && excludedRoutes.includes(slug)) {
     console.error(`❌ UNEXPECTED: Auth route "${slug}" reached RedirectToNewFormat! This indicates a routing problem.`);
