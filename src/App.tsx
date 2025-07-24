@@ -123,7 +123,7 @@ const App = () => {
   // Initialize cleanup of old drafts
   useCleanupOldDrafts();
   
-  // Force cache invalidation - timestamp: 2025-07-24
+  // Force cache invalidation - timestamp: 2025-07-24 - FINAL ATTEMPT
   
   
   return (
