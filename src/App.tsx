@@ -141,6 +141,7 @@ const App = () => {
                 <BrowserRouter>
                 <Routes>
                 {/* AUTH ROUTES - HIGHEST PRIORITY */}
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/reset-password-new" element={<ResetPassword />} />
                 <Route path="/redefinir-senha" element={<ResetPassword />} />
                 <Route path="/redefinir-senha/*" element={<ResetPassword />} />
