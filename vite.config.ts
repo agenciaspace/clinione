@@ -17,9 +17,9 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         // Force new file names to break cache
-        entryFileNames: `assets/[name]-RESET-[hash].js`,
-        chunkFileNames: `assets/[name]-RESET-[hash].js`,
-        assetFileNames: `assets/[name]-RESET-[hash].[ext]`,
+        entryFileNames: `assets/[name]-FIXED-[hash].js`,
+        chunkFileNames: `assets/[name]-FIXED-[hash].js`,
+        assetFileNames: `assets/[name]-FIXED-[hash].[ext]`,
       },
     },
   },
