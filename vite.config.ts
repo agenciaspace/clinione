@@ -59,7 +59,20 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
-        navigateFallbackAllowlist: [/^\/dashboard/, /^\/auth/, /^\/$/],
+        navigateFallbackAllowlist: [
+          /^\/dashboard/, 
+          /^\/auth/, 
+          /^\/$/,
+          /^\/redefinir-senha/,
+          /^\/reset-pwd/,
+          /^\/reset-password/,
+          /^\/login/,
+          /^\/register/,
+          /^\/forgot-password/,
+          /^\/email-confirmation/,
+          /^\/landing/,
+          /^\/c\//
+        ],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
