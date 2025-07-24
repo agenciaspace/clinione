@@ -14,11 +14,17 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(true);
   const [isValidToken, setIsValidToken] = useState(false);
+  const [tokenProcessed, setTokenProcessed] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
     const processToken = async () => {
+      // Evitar reprocessamento se já foi processado
+      if (tokenProcessed) {
+        console.log('Token already processed, skipping...');
+        return;
+      }
       // Interceptar imediatamente para evitar redirect automático do Supabase
       const currentUrl = window.location.href;
       const url = new URL(currentUrl);
@@ -82,6 +88,7 @@ const ResetPassword = () => {
             console.log('Session established successfully');
           }
           
+          setTokenProcessed(true);
           setIsValidToken(true);
           setIsVerifying(false);
           return;
@@ -105,6 +112,7 @@ const ResetPassword = () => {
             setIsValidToken(false);
           } else {
             console.log('JWT valid');
+            setTokenProcessed(true);
             setIsValidToken(true);
           }
         } else {
