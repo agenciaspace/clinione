@@ -24,6 +24,9 @@ const ResetPassword = () => {
       const hasProcessedToken = sessionStorage.getItem('reset-token-processed');
       if (hasProcessedToken || tokenProcessed) {
         console.log('Token already processed, skipping...');
+        // If token was already processed, ensure UI is in correct state
+        setIsValidToken(true);
+        setIsVerifying(false);
         return;
       }
       // Interceptar imediatamente para evitar redirect automático do Supabase
@@ -130,6 +133,17 @@ const ResetPassword = () => {
     };
 
     processToken();
+  }, []);
+
+  // Clear sessionStorage when component unmounts or user navigates away
+  useEffect(() => {
+    return () => {
+      // Only clear if we're navigating away (not staying on the same page)
+      if (!window.location.pathname.includes('redefinir-senha') && 
+          !window.location.pathname.includes('reset-password')) {
+        sessionStorage.removeItem('reset-token-processed');
+      }
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
