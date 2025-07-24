@@ -76,8 +76,25 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [user]);
 
   useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        console.log('Auth state changed to SIGNED_IN, fetching clinics.');
+        fetchClinics();
+      } else if (event === 'SIGNED_OUT') {
+        console.log('Auth state changed to SIGNED_OUT, clearing clinics.');
+        setClinics([]);
+        setActiveClinicState(null);
+        localStorage.removeItem('activeClinicId');
+      }
+    });
+
+    // Initial fetch
     fetchClinics();
-  }, [fetchClinics]); // Simple dependency on memoized function
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [fetchClinics]);
 
   useEffect(() => {
     // First clean up any existing webhook channel before attempting to create a new one
