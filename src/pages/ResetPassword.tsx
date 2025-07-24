@@ -20,6 +20,15 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const processToken = async () => {
+      // Check if we just successfully reset the password
+      const resetSuccess = sessionStorage.getItem('reset-password-success');
+      if (resetSuccess) {
+        console.log('Password reset was successful, redirecting...');
+        sessionStorage.removeItem('reset-password-success');
+        navigate('/login');
+        return;
+      }
+
       // Check sessionStorage to prevent reprocessing across re-renders
       const hasProcessedToken = sessionStorage.getItem('reset-token-processed');
       if (hasProcessedToken || tokenProcessed) {
@@ -133,7 +142,7 @@ const ResetPassword = () => {
     };
 
     processToken();
-  }, []);
+  }, [navigate]);
 
   // Clear sessionStorage when component unmounts or user navigates away
   useEffect(() => {
@@ -192,6 +201,9 @@ const ResetPassword = () => {
 
       // Clear the processed token flag
       sessionStorage.removeItem('reset-token-processed');
+      
+      // Mark that we're navigating away after success
+      sessionStorage.setItem('reset-password-success', 'true');
 
       // Fazer logout para limpar qualquer sessão
       await supabase.auth.signOut();
