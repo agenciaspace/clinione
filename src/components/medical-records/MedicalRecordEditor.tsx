@@ -17,6 +17,7 @@ interface MedicalRecordEditorProps {
   onCancel?: () => void;
   placeholder?: string;
   disabled?: boolean;
+  clinicId?: string;
 }
 
 export const MedicalRecordEditor: React.FC<MedicalRecordEditorProps> = ({
@@ -28,7 +29,8 @@ export const MedicalRecordEditor: React.FC<MedicalRecordEditorProps> = ({
   onCancel,
   onContentChange,
   placeholder = 'Digite as informações do prontuário...',
-  disabled = false
+  disabled = false,
+  clinicId
 }) => {
   const [isManualSaving, setIsManualSaving] = useState(false);
 
@@ -44,7 +46,8 @@ export const MedicalRecordEditor: React.FC<MedicalRecordEditorProps> = ({
     patientId,
     appointmentId,
     recordId,
-    initialContent
+    initialContent,
+    clinicId
   });
 
   const handleManualSave = async () => {

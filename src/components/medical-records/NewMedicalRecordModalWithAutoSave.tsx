@@ -373,6 +373,7 @@ export const NewMedicalRecordModalWithAutoSave: React.FC<NewMedicalRecordModalPr
                     initialContent=""
                     onContentChange={(content) => setRecordContent(content)}
                     placeholder="Descreva os sintomas, diagnóstico, tratamento prescrito e outras observações relevantes..."
+                    clinicId={clinicId}
                   />
                 ) : (
                   <div className="text-center p-8 text-muted-foreground">

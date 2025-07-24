@@ -18,13 +18,15 @@ interface UseMedicalRecordAutoSaveOptions {
   appointmentId?: string;
   initialContent?: string;
   recordId?: string; // For editing existing records
+  clinicId?: string; // Clinic ID from context
 }
 
 export const useMedicalRecordAutoSave = ({
   patientId,
   appointmentId,
   initialContent = '',
-  recordId
+  recordId,
+  clinicId
 }: UseMedicalRecordAutoSaveOptions) => {
   const [content, setContent] = useState(initialContent);
   const [isDraftLoaded, setIsDraftLoaded] = useState(false);
@@ -47,16 +49,23 @@ export const useMedicalRecordAutoSave = ({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('User not authenticated');
 
-      // Get current clinic ID (you might need to pass this as a prop)
-      const { data: userRoles, error: userRolesError } = await supabase
-        .from('user_roles')
-        .select('clinic_id')
-        .eq('user_id', session.user.id)
-        .limit(1)
-        .single();
+      // Use clinicId from props if available, otherwise try to get from user roles
+      let effectiveClinicId = clinicId;
+      
+      if (!effectiveClinicId) {
+        const { data: userRoles, error: userRolesError } = await supabase
+          .from('user_roles')
+          .select('clinic_id')
+          .eq('user_id', session.user.id)
+          .limit(1)
+          .single();
 
-      if (userRolesError || !userRoles?.clinic_id) {
-        throw new Error('User is not associated with any clinic');
+        if (userRolesError || !userRoles?.clinic_id) {
+          console.error('Failed to get clinic ID from user roles:', userRolesError);
+          throw new Error('User is not associated with any clinic. Please ensure you are logged into a clinic.');
+        }
+        
+        effectiveClinicId = userRoles.clinic_id;
       }
 
       // Save draft to drafts table for backup
@@ -65,7 +74,7 @@ export const useMedicalRecordAutoSave = ({
         .upsert(
           {
           user_id: session.user.id,
-          clinic_id: userRoles.clinic_id,
+          clinic_id: effectiveClinicId,
           draft_key: storageKey,
           content: draft.content,
           draft_type: draft.type,
@@ -119,7 +128,7 @@ export const useMedicalRecordAutoSave = ({
                 patient_id: patientId,
                 title: draft.title || 'Prontuário',
                 content: draft.content,
-                clinic_id: userRoles.clinic_id,
+                clinic_id: effectiveClinicId,
                 created_by: session.user.id
               });
               

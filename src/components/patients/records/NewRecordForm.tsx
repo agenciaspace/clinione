@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { MedicalRecordEditor } from '@/components/medical-records/MedicalRecordEditor';
+import { useClinic } from '@/contexts/ClinicContext';
 
 interface NewRecordFormProps {
   patient: any; // Patient object with id, appointmentId, etc.
@@ -24,6 +25,8 @@ export const NewRecordForm = ({
   isPending = false,
   recordId
 }: NewRecordFormProps) => {
+  const { activeClinic } = useClinic();
+  
   // Determine if this is a temporary patient from appointments
   const isTemporaryPatient = patient?.id?.startsWith('temp-');
   const appointmentId = isTemporaryPatient ? patient.id.replace('temp-', '') : undefined;
@@ -58,6 +61,7 @@ export const NewRecordForm = ({
             : "Adicione informações ao prontuário do paciente..."
           }
           disabled={isPending}
+          clinicId={activeClinic?.id}
         />
         
         {/* Additional actions for editing */}
