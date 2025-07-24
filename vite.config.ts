@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
-    mode === 'production' && VitePWA({
+    false && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'lovable-uploads/*.png'],
       manifest: {
