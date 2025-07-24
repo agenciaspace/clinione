@@ -13,6 +13,16 @@ export default defineConfig(({ mode }) => ({
       overlay: false // Disable error overlay that might cause reloads
     } : true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Force new file names to break cache
+        entryFileNames: `assets/[name]-RESET-[hash].js`,
+        chunkFileNames: `assets/[name]-RESET-[hash].js`,
+        assetFileNames: `assets/[name]-RESET-[hash].[ext]`,
+      },
+    },
+  },
   plugins: [
     react(),
     mode === 'development' &&
