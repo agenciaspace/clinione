@@ -34,7 +34,7 @@ const ResetPassword = () => {
 
       // Limpar URL para evitar reprocessamento
       if (accessToken) {
-        window.history.replaceState({}, document.title, '/redefinir-senha');
+        window.history.replaceState({}, document.title, '/redefinir-senha-limpa');
       }
 
       if (error) {

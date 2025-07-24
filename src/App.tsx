@@ -71,7 +71,7 @@ const RedirectToNewFormat = () => {
   // COMPREHENSIVE list of ALL auth and system routes that should NEVER be treated as clinic slugs
   const PROTECTED_ROUTES = [
     // Auth routes
-    'redefinir-senha', 'reset-password', 'reset-pwd', 'login', 'register', 
+    'redefinir-senha', 'redefinir-senha-limpa', 'reset-password', 'reset-pwd', 'login', 'register', 
     'forgot-password', 'email-confirmation', 'auth',
     // System routes  
     'dashboard', 'api', 'admin', 'app', 'www',
@@ -144,6 +144,7 @@ const App = () => {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/reset-password-new" element={<ResetPassword />} />
                 <Route path="/redefinir-senha" element={<ResetPassword />} />
+                <Route path="/redefinir-senha-limpa" element={<ResetPassword />} />
                 <Route path="/redefinir-senha/*" element={<ResetPassword />} />
                 <Route path="/reset-pwd" element={<ResetPassword />} />
                 <Route path="/login" element={<Login />} />
