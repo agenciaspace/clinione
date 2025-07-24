@@ -152,8 +152,8 @@ const App = () => {
                 {/* Landing page route for marketing purposes */}
                 <Route path="/landing" element={<LandingPage />} />
                 
-                {/* Legacy redirect for SEO - MUST BE LAST before catch-all */}
-                <Route path="/:slug" element={<RedirectToNewFormat />} />
+                {/* Legacy redirect for SEO - TEMPORARILY DISABLED FOR TESTING */}
+                {/* <Route path="/:slug" element={<RedirectToNewFormat />} /> */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
