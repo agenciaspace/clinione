@@ -20,8 +20,9 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const processToken = async () => {
-      // Evitar reprocessamento se já foi processado
-      if (tokenProcessed) {
+      // Check sessionStorage to prevent reprocessing across re-renders
+      const hasProcessedToken = sessionStorage.getItem('reset-token-processed');
+      if (hasProcessedToken || tokenProcessed) {
         console.log('Token already processed, skipping...');
         return;
       }
@@ -88,6 +89,8 @@ const ResetPassword = () => {
             console.log('Session established successfully');
           }
           
+          // Mark as processed in both state and sessionStorage
+          sessionStorage.setItem('reset-token-processed', 'true');
           setTokenProcessed(true);
           setIsValidToken(true);
           setIsVerifying(false);
@@ -112,6 +115,7 @@ const ResetPassword = () => {
             setIsValidToken(false);
           } else {
             console.log('JWT valid');
+            sessionStorage.setItem('reset-token-processed', 'true');
             setTokenProcessed(true);
             setIsValidToken(true);
           }
@@ -171,6 +175,9 @@ const ResetPassword = () => {
       toast.success("Senha redefinida", {
         description: "Sua senha foi redefinida com sucesso!"
       });
+
+      // Clear the processed token flag
+      sessionStorage.removeItem('reset-token-processed');
 
       // Fazer logout para limpar qualquer sessão
       await supabase.auth.signOut();
