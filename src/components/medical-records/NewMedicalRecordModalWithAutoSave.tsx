@@ -72,6 +72,7 @@ export const NewMedicalRecordModalWithAutoSave: React.FC<NewMedicalRecordModalPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCID, setSelectedCID] = useState<{ code: string; description: string } | null>(null);
   const [recordContent, setRecordContent] = useState('');
+  const [saveAsDraft, setSaveAsDraft] = useState(false);
   const isMobile = useIsMobile();
   
   const { 
@@ -168,13 +169,13 @@ export const NewMedicalRecordModalWithAutoSave: React.FC<NewMedicalRecordModalPr
           clinic_id: clinicId,
           date: appointmentDateTime.toISOString(),
           type: data.appointment_type,
-          status: 'completed',
+          status: saveAsDraft ? 'draft' : 'completed',
           notes: notesContent
         });
 
       if (error) throw error;
 
-      toast.success('Prontuário criado com sucesso!');
+      toast.success(saveAsDraft ? 'Rascunho salvo com sucesso!' : 'Prontuário criado com sucesso!');
       
       // Clear the auto-save draft since we successfully saved
       const draftKey = generateUniqueKey(data);
@@ -185,6 +186,7 @@ export const NewMedicalRecordModalWithAutoSave: React.FC<NewMedicalRecordModalPr
       form.reset();
       setRecordContent('');
       setSelectedCID(null);
+      setSaveAsDraft(false);
     } catch (error) {
       console.error('Error creating medical record:', error);
       toast.error('Erro ao criar prontuário');
@@ -424,11 +426,24 @@ export const NewMedicalRecordModalWithAutoSave: React.FC<NewMedicalRecordModalPr
                 Cancelar
               </Button>
               <Button 
+                type="button" 
+                variant="secondary"
+                disabled={isSubmitting || !recordContent.trim()}
+                onClick={() => {
+                  setSaveAsDraft(true);
+                  form.handleSubmit(onSubmit)();
+                }}
+                className="min-w-[120px]"
+              >
+                {isSubmitting && saveAsDraft ? 'Salvando...' : 'Salvar Rascunho'}
+              </Button>
+              <Button 
                 type="submit" 
                 disabled={isSubmitting || !recordContent.trim()}
                 className="min-w-[120px]"
+                onClick={() => setSaveAsDraft(false)}
               >
-                {isSubmitting ? 'Salvando...' : 'Criar Prontuário'}
+                {isSubmitting && !saveAsDraft ? 'Publicando...' : 'Publicar'}
               </Button>
             </div>
           </form>

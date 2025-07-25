@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useClinic } from '@/contexts/ClinicContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { FileText, Search, Calendar, Phone, Mail, User, Clock, Filter, Eye, Plus, Stethoscope } from 'lucide-react';
+import { FileText, Search, Calendar, Phone, Mail, User, Clock, Filter, Eye, Plus, Stethoscope, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -357,6 +357,28 @@ const MedicalRecords = () => {
     setIsNewRecordModalOpen(false);
   };
 
+  const handlePublishDraft = async (record: MedicalRecord) => {
+    try {
+      // Update the appointment status from draft to completed
+      const { error } = await supabase
+        .from('appointments')
+        .update({ 
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', record.appointment_id);
+
+      if (error) throw error;
+
+      toast.success('Prontuário publicado com sucesso!');
+      // Refresh the records list
+      fetchMedicalRecords();
+    } catch (error) {
+      console.error('Error publishing draft:', error);
+      toast.error('Erro ao publicar rascunho');
+    }
+  };
+
 
   if (isLoading || isLoadingDoctor) {
     return (
@@ -595,6 +617,16 @@ const MedicalRecords = () => {
                         <Eye className="h-4 w-4 mr-1" />
                         Ver Prontuário
                       </Button>
+                      {record.status === 'draft' && (
+                        <Button 
+                          size="sm" 
+                          variant="default"
+                          onClick={() => handlePublishDraft(record)}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Publicar
+                        </Button>
+                      )}
                     </div>
                   </div>
                   
