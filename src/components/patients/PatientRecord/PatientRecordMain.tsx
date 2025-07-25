@@ -119,12 +119,6 @@ const PatientRecordMain: React.FC<Props> = ({ patient, onClose, currentUser }) =
   const deleteRecordMutation = useDeleteRecord(patientId, activeEntry, currentUser);
 
   const handleSubmit = async (data: { content: string }) => {
-    // Don't allow editing appointment records directly
-    if (patientId.startsWith('temp-')) {
-      toast.error('Consultas devem ser editadas na página de agendamentos');
-      return;
-    }
-
     if (activeEntry) {
       updateRecordMutation.mutate({ id: activeEntry.id, content: data.content });
       setActiveEntry(null);
@@ -134,11 +128,6 @@ const PatientRecordMain: React.FC<Props> = ({ patient, onClose, currentUser }) =
   };
 
   const handleDelete = () => {
-    // Don't allow deleting appointment records
-    if (patientId.startsWith('temp-')) {
-      toast.error('Consultas não podem ser excluídas aqui');
-      return;
-    }
     setIsConfirmDialogOpen(true);
   };
 
