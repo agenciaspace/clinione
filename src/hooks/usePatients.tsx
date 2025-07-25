@@ -8,7 +8,12 @@ export const usePatients = (clinicId?: string) => {
   const { data: patients = [], isLoading } = useQuery({
     queryKey: ['patients', clinicId],
     queryFn: async () => {
-      if (!clinicId) return [];
+      if (!clinicId) {
+        console.warn('usePatients: No clinicId provided');
+        return [];
+      }
+      
+      console.log('usePatients: Fetching patients for clinic:', clinicId);
       
       const { data, error } = await supabase
         .from('patients')
@@ -20,6 +25,8 @@ export const usePatients = (clinicId?: string) => {
         toast.error("Erro ao carregar pacientes");
         return [];
       }
+      
+      console.log('usePatients: Found patients:', data?.length || 0);
       
       return data.map((patient: any) => ({
         id: patient.id,

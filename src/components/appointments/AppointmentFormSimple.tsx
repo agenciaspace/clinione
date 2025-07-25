@@ -211,11 +211,17 @@ export function AppointmentFormSimple({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">+ Novo Paciente</SelectItem>
-                  {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.name} - {patient.cpf}
+                  {patients.length === 0 ? (
+                    <SelectItem value="" disabled>
+                      Carregando pacientes...
                     </SelectItem>
-                  ))}
+                  ) : (
+                    patients.map((patient) => (
+                      <SelectItem key={patient.id} value={patient.id}>
+                        {patient.name} - {patient.cpf}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

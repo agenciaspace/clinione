@@ -44,8 +44,15 @@ const Calendar = () => {
     updateAppointmentNotes 
   } = useAppointments(selectedDate, selectedDoctor);
 
-  const { patients } = usePatients(activeClinic?.id);
+  const { patients, isLoading: isPatientsLoading } = usePatients(activeClinic?.id);
   const { getBlocksForDateRange, isTimeSlotBlocked, scheduleBlocks, updateScheduleBlock, deleteScheduleBlock } = useScheduleBlocks(activeClinic?.id, selectedDoctor);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Calendar component - activeClinic:', activeClinic);
+    console.log('Calendar component - patients count:', patients.length);
+    console.log('Calendar component - doctors count:', doctors.length);
+  }, [activeClinic, patients, doctors]);
 
   useEffect(() => {
     if (activeClinic) {
@@ -55,10 +62,21 @@ const Calendar = () => {
     }
   }, [activeClinic]);
 
+  // Re-fetch doctors when form opens to ensure fresh data
+  useEffect(() => {
+    if (isFormOpen && activeClinic) {
+      fetchDoctors();
+    }
+  }, [isFormOpen, activeClinic]);
+
   const fetchDoctors = async () => {
-    if (!activeClinic) return;
+    if (!activeClinic) {
+      console.error('No active clinic available to fetch doctors');
+      return;
+    }
     
     try {
+      console.log('Fetching doctors for clinic:', activeClinic.id);
       const { data, error } = await supabase
         .from('doctors')
         .select('*')
@@ -66,10 +84,12 @@ const Calendar = () => {
         
       if (error) {
         console.error('Error fetching doctors:', error);
+        toast.error('Erro ao carregar médicos');
         return;
       }
       
       if (data) {
+        console.log('Doctors fetched:', data.length);
         // Convert the data to match our Doctor type
         const convertedDoctors = data.map(doctor => ({
           ...doctor,
@@ -79,6 +99,7 @@ const Calendar = () => {
       }
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Erro ao carregar médicos');
     }
   };
   
@@ -97,6 +118,13 @@ const Calendar = () => {
   };
   
   const handleOpenForm = () => {
+    if (!activeClinic) {
+      toast.error('Por favor, selecione uma clínica primeiro');
+      return;
+    }
+    console.log('Opening appointment form with activeClinic:', activeClinic);
+    console.log('Current doctors:', doctors.length);
+    console.log('Current patients:', patients.length);
     setIsFormOpen(true);
   };
   
