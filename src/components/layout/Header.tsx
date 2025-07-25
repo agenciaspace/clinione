@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useClinic } from '../../contexts/ClinicContext';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Menu, ChevronDown } from 'lucide-react';
+import { Bell, Menu, ChevronDown, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Sidebar } from './Sidebar';
@@ -15,7 +15,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onSidebarToggle?: () => void;
+  sidebarCollapsed?: boolean;
+}
+
+export const Header: React.FC<HeaderProps> = ({ 
+  onSidebarToggle, 
+  sidebarCollapsed = false 
+}) => {
   const { user, logout } = useAuth();
   const { clinics, activeClinic, setActiveClinic, isLoadingClinics } = useClinic();
   const navigate = useNavigate();
@@ -28,7 +36,28 @@ export const Header: React.FC = () => {
 
   return (
     <header className="bg-card border-b border-border shadow-sm">
-      <div className="px-4 py-3 flex items-center justify-between">
+      <div className="px-6 py-4 flex items-center justify-between">
+        {/* Desktop sidebar toggle */}
+        <div className="hidden lg:flex items-center">
+          {onSidebarToggle && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onSidebarToggle}
+              className="mr-4 hover:bg-accent rounded-lg transition-all duration-200"
+            >
+              {sidebarCollapsed ? (
+                <PanelLeft className="h-5 w-5" />
+              ) : (
+                <PanelLeftClose className="h-5 w-5" />
+              )}
+              <span className="sr-only">
+                {sidebarCollapsed ? 'Expandir menu' : 'Minimizar menu'}
+              </span>
+            </Button>
+          )}
+        </div>
+
         {/* Mobile toggle */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
@@ -55,7 +84,7 @@ export const Header: React.FC = () => {
 
         {/* Clinic Selector */}
         {clinics.length > 0 && (
-          <div className="hidden sm:flex items-center ml-4">
+          <div className="hidden sm:flex items-center flex-1 justify-center max-w-md">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="border-dashed">
@@ -123,18 +152,18 @@ export const Header: React.FC = () => {
             </div>
           )}
 
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="icon" className="relative hover:bg-accent rounded-lg transition-all duration-200">
             <Bell className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 shadow-sm"></span>
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="p-1 flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-primary font-medium">
+              <Button variant="ghost" className="p-2 flex items-center space-x-3 hover:bg-accent rounded-lg transition-all duration-200">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium shadow-sm">
                   {user?.name?.charAt(0) || 'U'}
                 </div>
-                <span className="hidden md:inline text-sm font-medium text-foreground">
+                <span className="hidden md:inline text-sm font-medium text-foreground truncate max-w-32">
                   {user?.name || 'Usuário'}
                 </span>
               </Button>

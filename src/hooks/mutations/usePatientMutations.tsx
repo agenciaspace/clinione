@@ -1,10 +1,81 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
-import { Patient } from '@/types';
+import { Patient, PatientFormData } from '@/types';
 
 export const usePatientMutations = (clinicId?: string) => {
   const queryClient = useQueryClient();
+
+  const createPatientMutation = useMutation({
+    mutationFn: async (patientData: PatientFormData) => {
+      if (!clinicId) {
+        throw new Error('Clínica não selecionada');
+      }
+
+      const { data, error } = await supabase
+        .from('patients')
+        .insert({
+          name: patientData.name,
+          email: patientData.email,
+          phone: patientData.phone,
+          birth_date: patientData.birthDate,
+          cpf: patientData.cpf,
+          clinic_id: clinicId,
+          status: 'active'
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Erro detalhado ao criar paciente:', error);
+        
+        // Handle specific error types
+        if (error.code === '23505') {
+          if (error.message.includes('unique_cpf_per_clinic')) {
+            throw new Error('Este CPF já está cadastrado nesta clínica');
+          }
+          throw new Error('Já existe um paciente com estes dados');
+        }
+        
+        if (error.code === '23514') {
+          throw new Error('Dados inválidos fornecidos');
+        }
+        
+        throw error;
+      }
+      
+      // Transform data to Patient type for consistency
+      const transformedData: Patient = {
+        id: data.id,
+        name: data.name,
+        email: data.email || '',
+        phone: data.phone || '',
+        birthDate: data.birth_date,
+        cpf: data.cpf || '',
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        clinic_id: data.clinic_id,
+        status: (data.status as 'active' | 'inactive') || 'active',
+        lastVisit: data.last_visit
+      };
+      
+      return transformedData;
+    },
+    onSuccess: (data) => {
+      // Add new patient to cache
+      queryClient.setQueryData(['patients', clinicId], (oldData: Patient[] = []) => {
+        return [...oldData, data];
+      });
+      
+      // Invalidate to ensure eventual consistency
+      queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
+      toast.success('Paciente cadastrado com sucesso');
+    },
+    onError: (error) => {
+      console.error('Erro ao cadastrar paciente:', error);
+      toast.error('Erro ao cadastrar paciente');
+    }
+  });
 
   const updatePatientMutation = useMutation({
     mutationFn: async (updatePatient: Patient) => {
@@ -15,6 +86,7 @@ export const usePatientMutations = (clinicId?: string) => {
           email: updatePatient.email,
           phone: updatePatient.phone,
           birth_date: updatePatient.birthDate,
+          cpf: updatePatient.cpf,
           status: updatePatient.status
         })
         .eq('id', updatePatient.id)
@@ -30,6 +102,7 @@ export const usePatientMutations = (clinicId?: string) => {
         email: data.email || '',
         phone: data.phone || '',
         birthDate: data.birth_date,
+        cpf: data.cpf || '',
         created_at: data.created_at,
         updated_at: data.updated_at,
         clinic_id: data.clinic_id,
@@ -101,8 +174,10 @@ export const usePatientMutations = (clinicId?: string) => {
   });
 
   return {
+    createPatient: createPatientMutation.mutateAsync,
     updatePatient: updatePatientMutation.mutateAsync,
     deletePatient: deletePatientMutation.mutateAsync,
+    isCreating: createPatientMutation.isPending,
     isUpdating: updatePatientMutation.isPending,
     isDeleting: deletePatientMutation.isPending
   };

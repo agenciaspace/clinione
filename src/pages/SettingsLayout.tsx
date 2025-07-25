@@ -8,7 +8,8 @@ import {
   Bell, 
   PaintBucket, 
   Mail, 
-  Webhook
+  Webhook, 
+  Archive
 } from 'lucide-react';
 
 const SettingsLayout = () => {
@@ -50,6 +51,12 @@ const SettingsLayout = () => {
       label: 'Webhooks', 
       icon: <Webhook className="h-4 w-4" />,
       description: 'Integrações e APIs'
+    },
+    { 
+      path: '/dashboard/settings/archived-data', 
+      label: 'Dados Arquivados', 
+      icon: <Archive className="h-4 w-4" />,
+      description: 'Gerenciar dados arquivados'
     },
   ];
 
@@ -100,4 +107,4 @@ const SettingsLayout = () => {
   );
 };
 
-export default SettingsLayout; 
+export default SettingsLayout;

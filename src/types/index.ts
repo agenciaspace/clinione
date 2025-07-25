@@ -61,6 +61,7 @@ export interface PatientFormData {
   email: string;
   phone: string;
   birthDate: string;
+  cpf: string;
 }
 
 export interface Patient {
@@ -70,6 +71,7 @@ export interface Patient {
   email: string;
   phone: string;
   birthDate: string;
+  cpf: string;
   address?: string;
   medicalHistory?: string;
   clinicId?: string;
@@ -114,4 +116,42 @@ export interface Transaction {
   date: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export type ScheduleBlockType = 'unavailable' | 'break' | 'meeting' | 'vacation' | 'sick_leave' | 'personal' | 'training' | 'emergency' | 'lunch' | 'conference' | 'travel' | 'maintenance';
+
+export interface ScheduleBlock {
+  id: string;
+  doctor_id: string;
+  clinic_id: string;
+  title: string;
+  description?: string;
+  start_datetime: string;
+  end_datetime: string;
+  block_type: ScheduleBlockType;
+  is_recurring: boolean;
+  recurrence_pattern?: {
+    frequency: 'daily' | 'weekly' | 'monthly';
+    days?: number[]; // For weekly: [0,1,2,3,4,5,6] (Sunday to Saturday)
+    interval?: number; // Every N days/weeks/months
+    end_date?: string; // When recurrence ends
+  };
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ScheduleBlockFormData {
+  title: string;
+  description?: string;
+  start_datetime: string;
+  end_datetime: string;
+  block_type: ScheduleBlockType;
+  is_recurring: boolean;
+  recurrence_pattern?: {
+    frequency: 'daily' | 'weekly' | 'monthly';
+    days?: number[];
+    interval?: number;
+    end_date?: string;
+  };
 }

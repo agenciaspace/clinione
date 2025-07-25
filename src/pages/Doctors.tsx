@@ -4,17 +4,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  ResponsiveTable as Table, 
+  ResponsiveTableBody as TableBody, 
+  ResponsiveTableCell as TableCell, 
+  ResponsiveTableHead as TableHead, 
+  ResponsiveTableHeader as TableHeader, 
+  ResponsiveTableRow as TableRow 
+} from '@/components/ui/responsive-table';
 import { Search, Plus, EditIcon, TrashIcon, UserCircle, Mail, Phone, Calendar, AlertCircle, MapPin } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  ResponsiveDialog as Dialog, 
+  ResponsiveDialogContent as DialogContent, 
+  ResponsiveDialogDescription as DialogDescription, 
+  ResponsiveDialogFooter as DialogFooter, 
+  ResponsiveDialogHeader as DialogHeader, 
+  ResponsiveDialogTitle as DialogTitle 
+} from '@/components/ui/responsive-dialog';
 import { Doctor, WorkingHours } from '@/types';
 import { toast } from '@/components/ui/sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDoctors } from '@/hooks/useDoctors';
 import { useClinic } from '@/contexts/ClinicContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { DoctorPhotoUpload } from '@/components/doctors/DoctorPhotoUpload';
 import { DoctorWorkingHours } from '@/components/doctors/DoctorWorkingHours';
 import { DoctorAddresses } from '@/components/doctors/DoctorAddresses';
+import { DoctorScheduleBlocks } from '@/components/doctors/DoctorScheduleBlocks';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
@@ -64,7 +80,9 @@ const defaultWorkingHours: WorkingHours = {
 
 const Doctors = () => {
   const { activeClinic } = useClinic();
+  const isMobile = useIsMobile();
   const { doctors, isLoading, deleteDoctor, inactivateDoctor } = useDoctors();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -252,6 +270,17 @@ const Doctors = () => {
     return primary || addresses[0];
   };
 
+  // Prevent renders when activeClinic is not available
+  if (!activeClinic) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Selecione uma clínica para gerenciar profissionais</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="mb-6">
@@ -288,18 +317,77 @@ const Doctors = () => {
             </div>
           </div>
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[250px]">Nome</TableHead>
-                  <TableHead>Especialidade</TableHead>
-                  <TableHead>CRM</TableHead>
-                  <TableHead>Endereços</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+          {isMobile ? (
+            // Mobile view - Cards
+            <div className="space-y-4">
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              ) : filteredDoctors.length > 0 ? (
+                filteredDoctors.map((doctor) => {
+                  const primaryAddress = getPrimaryAddress(doctor);
+                  const addressCount = ((doctor as any).addresses as Address[] || []).length;
+                  
+                  return (
+                    <Card key={doctor.id} className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">{doctor.name}</h3>
+                          <p className="text-sm text-muted-foreground">{doctor.speciality}</p>
+                          <p className="text-xs text-muted-foreground mt-1">CRM: {doctor.licensenumber}</p>
+                          {primaryAddress && (
+                            <div className="flex items-center text-xs text-muted-foreground mt-2">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              <span>{primaryAddress.address}</span>
+                              {addressCount > 1 && (
+                                <span className="ml-1 text-blue-600">+{addressCount - 1} endereços</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditDoctor(doctor)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <EditIcon className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteDoctor(doctor)}
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  )
+                })
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  {searchTerm ? 'Nenhum profissional encontrado com esses critérios.' : 'Nenhum profissional cadastrado.'}
+                </div>
+              )}
+            </div>
+          ) : (
+            // Desktop view - Table
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[250px]">Nome</TableHead>
+                    <TableHead>Especialidade</TableHead>
+                    <TableHead>CRM</TableHead>
+                    <TableHead>Endereços</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
@@ -361,11 +449,12 @@ const Doctors = () => {
               </TableBody>
             </Table>
           </div>
+          )}
         </CardContent>
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-[800px] h-[90vh] max-h-[900px] overflow-y-auto">
+        <DialogContent size="xl">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Editar Profissional' : 'Adicionar Novo Profissional'}</DialogTitle>
             <DialogDescription>
@@ -495,6 +584,7 @@ const Doctors = () => {
                   doctorName={formData.name || 'Novo Profissional'}
                 />
               )}
+
             </div>
 
             <DialogFooter className="mt-6">
@@ -506,6 +596,17 @@ const Doctors = () => {
               </Button>
             </DialogFooter>
           </form>
+          
+          {/* Schedule Blocks Section - Only for existing doctors, outside the form */}
+          {formData.id && activeClinic && (
+            <div className="mt-6 border-t pt-6">
+              <DoctorScheduleBlocks
+                doctorId={formData.id}
+                doctorName={formData.name || 'Profissional'}
+                clinicId={activeClinic.id}
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

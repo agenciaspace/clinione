@@ -41,3 +41,19 @@ deploy-*.log
 .aider*
 .claude/
 supabase/.temp/
+
+# Debug and temporary SQL files
+*debug*.sql
+*test*.sql
+*emergency*.sql
+*diagnostic*.sql
+*fix*.sql
+*SOLUCAO*.md
+*CORRECAO*.md
+*EMERGENCY*.md
+*EXECUTE*.md
+check-deployment-status.sh
+
+# Keep important reference files  
+!fix-rls-simple.sql
+!DEPLOYMENT_CHECKLIST.md

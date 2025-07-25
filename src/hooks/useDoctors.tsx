@@ -36,6 +36,10 @@ export const useDoctors = () => {
     queryKey: ['doctors', activeClinic?.id],
     queryFn: fetchDoctors,
     enabled: !!activeClinic?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   // Verificar se um médico possui agendamentos

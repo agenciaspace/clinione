@@ -9,6 +9,7 @@ import NoClinicSelected from '../clinic/NoClinicSelected';
 import { useBreakpoint } from '../../hooks/use-breakpoint';
 import { MobileBottomNav } from './MobileBottomNav';
 import { EmailVerificationBanner } from '../auth/EmailVerificationBanner';
+import { useSidebar } from '../../hooks/useSidebar';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, requ
   const { activeClinic, isLoadingClinics } = useClinic();
   const navigate = useNavigate();
   const breakpoint = useBreakpoint();
+  const { isCollapsed, toggle } = useSidebar();
 
   // Redirecionamento se não estiver autenticado
   React.useEffect(() => {
@@ -47,13 +49,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, requ
     <div className="flex h-screen bg-background">
       {/* Sidebar somente no desktop (≥1024px) */}
       {breakpoint === 'desktop' && (
-        <div className="w-64 hidden lg:block">
-          <Sidebar />
+        <div className={`hidden lg:block transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+          <Sidebar isCollapsed={isCollapsed} />
         </div>
       )}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-background">
+        <Header 
+          onSidebarToggle={toggle}
+          sidebarCollapsed={isCollapsed}
+        />
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 pb-24 bg-background">
           <EmailVerificationBanner />
           {requireClinic && !activeClinic ? (
             <NoClinicSelected />

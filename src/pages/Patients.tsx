@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -8,7 +8,10 @@ import { PageHeader } from '@/components/patients/PageHeader';
 import { PatientsFilter } from '@/components/patients/PatientsFilter';
 import { PatientsTabContent } from '@/components/patients/PatientsTabContent';
 import { PatientRecordModal } from '@/components/patients/PatientRecordModal';
+import { AppointmentFormSimple } from '@/components/appointments/AppointmentFormSimple';
 import { usePatientManagement } from '@/hooks/mutations/usePatientManagement';
+import { useCreateAppointmentSimple } from '@/hooks/mutations/appointments/useCreateAppointmentSimple';
+import { useDoctors } from '@/hooks/useDoctors';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useClinic } from '@/contexts/ClinicContext';
@@ -20,6 +23,18 @@ const Patients = () => {
   const { activeClinic } = useClinic();
   const queryClient = useQueryClient();
   const patientChannelRef = useRef<RealtimeChannel | null>(null);
+  
+  // Appointment form state
+  const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false);
+  const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
+  
+  // Hooks for appointment functionality
+  const { doctors } = useDoctors();
+  const createAppointmentMutation = useCreateAppointmentSimple(activeClinic?.id);
+  
+  // Debug: Track re-renders
+  console.log('Patients.tsx: Component rendered with isAppointmentFormOpen:', isAppointmentFormOpen, 'selectedPatient:', selectedPatientForAppointment?.name);
+  
   const {
     searchTerm,
     setSearchTerm,
@@ -37,7 +52,64 @@ const Patients = () => {
     handleCloseRecordModal,
     filteredPatients,
     isLoading,
+    isCreating,
   } = usePatientManagement();
+
+  // Debug: Track state changes
+  useEffect(() => {
+    console.log('Patients.tsx: isAppointmentFormOpen changed to:', isAppointmentFormOpen);
+  }, [isAppointmentFormOpen]);
+  
+  useEffect(() => {
+    console.log('Patients.tsx: selectedPatientForAppointment changed to:', selectedPatientForAppointment?.name);
+  }, [selectedPatientForAppointment]);
+
+  // Appointment handling functions
+  const handleScheduleAppointment = (patient: Patient) => {
+    console.log('Patients.tsx: handleScheduleAppointment called for:', patient.name);
+    console.log('Patients.tsx: Current doctors:', doctors);
+    console.log('Patients.tsx: Current activeClinic:', activeClinic);
+    console.log('Patients.tsx: Before setState - isAppointmentFormOpen:', isAppointmentFormOpen);
+    setSelectedPatientForAppointment(patient);
+    setIsAppointmentFormOpen(true);
+    console.log('Patients.tsx: After setState - should be open now');
+  };
+
+  const handleCreateAppointment = async (appointmentData: any) => {
+    console.log('Patients.tsx: handleCreateAppointment called with:', appointmentData);
+    console.log('Patients.tsx: selectedPatientForAppointment:', selectedPatientForAppointment);
+    
+    try {
+      const finalData = {
+        patient_name: selectedPatientForAppointment?.name || appointmentData.patient_name,
+        patient_phone: selectedPatientForAppointment?.phone || appointmentData.patient_phone,
+        patient_email: selectedPatientForAppointment?.email || appointmentData.patient_email,
+        patient_cpf: selectedPatientForAppointment?.cpf || appointmentData.patient_cpf,
+        doctor_id: appointmentData.doctor_id,
+        doctor_name: appointmentData.doctor_name,
+        date: appointmentData.date,
+        time: appointmentData.time,
+        type: appointmentData.type,
+        notes: appointmentData.notes,
+      };
+      
+      console.log('Patients.tsx: Final appointment data:', finalData);
+      
+      await createAppointmentMutation.mutateAsync(finalData);
+      
+      console.log('Patients.tsx: Appointment created successfully, closing modal');
+      // Close the appointment form
+      setIsAppointmentFormOpen(false);
+      setSelectedPatientForAppointment(null);
+    } catch (error) {
+      console.error('Patients.tsx: Error creating appointment:', error);
+    }
+  };
+
+  const handleCloseAppointmentForm = () => {
+    setIsAppointmentFormOpen(false);
+    setSelectedPatientForAppointment(null);
+  };
 
   // Configurar escuta em tempo real para atualizações na tabela de pacientes
   useEffect(() => {
@@ -85,6 +157,7 @@ const Patients = () => {
                   email: newPatient.email || '',
                   phone: newPatient.phone || '',
                   birthDate: newPatient.birth_date,
+                  cpf: newPatient.cpf || '',
                   created_at: newPatient.created_at,
                   updated_at: newPatient.updated_at,
                   clinic_id: newPatient.clinic_id,
@@ -104,6 +177,7 @@ const Patients = () => {
                   email: updatedPatient.email || '',
                   phone: updatedPatient.phone || '',
                   birthDate: updatedPatient.birth_date,
+                  cpf: updatedPatient.cpf || '',
                   created_at: updatedPatient.created_at,
                   updated_at: updatedPatient.updated_at,
                   clinic_id: updatedPatient.clinic_id,
@@ -167,6 +241,7 @@ const Patients = () => {
               patientForm={patientForm}
               handleInputChange={handleInputChange}
               handleAddPatient={handleAddPatient}
+              isCreating={isCreating}
             />
             
             <TabsContent value="all">
@@ -177,6 +252,7 @@ const Patients = () => {
                 onDelete={handleDeletePatient}
                 onOpenRecord={handleOpenRecordModal}
                 onUpdatePatient={handleUpdatePatient}
+                onScheduleAppointment={handleScheduleAppointment}
               />
             </TabsContent>
             
@@ -188,6 +264,7 @@ const Patients = () => {
                 onDelete={handleDeletePatient}
                 onOpenRecord={handleOpenRecordModal}
                 onUpdatePatient={handleUpdatePatient}
+                onScheduleAppointment={handleScheduleAppointment}
               />
             </TabsContent>
             
@@ -199,6 +276,7 @@ const Patients = () => {
                 onDelete={handleDeletePatient}
                 onOpenRecord={handleOpenRecordModal}
                 onUpdatePatient={handleUpdatePatient}
+                onScheduleAppointment={handleScheduleAppointment}
               />
             </TabsContent>
           </Tabs>
@@ -210,6 +288,21 @@ const Patients = () => {
         onOpenChange={handleCloseRecordModal}
         patient={selectedPatient}
         currentUser={user}
+      />
+
+      <AppointmentFormSimple
+        isOpen={isAppointmentFormOpen}
+        onClose={handleCloseAppointmentForm}
+        onSubmit={handleCreateAppointment}
+        doctors={doctors}
+        selectedDate={new Date()}
+        preFilledPatient={selectedPatientForAppointment ? {
+          name: selectedPatientForAppointment.name,
+          phone: selectedPatientForAppointment.phone,
+          email: selectedPatientForAppointment.email,
+          cpf: selectedPatientForAppointment.cpf
+        } : undefined}
+        key={selectedPatientForAppointment?.id || 'new'}
       />
     </DashboardLayout>
   );

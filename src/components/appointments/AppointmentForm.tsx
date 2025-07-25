@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -54,6 +54,11 @@ interface AppointmentFormProps {
   onSubmit: (data: AppointmentFormValues) => void;
   doctors: Doctor[];
   selectedDate?: Date;
+  preFilledPatient?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+  };
 }
 
 export function AppointmentForm({ 
@@ -61,15 +66,21 @@ export function AppointmentForm({
   onClose, 
   onSubmit, 
   doctors, 
-  selectedDate 
+  selectedDate,
+  preFilledPatient 
 }: AppointmentFormProps) {
   const isMobile = useIsMobile();
+  
+  console.log('AppointmentForm: Rendering with isOpen:', isOpen);
+  console.log('AppointmentForm: preFilledPatient:', preFilledPatient);
+  console.log('AppointmentForm: doctors count:', doctors.length);
+  
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      patient_name: '',
-      patient_phone: '',
-      patient_email: '',
+      patient_name: preFilledPatient?.name || '',
+      patient_phone: preFilledPatient?.phone || '',
+      patient_email: preFilledPatient?.email || '',
       doctor_id: undefined,
       date: selectedDate || new Date(),
       time: '09:00',
@@ -77,6 +88,22 @@ export function AppointmentForm({
       notes: '',
     },
   });
+
+  // Reset form when preFilledPatient changes
+  useEffect(() => {
+    if (preFilledPatient) {
+      form.reset({
+        patient_name: preFilledPatient.name || '',
+        patient_phone: preFilledPatient.phone || '',
+        patient_email: preFilledPatient.email || '',
+        doctor_id: undefined,
+        date: selectedDate || new Date(),
+        time: '09:00',
+        type: 'in-person',
+        notes: '',
+      });
+    }
+  }, [preFilledPatient, selectedDate, form]);
 
   function handleSubmit(data: AppointmentFormValues) {
     onSubmit(data);

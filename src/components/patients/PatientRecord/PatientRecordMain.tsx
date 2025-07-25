@@ -26,7 +26,39 @@ const PatientRecordMain: React.FC<Props> = ({ patient, onClose, currentUser }) =
   const { data: recordEntries = [], isLoading: isLoadingRecords, error: recordsError } = useQuery({
     queryKey: ['patientRecords', patientId],
     queryFn: async () => {
-      // Check authentication first
+      // Check if this is a temporary patient (from appointments)
+      if (patientId.startsWith('temp-')) {
+        // Extract appointment ID from temp ID
+        const appointmentId = patientId.replace('temp-', '');
+        
+        // Fetch the appointment data instead
+        const { data, error } = await supabase
+          .from('appointments')
+          .select('*')
+          .eq('id', appointmentId)
+          .single();
+
+        if (error) {
+          console.error('Erro ao buscar consulta:', error);
+          throw error;
+        }
+
+        // Convert appointment to record format for display
+        if (data) {
+          return [{
+            id: `record-${data.id}`,
+            title: 'Consulta',
+            content: data.notes || 'Sem anotações',
+            created_at: data.created_at,
+            updated_at: data.updated_at,
+            type: 'appointment',
+            appointment_data: data
+          }];
+        }
+        return [];
+      }
+
+      // For real patients, query patient_records table
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Usuário não autenticado');
@@ -40,12 +72,6 @@ const PatientRecordMain: React.FC<Props> = ({ patient, onClose, currentUser }) =
 
       if (error) {
         console.error('Erro ao buscar prontuário:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
         
         // If it's a permission error, show a more specific message
         if (error.code === '42501' || error.message.includes('403')) {

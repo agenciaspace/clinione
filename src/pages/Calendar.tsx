@@ -1,32 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Doctor, Appointment, WorkingHours } from '@/types';
+import { Doctor, Appointment, WorkingHours, ScheduleBlock } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClinic } from '@/contexts/ClinicContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppointmentDetails } from '@/components/appointments/AppointmentDetails';
-import { AppointmentForm } from '@/components/appointments/AppointmentForm';
+import { AppointmentFormSimple } from '@/components/appointments/AppointmentFormSimple';
 import { useAppointments } from '@/hooks/useAppointments';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { usePatients } from '@/hooks/usePatients';
+import { useScheduleBlocks } from '@/hooks/useScheduleBlocks';
+import { Calendar as CalendarIcon, Plus, Maximize2, Minimize2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { GoogleCalendarView } from '@/components/calendar/GoogleCalendarView';
 import { AppointmentCalendar } from '@/components/dashboard/AppointmentCalendar';
 import { AppointmentList } from '@/components/dashboard/AppointmentList';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Calendar as CalendarIcon, Plus, ChevronDown, ChevronUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { toast } from '@/components/ui/sonner';
 
 const Calendar = () => {
   const { user } = useAuth();
   const { activeClinic } = useClinic();
   const isMobile = useIsMobile();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [view, setView] = useState<'day' | 'week' | 'all'>('day');
   const [selectedDoctor, setSelectedDoctor] = useState<string | undefined>(undefined);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isAppointmentsOpen, setIsAppointmentsOpen] = useState(!isMobile); // Fechado por padrão no mobile
+  const [isScheduleBlocksOpen, setIsScheduleBlocksOpen] = useState(false);
+  const [calendarView, setCalendarView] = useState<'compact' | 'expanded'>('expanded');
+  const [view, setView] = useState<'day' | 'week' | 'all'>('day');
   
   const { 
     appointments, 
@@ -40,6 +44,16 @@ const Calendar = () => {
     updateAppointmentNotes 
   } = useAppointments(selectedDate, selectedDoctor);
 
+  const { patients, isLoading: isPatientsLoading } = usePatients(activeClinic?.id);
+  const { getBlocksForDateRange, isTimeSlotBlocked, scheduleBlocks, updateScheduleBlock, deleteScheduleBlock } = useScheduleBlocks(activeClinic?.id, selectedDoctor);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Calendar component - activeClinic:', activeClinic);
+    console.log('Calendar component - patients count:', patients.length);
+    console.log('Calendar component - doctors count:', doctors.length);
+  }, [activeClinic, patients, doctors]);
+
   useEffect(() => {
     if (activeClinic) {
       fetchDoctors();
@@ -48,10 +62,21 @@ const Calendar = () => {
     }
   }, [activeClinic]);
 
+  // Re-fetch doctors when form opens to ensure fresh data
+  useEffect(() => {
+    if (isFormOpen && activeClinic) {
+      fetchDoctors();
+    }
+  }, [isFormOpen, activeClinic]);
+
   const fetchDoctors = async () => {
-    if (!activeClinic) return;
+    if (!activeClinic) {
+      console.error('No active clinic available to fetch doctors');
+      return;
+    }
     
     try {
+      console.log('Fetching doctors for clinic:', activeClinic.id);
       const { data, error } = await supabase
         .from('doctors')
         .select('*')
@@ -59,10 +84,12 @@ const Calendar = () => {
         
       if (error) {
         console.error('Error fetching doctors:', error);
+        toast.error('Erro ao carregar médicos');
         return;
       }
       
       if (data) {
+        console.log('Doctors fetched:', data.length);
         // Convert the data to match our Doctor type
         const convertedDoctors = data.map(doctor => ({
           ...doctor,
@@ -72,6 +99,7 @@ const Calendar = () => {
       }
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Erro ao carregar médicos');
     }
   };
   
@@ -90,6 +118,13 @@ const Calendar = () => {
   };
   
   const handleOpenForm = () => {
+    if (!activeClinic) {
+      toast.error('Por favor, selecione uma clínica primeiro');
+      return;
+    }
+    console.log('Opening appointment form with activeClinic:', activeClinic);
+    console.log('Current doctors:', doctors.length);
+    console.log('Current patients:', patients.length);
     setIsFormOpen(true);
   };
   
@@ -98,16 +133,41 @@ const Calendar = () => {
   };
   
   const handleCreateAppointment = async (formData: any) => {
-    let doctorName;
-    if (formData.doctor_id) {
+    console.log('Calendar: handleCreateAppointment called with:', formData);
+    
+    let doctorName = formData.doctor_name;
+    if (formData.doctor_id && !doctorName) {
       const selectedDoctor = doctors.find(d => d.id === formData.doctor_id);
       doctorName = selectedDoctor?.name;
+    }
+    
+    // Check for schedule blocks conflicts
+    if (formData.doctor_id && formData.date && formData.time) {
+      const appointmentDateTime = new Date(formData.date);
+      const [hours, minutes] = formData.time.split(':');
+      appointmentDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      // Assume 1-hour appointment duration
+      const endDateTime = new Date(appointmentDateTime);
+      endDateTime.setHours(endDateTime.getHours() + 1);
+      
+      const isBlocked = isTimeSlotBlocked(
+        formData.doctor_id,
+        appointmentDateTime.toISOString(),
+        endDateTime.toISOString()
+      );
+      
+      if (isBlocked) {
+        toast.error('Este horário está bloqueado para o profissional selecionado. Por favor, escolha outro horário.');
+        return;
+      }
     }
     
     await createAppointment({
       patient_name: formData.patient_name,
       patient_phone: formData.patient_phone,
       patient_email: formData.patient_email,
+      patient_cpf: formData.patient_cpf,
       doctor_id: formData.doctor_id,
       doctor_name: doctorName,
       date: formData.date,
@@ -124,6 +184,17 @@ const Calendar = () => {
     setIsDetailsOpen(false);
   };
 
+  const handleEditBlock = (block: ScheduleBlock) => {
+    // TODO: Implement edit block functionality
+    console.log('Edit block:', block);
+  };
+
+  const handleDeleteBlock = (id: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este bloqueio?')) {
+      deleteScheduleBlock(id);
+    }
+  };
+
   const hasAppointmentsOnDate = (date: Date) => {
     return monthAppointments.some(appointment => {
       const appointmentDate = new Date(appointment.date);
@@ -133,6 +204,22 @@ const Calendar = () => {
         appointmentDate.getFullYear() === date.getFullYear()
       );
     });
+  };
+
+  const hasScheduleBlocksOnDate = (date: Date) => {
+    const dateStart = new Date(date);
+    dateStart.setHours(0, 0, 0, 0);
+    
+    const dateEnd = new Date(date);
+    dateEnd.setHours(23, 59, 59, 999);
+    
+    const blocks = getBlocksForDateRange(
+      dateStart.toISOString(), 
+      dateEnd.toISOString(), 
+      selectedDoctor && selectedDoctor !== 'all' ? selectedDoctor : undefined
+    );
+    
+    return blocks.length > 0;
   };
 
   return (
@@ -156,133 +243,83 @@ const Calendar = () => {
           </div>
           
           {activeClinic && (
-            <Button onClick={handleOpenForm} size={isMobile ? "default" : "lg"}>
-              <Plus className="h-5 w-5 mr-2" />
-              {isMobile ? 'Novo Agendamento' : 'Novo Agendamento'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => setCalendarView(calendarView === 'expanded' ? 'compact' : 'expanded')}
+                size={isMobile ? "default" : "lg"}
+                title={calendarView === 'expanded' ? 'Visualização Compacta' : 'Visualização Expandida'}
+              >
+                {calendarView === 'expanded' ? (
+                  <Minimize2 className="h-5 w-5" />
+                ) : (
+                  <Maximize2 className="h-5 w-5" />
+                )}
+                {!isMobile && (
+                  <span className="ml-2">
+                    {calendarView === 'expanded' ? 'Compacta' : 'Expandida'}
+                  </span>
+                )}
+              </Button>
+              <Button type="button" onClick={handleOpenForm} size={isMobile ? "default" : "lg"}>
+                <Plus className="h-5 w-5 mr-2" />
+                Novo Agendamento
+              </Button>
+            </div>
           )}
         </div>
       </div>
       
-      {/* Layout with maximum calendar focus */}
-      <div className="space-y-6">
-        {/* Calendar Section - Takes full width and prominence */}
-        <div className="w-full">
-          <Card className="shadow-lg border-2">
-            <CardContent className="p-6 sm:p-8">
-              <div className={`${
-                isMobile 
-                  ? 'space-y-6' 
-                  : 'grid grid-cols-1 lg:grid-cols-3 gap-8 items-start'
-              }`}>
-                {/* Calendar takes center stage */}
-                <div className={`${isMobile ? 'order-1' : 'lg:col-span-2'} flex justify-center`}>
-                  <div className="w-full max-w-md lg:max-w-lg">
-                    <AppointmentCalendar
-                      selectedDate={selectedDate}
-                      setSelectedDate={setSelectedDate}
-                      selectedDoctor={selectedDoctor}
-                      setSelectedDoctor={setSelectedDoctor}
-                      doctors={doctors}
-                      view={view}
-                      setView={setView}
-                      hasAppointmentsOnDate={hasAppointmentsOnDate}
-                    />
-                  </div>
-                </div>
-
-                {/* Quick stats and info */}
-                <div className={`${isMobile ? 'order-2' : 'lg:col-span-1'} space-y-4`}>
-                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-lg border">
-                    <h3 className="font-semibold text-lg mb-3">Resumo do Dia</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Total de agendamentos:</span>
-                        <span className="font-semibold text-lg">{appointments.length}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Profissionais ativos:</span>
-                        <span className="font-semibold text-lg">{doctors.length}</span>
-                      </div>
-                      {selectedDate && (
-                        <div className="pt-2 border-t">
-                          <p className="text-sm font-medium text-primary">
-                            {selectedDate.toLocaleDateString('pt-BR', { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
-                            })}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Quick actions */}
-                  <div className="space-y-2">
-                    <Button 
-                      onClick={handleOpenForm} 
-                      className="w-full" 
-                      size="lg"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Novo Agendamento
-                    </Button>
-                  </div>
-                </div>
+      {/* Calendar Views */}
+      {activeClinic && (
+        <>
+          {calendarView === 'expanded' ? (
+            /* Google Calendar View - Full Screen */
+            <GoogleCalendarView
+              selectedDate={selectedDate || new Date()}
+              onDateSelect={setSelectedDate}
+              appointments={allAppointments}
+              scheduleBlocks={scheduleBlocks}
+              doctors={doctors}
+              clinicId={activeClinic.id}
+              selectedDoctorId={selectedDoctor}
+              onNewAppointment={handleOpenForm}
+              onEditAppointment={handleOpenDetails}
+              onDeleteAppointment={handleDeleteAppointment}
+              onDeleteBlock={handleDeleteBlock}
+            />
+          ) : (
+            /* Compact Calendar View */
+            <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-6`}>
+              <div className={`${isMobile ? '' : 'lg:col-span-1'}`}>
+                <AppointmentCalendar
+                  selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
+                  selectedDoctor={selectedDoctor || 'all'}
+                  setSelectedDoctor={(value) => setSelectedDoctor(value === 'all' ? undefined : value)}
+                  doctors={doctors}
+                  view={view}
+                  setView={setView}
+                  hasAppointmentsOnDate={hasAppointmentsOnDate}
+                  hasScheduleBlocksOnDate={hasScheduleBlocksOnDate}
+                />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Appointments List - Collapsible on mobile, always visible on desktop */}
-        <Collapsible 
-          open={isAppointmentsOpen} 
-          onOpenChange={setIsAppointmentsOpen}
-          className="w-full"
-        >
-          <Card>
-            <CardHeader className="pb-3">
-              <CollapsibleTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-between p-0 h-auto hover:bg-transparent"
-                >
-                  <CardTitle className="flex items-center text-xl">
-                    Agendamentos
-                    {selectedDate && (
-                      <span className="ml-2 text-base font-normal text-muted-foreground">
-                        ({appointments.length} {view === 'day' ? 'hoje' : view === 'week' ? 'esta semana' : 'total'})
-                      </span>
-                    )}
-                  </CardTitle>
-                  {isMobile && (
-                    isAppointmentsOpen ? 
-                      <ChevronUp className="h-5 w-5" /> : 
-                      <ChevronDown className="h-5 w-5" />
-                  )}
-                </Button>
-              </CollapsibleTrigger>
-            </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="pt-0">
+              <div className={`${isMobile ? '' : 'lg:col-span-2'}`}>
                 <AppointmentList
                   appointments={appointments}
-                  allAppointments={allAppointments}
-                  isLoading={isLoading}
-                  view={view}
-                  onOpenForm={handleOpenForm}
-                  onOpenDetails={handleOpenDetails}
-                  onConfirm={confirmAppointment}
-                  onCancel={cancelAppointment}
                   selectedDate={selectedDate}
+                  view={view}
+                  onOpenDetails={handleOpenDetails}
+                  doctors={doctors}
+                  isLoading={isLoading}
+                  hasScheduleBlocksOnDate={hasScheduleBlocksOnDate}
                 />
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-      </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       <AppointmentDetails
         appointment={selectedAppointment}
@@ -294,12 +331,13 @@ const Calendar = () => {
         onUpdateNotes={handleUpdateNotes}
       />
 
-      <AppointmentForm
+      <AppointmentFormSimple
         isOpen={isFormOpen}
         onClose={handleCloseForm}
         onSubmit={handleCreateAppointment}
         doctors={doctors}
         selectedDate={selectedDate}
+        patients={patients}
       />
     </DashboardLayout>
   );

@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from './AuthContext';
 import { toast } from '@/components/ui/sonner';
@@ -32,7 +32,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isLoadingClinics, setIsLoadingClinics] = useState(true);
   const [webhookChannel, setWebhookChannel] = useState<RealtimeChannel | null>(null);
 
-  const fetchClinics = async () => {
+  const fetchClinics = useCallback(async () => {
     if (!user) {
       setClinics([]);
       setActiveClinicState(null);
@@ -73,17 +73,36 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } finally {
       setIsLoadingClinics(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        console.log('Auth state changed to SIGNED_IN, fetching clinics.');
+        fetchClinics();
+      } else if (event === 'SIGNED_OUT') {
+        console.log('Auth state changed to SIGNED_OUT, clearing clinics.');
+        setClinics([]);
+        setActiveClinicState(null);
+        localStorage.removeItem('activeClinicId');
+      }
+    });
+
+    // Initial fetch
     fetchClinics();
-  }, [user]);
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [fetchClinics]);
 
   useEffect(() => {
     // First clean up any existing webhook channel before attempting to create a new one
     if (webhookChannel) {
       try {
-        console.log('[WEBHOOK] Removendo canal webhook anterior');
+        if (import.meta.env.DEV) {
+          console.log('[WEBHOOK] Removendo canal webhook anterior');
+        }
         supabase.removeChannel(webhookChannel);
       } catch (e) {
         console.error('Erro ao remover canal webhook:', e);
@@ -94,9 +113,11 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     
     // Only setup a new channel if we have an active clinic
     if (activeClinic?.id) {
-      // Use a delay to avoid race conditions with channel setup/teardown
+      // Use a longer delay to avoid rapid channel creation/destruction
       const setupTimer = setTimeout(() => {
-        console.log(`[WEBHOOK] Configurando novo canal webhook para clínica ${activeClinic.id}`);
+        if (import.meta.env.DEV) {
+          console.log(`[WEBHOOK] Configurando novo canal webhook para clínica ${activeClinic.id}`);
+        }
         try {
           // Get all existing channels
           const existingChannels = supabase.getChannels();
@@ -107,7 +128,9 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           // Remove any webhook channels for this clinic to prevent duplicates
           existingChannels.forEach(ch => {
             if (ch.topic && ch.topic.startsWith(`webhook-${activeClinic.id}`)) {
-              console.log('[WEBHOOK] Removendo canal existente com nome similar:', ch.topic);
+              if (import.meta.env.DEV) {
+                console.log('[WEBHOOK] Removendo canal existente com nome similar:', ch.topic);
+              }
               try {
                 supabase.removeChannel(ch);
               } catch (e) {
@@ -125,7 +148,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         } catch (error) {
           console.error('[WEBHOOK] Erro ao configurar canal webhook:', error);
         }
-      }, 800); // Increased delay to ensure cleanup has completed
+      }, 5000); // Longer delay to prevent rapid channel creation/destruction
       
       return () => {
         clearTimeout(setupTimer);
@@ -135,7 +158,9 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => {
       if (webhookChannel) {
         try {
-          console.log('[WEBHOOK] Cleanup: Removendo canal webhook ao desmontar');
+          if (import.meta.env.DEV) {
+            console.log('[WEBHOOK] Cleanup: Removendo canal webhook ao desmontar');
+          }
           supabase.removeChannel(webhookChannel);
         } catch (e) {
           console.error('Erro ao remover canal webhook durante limpeza:', e);

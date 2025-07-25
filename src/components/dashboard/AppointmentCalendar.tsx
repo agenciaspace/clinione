@@ -18,6 +18,7 @@ interface AppointmentCalendarProps {
   view: 'day' | 'week' | 'all';
   setView: (view: 'day' | 'week' | 'all') => void;
   hasAppointmentsOnDate: (date: Date) => boolean;
+  hasScheduleBlocksOnDate?: (date: Date) => boolean;
 }
 
 export function AppointmentCalendar({
@@ -28,7 +29,8 @@ export function AppointmentCalendar({
   doctors,
   view,
   setView,
-  hasAppointmentsOnDate
+  hasAppointmentsOnDate,
+  hasScheduleBlocksOnDate
 }: AppointmentCalendarProps) {
   const isMobile = useIsMobile();
 
@@ -54,10 +56,16 @@ export function AppointmentCalendar({
             className={`border rounded-md ${isMobile ? 'scale-90' : ''}`}
             modifiers={{
               hasAppointment: (date) => hasAppointmentsOnDate(date),
+              hasScheduleBlock: (date) => hasScheduleBlocksOnDate ? hasScheduleBlocksOnDate(date) : false,
             }}
             modifiersStyles={{
               hasAppointment: {
                 backgroundColor: '#FFFAE6',
+                fontWeight: 'bold'
+              },
+              hasScheduleBlock: {
+                backgroundColor: '#FFE5E5',
+                color: '#DC2626',
                 fontWeight: 'bold'
               }
             }}

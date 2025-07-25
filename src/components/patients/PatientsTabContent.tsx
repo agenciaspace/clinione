@@ -10,6 +10,7 @@ interface PatientsTabContentProps {
   onDelete: (id: string) => void;
   onOpenRecord: (patient: Patient) => void;
   onUpdatePatient?: (patient: Patient) => void;
+  onScheduleAppointment: (patient: Patient) => void;
 }
 
 export const PatientsTabContent = ({
@@ -19,6 +20,7 @@ export const PatientsTabContent = ({
   onDelete,
   onOpenRecord,
   onUpdatePatient,
+  onScheduleAppointment,
 }: PatientsTabContentProps) => {
   return (
     <PatientList
@@ -28,6 +30,10 @@ export const PatientsTabContent = ({
       onDelete={onDelete}
       onOpenRecord={onOpenRecord}
       onUpdatePatient={onUpdatePatient}
+      onScheduleAppointment={(patient) => {
+        console.log('PatientsTabContent: onScheduleAppointment called for:', patient.name);
+        onScheduleAppointment(patient);
+      }}
     />
   );
 };
