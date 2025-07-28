@@ -50,9 +50,12 @@ const Calendar = () => {
   // Debug logging
   useEffect(() => {
     console.log('Calendar component - activeClinic:', activeClinic);
+    console.log('Calendar component - activeClinic?.id:', activeClinic?.id);
+    console.log('Calendar component - patients:', patients);
     console.log('Calendar component - patients count:', patients.length);
+    console.log('Calendar component - isPatientsLoading:', isPatientsLoading);
     console.log('Calendar component - doctors count:', doctors.length);
-  }, [activeClinic, patients, doctors]);
+  }, [activeClinic, patients, doctors, isPatientsLoading]);
 
   useEffect(() => {
     if (activeClinic) {

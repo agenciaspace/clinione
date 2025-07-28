@@ -88,6 +88,8 @@ export function AppointmentFormSimple({
   console.log('AppointmentFormSimple: preFilledPatient:', preFilledPatient);
   console.log('AppointmentFormSimple: doctors count:', doctors.length);
   console.log('AppointmentFormSimple: patients count:', patients.length);
+  console.log('AppointmentFormSimple: patients data:', patients);
+  console.log('AppointmentFormSimple: selectedPatientId:', selectedPatientId);
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
@@ -211,17 +213,11 @@ export function AppointmentFormSimple({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">+ Novo Paciente</SelectItem>
-                  {patients.length === 0 ? (
-                    <SelectItem value="" disabled>
-                      Carregando pacientes...
+                  {patients.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {patient.name} - {patient.cpf}
                     </SelectItem>
-                  ) : (
-                    patients.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.name} - {patient.cpf}
-                      </SelectItem>
-                    ))
-                  )}
+                  ))}
                 </SelectContent>
               </Select>
             </div>
