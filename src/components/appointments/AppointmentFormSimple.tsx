@@ -27,7 +27,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar as CalendarIcon, Clock, UserPlus, User } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, UserPlus, User, Stethoscope } from 'lucide-react';
 import { Doctor, Patient } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cpfValidationRules, maskCPF } from '@/utils/cpf-validation';
@@ -343,31 +343,34 @@ export function AppointmentFormSimple({
               name="doctor_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm">Profissional *</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Selecione um profissional" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
+                  <FormLabel className="text-sm flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4" />
+                    Profissional
+                    <span className="text-xs font-normal text-red-600 dark:text-red-400">* Obrigatório</span>
+                  </FormLabel>
+                  <FormControl>
+                    <select
+                      {...field}
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Selecione um profissional</option>
                       {doctors.length > 0 ? (
                         doctors.map((doctor) => (
-                          <SelectItem key={doctor.id} value={doctor.id}>
+                          <option key={doctor.id} value={doctor.id}>
                             {doctor.name}
-                          </SelectItem>
+                          </option>
                         ))
                       ) : (
-                        <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                          Nenhum profissional encontrado
-                        </div>
+                        <option disabled>Nenhum profissional encontrado</option>
                       )}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                  </FormControl>
                   <FormMessage />
+                  {doctors.length === 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Cadastre profissionais na aba "Profissionais" antes de criar agendamentos.
+                    </p>
+                  )}
                 </FormItem>
               )}
             />
@@ -440,17 +443,15 @@ export function AppointmentFormSimple({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm">Tipo de Consulta</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="in-person">Presencial</SelectItem>
-                      <SelectItem value="online">Teleconsulta</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <select
+                      {...field}
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="in-person">Presencial</option>
+                      <option value="online">Teleconsulta</option>
+                    </select>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
