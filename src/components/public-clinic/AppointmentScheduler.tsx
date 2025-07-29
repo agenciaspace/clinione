@@ -468,12 +468,12 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
             {doctors.length > 0 && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Profissional (opcional)</Label>
-                <Select value={selectedDoctor || ''} onValueChange={(value) => setSelectedDoctor(value || null)}>
+                <Select value={selectedDoctor || 'all'} onValueChange={(value) => setSelectedDoctor(value === 'all' ? null : value)}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Todos os profissionais" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os profissionais</SelectItem>
+                    <SelectItem value="all">Todos os profissionais</SelectItem>
                     {doctors.map(doctor => (
                       <SelectItem key={doctor.id} value={doctor.id}>
                         {doctor.name}
