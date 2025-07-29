@@ -215,16 +215,30 @@ export function AppointmentFormSimple({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">+ Novo Paciente</SelectItem>
-                  {patients.map((patient) => {
-                    console.log('Rendering patient in select:', patient);
-                    return (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.name} - {patient.cpf}
-                      </SelectItem>
-                    );
-                  })}
+                  {patients && patients.length > 0 ? (
+                    patients.map((patient) => {
+                      console.log('Rendering patient in select:', patient);
+                      if (!patient.id || !patient.name) {
+                        console.error('Invalid patient data:', patient);
+                        return null;
+                      }
+                      return (
+                        <SelectItem key={patient.id} value={patient.id}>
+                          {patient.name} {patient.cpf ? `- ${patient.cpf}` : ''}
+                        </SelectItem>
+                      );
+                    })
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      Carregando pacientes...
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
+              {/* Debug info */}
+              <div className="text-xs text-muted-foreground">
+                Total de pacientes: {patients.length} | Selecionado: {selectedPatientId}
+              </div>
             </div>
 
             <FormField
