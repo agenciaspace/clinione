@@ -27,7 +27,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, UserPlus, User } from 'lucide-react';
 import { Doctor, Patient } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cpfValidationRules, maskCPF } from '@/utils/cpf-validation';
@@ -205,17 +205,19 @@ export function AppointmentFormSimple({
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             {/* Patient Selection */}
             <div className="space-y-3">
-              <label className="text-sm font-medium">Selecionar Paciente</label>
+              <label className="text-sm font-medium flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Paciente
+              </label>
               <select
                 value={selectedPatientId}
                 onChange={(e) => handlePatientSelection(e.target.value)}
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="new">+ Novo Paciente</option>
+                <option value="new">➕ Cadastrar Novo Paciente</option>
+                {patients.length > 0 && <option disabled>──────────────</option>}
                 {patients && patients.length > 0 && patients.map((patient) => {
-                  console.log('Rendering patient option:', patient);
                   if (!patient.id || !patient.name) {
-                    console.error('Invalid patient data:', patient);
                     return null;
                   }
                   return (
@@ -225,10 +227,26 @@ export function AppointmentFormSimple({
                   );
                 })}
               </select>
-              {/* Debug info */}
-              <div className="text-xs text-muted-foreground">
-                Total de pacientes: {patients.length} | Selecionado: {selectedPatientId}
-              </div>
+              
+              {/* Visual feedback for new patient */}
+              {selectedPatientId === 'new' && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
+                  <UserPlus className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                    Você está cadastrando um novo paciente. Preencha todos os campos obrigatórios abaixo.
+                  </span>
+                </div>
+              )}
+              
+              {/* Visual feedback for existing patient */}
+              {selectedPatientId !== 'new' && selectedPatientId !== '' && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-md">
+                  <User className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <span className="text-sm text-green-700 dark:text-green-300">
+                    Paciente selecionado. Os dados foram preenchidos automaticamente.
+                  </span>
+                </div>
+              )}
             </div>
 
             <FormField
@@ -236,12 +254,15 @@ export function AppointmentFormSimple({
               name="patient_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm">Nome do Paciente</FormLabel>
+                  <FormLabel className="text-sm flex items-center gap-2">
+                    Nome do Paciente
+                    {isNewPatient && <span className="text-xs font-normal text-blue-600 dark:text-blue-400">* Obrigatório</span>}
+                  </FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Nome completo" 
+                      placeholder={isNewPatient ? "Digite o nome completo do novo paciente" : "Nome do paciente"} 
                       {...field} 
-                      className="h-10" 
+                      className={`h-10 ${isNewPatient ? 'border-blue-300 dark:border-blue-700' : ''}`} 
                       disabled={!isNewPatient}
                     />
                   </FormControl>
@@ -255,12 +276,15 @@ export function AppointmentFormSimple({
               name="patient_cpf"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm">CPF</FormLabel>
+                  <FormLabel className="text-sm flex items-center gap-2">
+                    CPF
+                    {isNewPatient && <span className="text-xs font-normal text-blue-600 dark:text-blue-400">* Obrigatório</span>}
+                  </FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="000.000.000-00" 
+                      placeholder={isNewPatient ? "Digite o CPF do novo paciente" : "CPF do paciente"} 
                       {...field} 
-                      className="h-10"
+                      className={`h-10 ${isNewPatient ? 'border-blue-300 dark:border-blue-700' : ''}`}
                       disabled={!isNewPatient}
                       onChange={(e) => {
                         const maskedValue = maskCPF(e.target.value);
