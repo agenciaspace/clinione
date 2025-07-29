@@ -81,7 +81,7 @@ export function AppointmentFormSimple({
   preFilledPatient 
 }: AppointmentFormSimpleProps) {
   const isMobile = useIsMobile();
-  const [selectedPatientId, setSelectedPatientId] = useState<string>('');
+  const [selectedPatientId, setSelectedPatientId] = useState<string>(preFilledPatient ? '' : 'new');
   const [isNewPatient, setIsNewPatient] = useState(!preFilledPatient);
   
   console.log('AppointmentFormSimple: Rendering with isOpen:', isOpen);
@@ -126,6 +126,7 @@ export function AppointmentFormSimple({
 
   // Handle patient selection
   const handlePatientSelection = (patientId: string) => {
+    console.log('handlePatientSelection called with:', patientId);
     setSelectedPatientId(patientId);
     
     if (patientId === 'new') {
@@ -144,6 +145,7 @@ export function AppointmentFormSimple({
     } else {
       setIsNewPatient(false);
       const selectedPatient = patients.find(p => p.id === patientId);
+      console.log('Selected patient:', selectedPatient);
       if (selectedPatient) {
         form.reset({
           patient_name: selectedPatient.name,
@@ -213,11 +215,14 @@ export function AppointmentFormSimple({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">+ Novo Paciente</SelectItem>
-                  {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.name} - {patient.cpf}
-                    </SelectItem>
-                  ))}
+                  {patients.map((patient) => {
+                    console.log('Rendering patient in select:', patient);
+                    return (
+                      <SelectItem key={patient.id} value={patient.id}>
+                        {patient.name} - {patient.cpf}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
