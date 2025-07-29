@@ -328,9 +328,9 @@ export function AppointmentFormSimple({
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">
                           Nenhum profissional encontrado
-                        </SelectItem>
+                        </div>
                       )}
                     </SelectContent>
                   </Select>

@@ -44,7 +44,9 @@
       "Bash(git commit -m \"fix: move auth routes to highest priority to prevent /:slug capture\")",
       "Bash(nslookup:*)",
       "Bash(git fetch:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(GIT_TRACE=1 GIT_CURL_VERBOSE=1 git push origin clarissa)",
+      "Bash(git remote:*)"
     ],
     "deny": []
   }
