@@ -131,7 +131,93 @@ const ClinicManager: React.FC = () => {
     setIsDeleting(true);
     
     try {
-      // Excluir todos os pacientes relacionados à clínica
+      // 1. Primeiro excluir todas as tabelas de notificação
+      const { error: notificationLogsError } = await supabase
+        .from('notification_logs')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (notificationLogsError) {
+        console.error('Erro ao excluir logs de notificação:', notificationLogsError);
+      }
+
+      const { error: notificationQueueError } = await supabase
+        .from('notification_queue')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (notificationQueueError) {
+        console.error('Erro ao excluir fila de notificação:', notificationQueueError);
+      }
+
+      const { error: emailTemplatesError } = await supabase
+        .from('email_templates')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (emailTemplatesError) {
+        console.error('Erro ao excluir templates de email:', emailTemplatesError);
+      }
+
+      const { error: notificationPreferencesError } = await supabase
+        .from('notification_preferences')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (notificationPreferencesError) {
+        console.error('Erro ao excluir preferências de notificação:', notificationPreferencesError);
+      }
+
+      const { error: smtpConfigError } = await supabase
+        .from('smtp_config')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (smtpConfigError) {
+        console.error('Erro ao excluir configuração SMTP:', smtpConfigError);
+      }
+
+      // 2. Excluir rascunhos (drafts)
+      const { error: draftsError } = await supabase
+        .from('drafts')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (draftsError) {
+        console.error('Erro ao excluir rascunhos:', draftsError);
+      }
+
+      // 3. Excluir bloqueios de agenda
+      const { error: scheduleBlocksError } = await supabase
+        .from('schedule_blocks')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (scheduleBlocksError) {
+        console.error('Erro ao excluir bloqueios de agenda:', scheduleBlocksError);
+      }
+
+      // 4. Excluir prontuários dos pacientes
+      const { error: patientRecordsError } = await supabase
+        .from('patient_records')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (patientRecordsError) {
+        console.error('Erro ao excluir prontuários:', patientRecordsError);
+      }
+
+      // 5. Excluir user_roles
+      const { error: userRolesError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (userRolesError) {
+        console.error('Erro ao excluir roles de usuário:', userRolesError);
+      }
+
+      // 6. Excluir todos os pacientes relacionados à clínica
       const { error: patientsError } = await supabase
         .from('patients')
         .delete()
