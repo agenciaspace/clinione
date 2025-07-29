@@ -21,6 +21,8 @@ import MedicalRecords from "./pages/MedicalRecords";
 import Doctors from "./pages/Doctors";
 import Reports from "./pages/Reports";
 import Financial from "./pages/Financial";
+import FinancialLayout from "./pages/FinancialLayout";
+import FinancialReports from "./pages/financial/FinancialReports";
 
 import Settings from "./pages/Settings";
 import SettingsLayout from "./pages/SettingsLayout";
@@ -160,7 +162,15 @@ const App = () => {
                 <Route path="/dashboard/medical-records" element={<MedicalRecords />} />
                 <Route path="/dashboard/doctors" element={<Doctors />} />
                 <Route path="/dashboard/reports" element={<Reports />} />
-                <Route path="/dashboard/financial" element={<Financial />} />
+                
+                {/* Financial routes with subroutes */}
+                <Route path="/dashboard/financial/*" element={<FinancialLayout />}>
+                  <Route index element={<Financial />} />
+                  <Route path="transactions" element={<Financial />} />
+                  <Route path="forecasts" element={<Financial />} />
+                  <Route path="reports" element={<FinancialReports />} />
+                </Route>
+                
                 <Route path="/dashboard/clinic" element={<ClinicProfile />} />
                 
                 {/* Settings routes with subroutes */}
