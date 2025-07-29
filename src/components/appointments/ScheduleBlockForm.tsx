@@ -16,7 +16,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
@@ -142,27 +141,24 @@ export const ScheduleBlockForm: React.FC<ScheduleBlockFormProps> = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Médico</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  field.onChange(value);
-                  if (onDoctorChange) onDoctorChange(value);
-                }}
-                value={field.value}
-                disabled={isEditing}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um médico" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
+              <FormControl>
+                <select
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    if (onDoctorChange) onDoctorChange(e.target.value);
+                  }}
+                  value={field.value}
+                  disabled={isEditing}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">Selecione um médico</option>
                   {doctors.map((doctor) => (
-                    <SelectItem key={doctor.id} value={doctor.id}>
+                    <option key={doctor.id} value={doctor.id}>
                       {doctor.name}
-                    </SelectItem>
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -206,20 +202,20 @@ export const ScheduleBlockForm: React.FC<ScheduleBlockFormProps> = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tipo de Bloqueio</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
+              <FormControl>
+                <select
+                  onChange={(e) => field.onChange(e.target.value)}
+                  value={field.value}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">Selecione o tipo</option>
                   {blockTypeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <option key={option.value} value={option.value}>
                       {option.label}
-                    </SelectItem>
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -380,16 +376,14 @@ export const ScheduleBlockForm: React.FC<ScheduleBlockFormProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="frequency">Frequência</Label>
-                <Select defaultValue="weekly">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a frequência" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Diariamente</SelectItem>
-                    <SelectItem value="weekly">Semanalmente</SelectItem>
-                    <SelectItem value="monthly">Mensalmente</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  defaultValue="weekly"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="daily">Diariamente</option>
+                  <option value="weekly">Semanalmente</option>
+                  <option value="monthly">Mensalmente</option>
+                </select>
               </div>
               
               <div>
