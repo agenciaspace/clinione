@@ -197,7 +197,17 @@ const ClinicManager: React.FC = () => {
         console.error('Erro ao excluir bloqueios de agenda:', scheduleBlocksError);
       }
 
-      // 4. Excluir prontuários dos pacientes
+      // 4. Excluir dados médicos arquivados
+      const { error: archivedMedicalDataError } = await supabase
+        .from('archived_medical_data')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (archivedMedicalDataError) {
+        console.error('Erro ao excluir dados médicos arquivados:', archivedMedicalDataError);
+      }
+
+      // 5. Excluir prontuários dos pacientes
       const { error: patientRecordsError } = await supabase
         .from('patient_records')
         .delete()
@@ -207,15 +217,6 @@ const ClinicManager: React.FC = () => {
         console.error('Erro ao excluir prontuários:', patientRecordsError);
       }
 
-      // 5. Excluir user_roles
-      const { error: userRolesError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('clinic_id', id);
-      
-      if (userRolesError) {
-        console.error('Erro ao excluir roles de usuário:', userRolesError);
-      }
 
       // 6. Excluir todos os pacientes relacionados à clínica
       const { error: patientsError } = await supabase
@@ -305,6 +306,19 @@ const ClinicManager: React.FC = () => {
       if (transactionsError) {
         console.error('Erro ao excluir transações:', transactionsError);
         toast.error('Ocorreu um erro ao excluir as transações associadas à clínica');
+        setIsDeleting(false);
+        return;
+      }
+
+      // Excluir user_roles (deve ser feito ANTES de excluir a clínica)
+      const { error: userRolesError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('clinic_id', id);
+      
+      if (userRolesError) {
+        console.error('Erro ao excluir roles de usuário:', userRolesError);
+        toast.error('Ocorreu um erro ao excluir as permissões associadas à clínica');
         setIsDeleting(false);
         return;
       }
