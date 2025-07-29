@@ -445,7 +445,10 @@ const MedicalRecords = () => {
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-lg">Filtros</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Filter className="h-5 w-5 text-primary" />
+            Filtros
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className={`${isMobile ? 'space-y-4' : 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4'}`}>
@@ -499,18 +502,24 @@ const MedicalRecords = () => {
             </Select>
           </div>
           
-          <div className="mt-4">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date">Data da consulta</SelectItem>
-                <SelectItem value="patient">Nome do paciente</SelectItem>
-                <SelectItem value="doctor">Médico</SelectItem>
-                <SelectItem value="created">Data de criação</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="mt-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Ordenar por:</span>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Data da consulta</SelectItem>
+                  <SelectItem value="patient">Nome do paciente</SelectItem>
+                  <SelectItem value="doctor">Médico</SelectItem>
+                  <SelectItem value="created">Data de criação</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {filteredRecords.length} {filteredRecords.length === 1 ? 'resultado' : 'resultados'} encontrados
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -519,13 +528,13 @@ const MedicalRecords = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">
-              Prontuários ({filteredRecords.length})
+            <CardTitle className="text-xl flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Prontuários
+              <Badge variant="secondary" className="ml-2">
+                {filteredRecords.length}
+              </Badge>
             </CardTitle>
-            <Button variant="outline" size="sm">
-              <Filter className="h-4 w-4 mr-2" />
-              Filtros Avançados
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -540,16 +549,16 @@ const MedicalRecords = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {filteredRecords.map((record) => (
                 <div
                   key={record.id}
-                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  className="border rounded-lg p-6 hover:shadow-md transition-all duration-200 bg-card"
                 >
                   <div className={`${isMobile ? 'space-y-3' : 'flex items-start justify-between'}`}>
                     <div className={`${isMobile ? 'space-y-3' : 'flex items-start space-x-4 flex-1'}`}>
-                      <Avatar className="h-12 w-12 flex-shrink-0">
-                        <AvatarFallback className="bg-primary text-primary-foreground">
+                      <Avatar className="h-14 w-14 flex-shrink-0 ring-2 ring-primary/10">
+                        <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
                           {getInitials(record.patient_name)}
                         </AvatarFallback>
                       </Avatar>
@@ -557,19 +566,22 @@ const MedicalRecords = () => {
                       <div className="flex-1 space-y-2">
                         <div className="flex items-start justify-between">
                           <div>
-                            <h3 className="font-semibold text-lg">{record.patient_name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Dr. {record.doctor_name}
-                            </p>
+                            <h3 className="font-semibold text-lg text-foreground">{record.patient_name}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Stethoscope className="h-4 w-4 text-muted-foreground" />
+                              <p className="text-sm text-muted-foreground">
+                                Dr. {record.doctor_name}
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center gap-2">
                             <Badge 
                               variant="secondary" 
-                              className={`${getStatusColor(record.status)} text-white`}
+                              className={`${getStatusColor(record.status)} text-white border-0`}
                             >
                               {getStatusLabel(record.status)}
                             </Badge>
-                            <Badge variant="outline">
+                            <Badge variant="outline" className="border-primary/20">
                               {getTypeLabel(record.appointment_type)}
                             </Badge>
                           </div>
@@ -591,49 +603,54 @@ const MedicalRecords = () => {
                         </div>
                         
                         {record.diagnosis && (
-                          <div className="bg-gray-50 rounded-lg p-3 mt-2">
-                            <p className="text-sm">
-                              <strong>Descrição:</strong> {record.diagnosis}
+                          <div className="bg-muted/50 rounded-lg p-4 mt-3 border border-muted">
+                            <p className="text-sm leading-relaxed">
+                              <strong className="text-foreground">Descrição:</strong> <span className="text-muted-foreground">{record.diagnosis}</span>
                             </p>
                           </div>
                         )}
                         
                         {record.cid_code && record.cid_description && (
-                          <div className="bg-blue-50 rounded-lg p-3 mt-2">
-                            <p className="text-sm">
-                              <strong>CID:</strong> {record.cid_code} - {record.cid_description}
+                          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 mt-3 border border-blue-200 dark:border-blue-800">
+                            <p className="text-sm leading-relaxed">
+                              <strong className="text-blue-900 dark:text-blue-100">CID:</strong> <span className="text-blue-700 dark:text-blue-300">{record.cid_code} - {record.cid_description}</span>
                             </p>
                           </div>
                         )}
                       </div>
                     </div>
                     
-                    <div className={`${isMobile ? 'flex justify-end space-x-2' : 'flex flex-col space-y-2'} flex-shrink-0`}>
+                    <div className={`${isMobile ? 'flex justify-end gap-3 mt-4' : 'flex items-center gap-3'} flex-shrink-0`}>
                       <Button 
-                        size="sm" 
+                        size={isMobile ? "default" : "sm"}
                         variant="outline"
                         onClick={() => handleViewRecord(record)}
+                        className="min-w-[120px]"
                       >
-                        <Eye className="h-4 w-4 mr-1" />
+                        <Eye className="h-4 w-4 mr-2" />
                         Ver Prontuário
                       </Button>
                       {record.status === 'draft' && (
                         <Button 
-                          size="sm" 
+                          size={isMobile ? "default" : "sm"}
                           variant="default"
                           onClick={() => handlePublishDraft(record)}
+                          className="min-w-[100px]"
                         >
-                          <CheckCircle className="h-4 w-4 mr-1" />
+                          <CheckCircle className="h-4 w-4 mr-2" />
                           Publicar
                         </Button>
                       )}
                     </div>
                   </div>
                   
-                  <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
+                  <div className="mt-4 pt-4 border-t border-muted/50 text-xs text-muted-foreground">
                     <div className="flex items-center justify-between">
-                      <span>Criado em: {formatDateOnly(record.created_at)}</span>
-                      <span>ID: {record.appointment_id}</span>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>Criado em: {formatDateOnly(record.created_at)}</span>
+                      </div>
+                      <span className="font-mono">ID: {record.appointment_id}</span>
                     </div>
                   </div>
                 </div>
