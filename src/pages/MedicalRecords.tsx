@@ -555,7 +555,7 @@ const MedicalRecords = () => {
                   key={record.id}
                   className="border rounded-lg p-6 hover:shadow-md transition-all duration-200 bg-card"
                 >
-                  <div className={`${isMobile ? 'space-y-3' : 'flex items-start justify-between'}`}>
+                  <div className={`${isMobile ? 'space-y-4' : 'flex items-start justify-between gap-6'}`}>
                     <div className={`${isMobile ? 'space-y-3' : 'flex items-start space-x-4 flex-1'}`}>
                       <Avatar className="h-14 w-14 flex-shrink-0 ring-2 ring-primary/10">
                         <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
@@ -564,7 +564,7 @@ const MedicalRecords = () => {
                       </Avatar>
                       
                       <div className="flex-1 space-y-2">
-                        <div className="flex items-start justify-between">
+                        <div className={`${isMobile ? 'space-y-3' : 'flex items-start justify-between'}`}>
                           <div>
                             <h3 className="font-semibold text-lg text-foreground">{record.patient_name}</h3>
                             <div className="flex items-center gap-2 mt-1">
@@ -574,7 +574,7 @@ const MedicalRecords = () => {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className={`flex items-center gap-2 ${isMobile ? '' : 'ml-4'}`}>
                             <Badge 
                               variant="secondary" 
                               className={`${getStatusColor(record.status)} text-white border-0`}
