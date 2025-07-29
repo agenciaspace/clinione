@@ -66,14 +66,14 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
   });
   const [isSuccess, setIsSuccess] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<string | null>('all');
   const isMobile = useIsMobile();
   
   // Passar o selectedDoctor para o hook useAvailableSlots
   const { slots, isLoading, error, refetch } = useAvailableSlots(
     clinicId, 
     selectedDate, 
-    selectedDoctor || undefined
+    selectedDoctor === 'all' ? undefined : selectedDoctor || undefined
   );
 
   useEffect(() => {
@@ -231,7 +231,7 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
       email: '',
       notes: ''
     });
-    setSelectedDoctor(null);
+    setSelectedDoctor('all');
   };
 
   const handleClose = () => {
