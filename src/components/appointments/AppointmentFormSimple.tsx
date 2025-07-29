@@ -206,35 +206,25 @@ export function AppointmentFormSimple({
             {/* Patient Selection */}
             <div className="space-y-3">
               <label className="text-sm font-medium">Selecionar Paciente</label>
-              <Select
+              <select
                 value={selectedPatientId}
-                onValueChange={handlePatientSelection}
+                onChange={(e) => handlePatientSelection(e.target.value)}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Selecione um paciente ou crie um novo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="new">+ Novo Paciente</SelectItem>
-                  {patients && patients.length > 0 ? (
-                    patients.map((patient) => {
-                      console.log('Rendering patient in select:', patient);
-                      if (!patient.id || !patient.name) {
-                        console.error('Invalid patient data:', patient);
-                        return null;
-                      }
-                      return (
-                        <SelectItem key={patient.id} value={patient.id}>
-                          {patient.name} {patient.cpf ? `- ${patient.cpf}` : ''}
-                        </SelectItem>
-                      );
-                    })
-                  ) : (
-                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                      Carregando pacientes...
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
+                <option value="new">+ Novo Paciente</option>
+                {patients && patients.length > 0 && patients.map((patient) => {
+                  console.log('Rendering patient option:', patient);
+                  if (!patient.id || !patient.name) {
+                    console.error('Invalid patient data:', patient);
+                    return null;
+                  }
+                  return (
+                    <option key={patient.id} value={patient.id}>
+                      {patient.name} {patient.cpf ? `- ${patient.cpf}` : ''}
+                    </option>
+                  );
+                })}
+              </select>
               {/* Debug info */}
               <div className="text-xs text-muted-foreground">
                 Total de pacientes: {patients.length} | Selecionado: {selectedPatientId}
