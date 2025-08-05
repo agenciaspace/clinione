@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+<<<<<<< Updated upstream
       "Bash(npm run dev:*)",
       "Bash(npm install)",
       "Bash(rm:*)",
@@ -9,6 +10,10 @@
       "Bash(npm cache clean:*)",
       "Bash(npm install:*)",
       "Bash(sudo rm:*)"
+=======
+      "Bash(node:*)",
+      "Bash(npm --version)"
+>>>>>>> Stashed changes
     ],
     "deny": []
   }
