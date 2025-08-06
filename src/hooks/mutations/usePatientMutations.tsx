@@ -27,8 +27,6 @@ export const usePatientMutations = (clinicId?: string) => {
         .single();
       
       if (error) {
-        console.error('Erro detalhado ao criar paciente:', error);
-        
         // Handle specific error types
         if (error.code === '23505') {
           if (error.message.includes('unique_cpf_per_clinic')) {
@@ -71,9 +69,15 @@ export const usePatientMutations = (clinicId?: string) => {
       queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
       toast.success('Paciente cadastrado com sucesso');
     },
-    onError: (error) => {
-      console.error('Erro ao cadastrar paciente:', error);
-      toast.error('Erro ao cadastrar paciente');
+    onError: (error: any) => {
+      // Mensagem de erro mais amigável
+      const errorMessage = error.message || 'Erro desconhecido';
+      
+      if (errorMessage.includes('CPF já está cadastrado')) {
+        toast.error('Este CPF já está cadastrado nesta clínica. Por favor, verifique se o paciente já existe ou use outro CPF.');
+      } else {
+        toast.error(`Erro ao cadastrar paciente: ${errorMessage}`);
+      }
     }
   });
 

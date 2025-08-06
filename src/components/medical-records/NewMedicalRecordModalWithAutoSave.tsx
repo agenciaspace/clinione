@@ -141,8 +141,14 @@ export const NewMedicalRecordModalWithAutoSave: React.FC<NewMedicalRecordModalPr
   };
 
   const onSubmit = async (data: MedicalRecordFormData) => {
+    // Prevent any default behavior
     if (!recordContent.trim()) {
       toast.error('Por favor, adicione o conteúdo do prontuário');
+      return;
+    }
+
+    // Prevent multiple submissions
+    if (isSubmitting) {
       return;
     }
 
@@ -217,7 +223,13 @@ export const NewMedicalRecordModalWithAutoSave: React.FC<NewMedicalRecordModalPr
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              form.handleSubmit(onSubmit)(e);
+            }} 
+            className="space-y-6">
             {/* Patient and Doctor Selection */}
             <div className={`${isMobile ? 'space-y-4' : 'grid grid-cols-2 gap-4'}`}>
               <FormField
@@ -429,7 +441,9 @@ export const NewMedicalRecordModalWithAutoSave: React.FC<NewMedicalRecordModalPr
                 type="button" 
                 variant="secondary"
                 disabled={isSubmitting || !recordContent.trim()}
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setSaveAsDraft(true);
                   form.handleSubmit(onSubmit)();
                 }}
@@ -438,10 +452,15 @@ export const NewMedicalRecordModalWithAutoSave: React.FC<NewMedicalRecordModalPr
                 {isSubmitting && saveAsDraft ? 'Salvando...' : 'Salvar Rascunho'}
               </Button>
               <Button 
-                type="submit" 
+                type="button" 
                 disabled={isSubmitting || !recordContent.trim()}
                 className="min-w-[120px]"
-                onClick={() => setSaveAsDraft(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSaveAsDraft(false);
+                  form.handleSubmit(onSubmit)();
+                }}
               >
                 {isSubmitting && !saveAsDraft ? 'Publicando...' : 'Publicar'}
               </Button>

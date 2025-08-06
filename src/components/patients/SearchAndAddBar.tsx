@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Search, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +15,9 @@ import {
 import { Label } from '@/components/ui/label';
 import { PatientFormData } from '@/types';
 import { maskCPF, validateCPF } from '@/utils/cpf-validation';
+import { usePatients } from '@/hooks/usePatients';
+import { useClinic } from '@/contexts/ClinicContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface SearchAndAddBarProps {
   searchTerm: string;
@@ -38,6 +41,22 @@ export const SearchAndAddBar = ({
   isCreating = false,
 }: SearchAndAddBarProps) => {
   const [cpfError, setCpfError] = useState<string | null>(null);
+  const [cpfDuplicate, setCpfDuplicate] = useState<boolean>(false);
+  const { activeClinic } = useClinic();
+  const { patients } = usePatients(activeClinic?.id);
+
+  // Check for duplicate CPF whenever CPF changes
+  useEffect(() => {
+    if (patientForm.cpf && patientForm.cpf.length >= 14) { // CPF with mask has 14 chars
+      const cleanCpf = patientForm.cpf.replace(/\D/g, '');
+      const isDuplicate = patients.some(patient => 
+        patient.cpf?.replace(/\D/g, '') === cleanCpf
+      );
+      setCpfDuplicate(isDuplicate);
+    } else {
+      setCpfDuplicate(false);
+    }
+  }, [patientForm.cpf, patients]);
 
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
@@ -65,6 +84,12 @@ export const SearchAndAddBar = ({
     const cpfValidationError = validateCPF(patientForm.cpf);
     if (cpfValidationError) {
       setCpfError(cpfValidationError);
+      return;
+    }
+    
+    // Check for duplicate CPF
+    if (cpfDuplicate) {
+      setCpfError('Este CPF já está cadastrado nesta clínica');
       return;
     }
     
@@ -155,16 +180,25 @@ export const SearchAndAddBar = ({
                   onChange={handleCpfChange}
                   placeholder="000.000.000-00" 
                   required 
-                  className={cpfError ? 'border-red-500' : ''}
+                  className={cpfError || cpfDuplicate ? 'border-red-500' : ''}
                 />
                 {cpfError && <span className="text-sm text-red-500">{cpfError}</span>}
+                {cpfDuplicate && !cpfError && (
+                  <Alert className="mt-2 border-orange-200 bg-orange-50">
+                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-800">
+                      Este CPF já está cadastrado nesta clínica. Se deseja atualizar os dados do paciente, 
+                      feche este formulário e edite o paciente existente.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsAddPatientOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isCreating}>
+              <Button type="submit" disabled={isCreating || cpfDuplicate || !!cpfError}>
                 {isCreating ? 'Cadastrando...' : 'Cadastrar Paciente'}
               </Button>
             </DialogFooter>
