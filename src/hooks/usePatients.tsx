@@ -43,9 +43,9 @@ export const usePatients = (clinicId?: string) => {
       }));
     },
     enabled: !!clinicId,
-    refetchOnWindowFocus: true, // Allow refetching when window gets focus
-    staleTime: 0, // Treat data as immediately stale to ensure fresh data
-    gcTime: 1000 * 60 * 5, // Cache for 5 minutes (was cacheTime in v4)
+    refetchOnWindowFocus: false, // Desabilitar refetch ao focar janela
+    staleTime: 1000 * 60 * 5, // Dados válidos por 5 minutos
+    gcTime: 1000 * 60 * 30, // Cache por 30 minutos
   });
 
   return {

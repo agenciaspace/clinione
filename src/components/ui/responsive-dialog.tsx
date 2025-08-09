@@ -30,12 +30,14 @@ ResponsiveDialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 interface ResponsiveDialogContentProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+  onPointerDownOutside?: (event: CustomEvent<{ originalEvent: PointerEvent }>) => void;
+  onEscapeKeyDown?: (event: KeyboardEvent) => void;
 }
 
 const ResponsiveDialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   ResponsiveDialogContentProps
->(({ className, children, size = 'md', ...props }, ref) => {
+>(({ className, children, size = 'md', onPointerDownOutside, onEscapeKeyDown, ...props }, ref) => {
   const isMobile = useIsMobile()
   
   const getSizeClasses = () => {
@@ -70,6 +72,22 @@ const ResponsiveDialogContent = React.forwardRef<
           getSizeClasses(),
           className
         )}
+        onPointerDownOutside={(event) => {
+          // Prevenir fechamento acidental quando usuário clica fora
+          if (onPointerDownOutside) {
+            onPointerDownOutside(event);
+          } else {
+            // Sempre prevenir fechamento ao clicar fora para evitar perda de dados
+            event.preventDefault();
+          }
+        }}
+        onEscapeKeyDown={(event) => {
+          // Permitir fechamento com ESC mas confirmar se há dados não salvos
+          if (onEscapeKeyDown) {
+            onEscapeKeyDown(event);
+          }
+          // Permite comportamento padrão do ESC
+        }}
         {...props}
       >
         <div className={cn("flex flex-col", isMobile ? "h-full" : "max-h-[80vh]")}>

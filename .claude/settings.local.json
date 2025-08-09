@@ -46,7 +46,10 @@
       "Bash(git fetch:*)",
       "Bash(git merge:*)",
       "Bash(GIT_TRACE=1 GIT_CURL_VERBOSE=1 git push origin clarissa)",
-      "Bash(git remote:*)"
+      "Bash(git remote:*)",
+      "Bash(git branch:*)",
+      "Bash(git config:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   }

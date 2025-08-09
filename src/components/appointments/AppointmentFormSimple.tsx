@@ -83,6 +83,11 @@ export function AppointmentFormSimple({
   const isMobile = useIsMobile();
   const [selectedPatientId, setSelectedPatientId] = useState<string>(preFilledPatient ? '' : 'new');
   const [isNewPatient, setIsNewPatient] = useState(!preFilledPatient);
+  const [hasRestoredData, setHasRestoredData] = useState(false);
+  
+  // Chaves para persistência no localStorage
+  const FORM_STORAGE_KEY = 'appointmentForm_draft';
+  const LAST_OPEN_KEY = 'appointmentForm_lastOpen';
   
   console.log('AppointmentFormSimple: Rendering with isOpen:', isOpen);
   console.log('AppointmentFormSimple: preFilledPatient:', preFilledPatient);
@@ -91,6 +96,48 @@ export function AppointmentFormSimple({
   console.log('AppointmentFormSimple: patients data:', patients);
   console.log('AppointmentFormSimple: selectedPatientId:', selectedPatientId);
   
+  // Função para salvar dados no localStorage
+  const saveFormData = (formData: any) => {
+    try {
+      const dataToSave = {
+        ...formData,
+        selectedPatientId,
+        isNewPatient,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(dataToSave));
+    } catch (error) {
+      console.warn('Erro ao salvar dados do formulário:', error);
+    }
+  };
+
+  // Função para restaurar dados do localStorage
+  const loadFormData = () => {
+    try {
+      const saved = localStorage.getItem(FORM_STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        // Verificar se os dados não são muito antigos (24 horas)
+        if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+          return data;
+        }
+      }
+    } catch (error) {
+      console.warn('Erro ao carregar dados do formulário:', error);
+    }
+    return null;
+  };
+
+  // Função para limpar dados salvos
+  const clearFormData = () => {
+    try {
+      localStorage.removeItem(FORM_STORAGE_KEY);
+      localStorage.removeItem(LAST_OPEN_KEY);
+    } catch (error) {
+      console.warn('Erro ao limpar dados do formulário:', error);
+    }
+  };
+
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
@@ -105,6 +152,39 @@ export function AppointmentFormSimple({
       notes: '',
     },
   });
+
+  // Restaurar dados salvos quando modal abrir
+  useEffect(() => {
+    if (isOpen) {
+      console.log('Modal aberto, verificando dados salvos...');
+      localStorage.setItem(LAST_OPEN_KEY, Date.now().toString());
+      
+      const savedData = loadFormData();
+      if (savedData && !preFilledPatient) {
+        console.log('Restaurando dados salvos:', savedData);
+        setHasRestoredData(true);
+        
+        // Restaurar estado do paciente
+        setSelectedPatientId(savedData.selectedPatientId || 'new');
+        setIsNewPatient(savedData.isNewPatient !== false);
+        
+        // Restaurar dados do formulário
+        form.reset({
+          patient_name: savedData.patient_name || '',
+          patient_phone: savedData.patient_phone || '',
+          patient_email: savedData.patient_email || '',
+          patient_cpf: savedData.patient_cpf || '',
+          doctor_id: savedData.doctor_id || '',
+          date: savedData.date ? new Date(savedData.date) : selectedDate || new Date(),
+          time: savedData.time || '09:00',
+          type: savedData.type || 'in-person',
+          notes: savedData.notes || '',
+        });
+      } else {
+        setHasRestoredData(false);
+      }
+    }
+  }, [isOpen, preFilledPatient, selectedDate, form]);
 
   // Reset form when preFilledPatient changes
   useEffect(() => {
@@ -123,6 +203,31 @@ export function AppointmentFormSimple({
       });
     }
   }, [preFilledPatient, selectedDate, form]);
+
+  // Salvar dados no localStorage quando houver mudanças no formulário
+  useEffect(() => {
+    if (isOpen) {
+      const subscription = form.watch((value) => {
+        saveFormData(value);
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, [isOpen, form, selectedPatientId, isNewPatient]);
+
+  // Salvar ao sair da aba (visibilitychange)
+  useEffect(() => {
+    if (isOpen) {
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          const currentValues = form.getValues();
+          saveFormData(currentValues);
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
+  }, [isOpen, form, selectedPatientId, isNewPatient]);
 
   // Handle patient selection
   const handlePatientSelection = (patientId: string) => {
@@ -184,14 +289,31 @@ export function AppointmentFormSimple({
     };
     
     console.log('AppointmentFormSimple: Final data with doctor name:', finalData);
+    
+    // Limpar dados salvos após sucesso
+    clearFormData();
+    
     onSubmit(finalData);
     form.reset();
   }
 
+  // Handler para fechamento do modal
+  const handleClose = () => {
+    // Não limpar dados salvos ao fechar - apenas quando cancelar explicitamente ou submeter
+    onClose();
+  };
+
+  // Handler para cancelar - limpa os dados salvos
+  const handleCancel = () => {
+    clearFormData();
+    form.reset();
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={open => {
       console.log('AppointmentFormSimple: Dialog onOpenChange called with:', open);
-      if (!open) onClose();
+      if (!open) handleClose();
     }}>
       <DialogContent size="lg">
         <DialogHeader className="pb-4">
@@ -200,6 +322,16 @@ export function AppointmentFormSimple({
             Preencha os dados para criar um novo agendamento
           </DialogDescription>
         </DialogHeader>
+
+        {/* Indicador de dados restaurados */}
+        {hasRestoredData && (
+          <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md mb-4">
+            <CalendarIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <span className="text-sm text-blue-700 dark:text-blue-300">
+              📋 Dados anteriores restaurados automaticamente. Continue preenchendo de onde parou!
+            </span>
+          </div>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -480,7 +612,7 @@ export function AppointmentFormSimple({
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={onClose}
+                onClick={handleCancel}
                 className={`${isMobile ? 'w-full order-2' : 'w-auto'}`}
               >
                 Cancelar

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { X, RefreshCw } from 'lucide-react';
+import { X, RefreshCw, CheckCircle } from 'lucide-react';
+import { toast } from '@/components/ui/sonner';
 
 export const PWAUpdatePrompt = () => {
   const [showPrompt, setShowPrompt] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [updateApplied, setUpdateApplied] = useState(false);
 
   useEffect(() => {
     // Check if user has disabled PWA update prompts
@@ -63,14 +65,17 @@ export const PWAUpdatePrompt = () => {
       navigator.serviceWorker.ready.then((registration) => {
         if (registration.waiting) {
           registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          setUpdateApplied(true);
+          
+          // Mostrar toast de sucesso
+          toast.success('Atualização aplicada com sucesso!', {
+            description: 'A nova versão será carregada na próxima vez que você abrir o aplicativo.',
+            duration: 5000,
+          });
         }
       });
     }
     setShowPrompt(false);
-    // Recarregar a página após um pequeno delay
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
   };
 
   // Não mostrar se não há atualização ou se foi rejeitado recentemente
@@ -88,17 +93,23 @@ export const PWAUpdatePrompt = () => {
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium">Atualização</p>
-              <p className="text-xs text-muted-foreground">Nova versão disponível</p>
+              <p className="text-xs text-muted-foreground">
+                {updateApplied ? 'Atualização aplicada' : 'Nova versão disponível'}
+              </p>
             </div>
             <div className="flex-shrink-0 flex items-center space-x-1">
-              <Button
-                size="sm"
-                onClick={handleUpdate}
-                className="h-7 px-2 text-xs"
-              >
-                <RefreshCw className="h-3 w-3 mr-1" />
-                Atualizar
-              </Button>
+              {!updateApplied ? (
+                <Button
+                  size="sm"
+                  onClick={handleUpdate}
+                  className="h-7 px-2 text-xs"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Atualizar
+                </Button>
+              ) : (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              )}
               <Button
                 size="sm"
                 variant="ghost"

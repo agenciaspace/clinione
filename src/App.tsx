@@ -54,11 +54,13 @@ const queryClient = new QueryClient({
         return failureCount < 3;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+      staleTime: 1000 * 60 * 30, // 30 minutes - aumentado para evitar refetches desnecessários
+      gcTime: 1000 * 60 * 60, // 60 minutes - cache por mais tempo
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
-      refetchOnMount: false
+      refetchOnMount: false,
+      refetchIntervalInBackground: false, // Não refetch em background
+      refetchInterval: false, // Desabilitar refetch automático por intervalo
     },
   },
 });
