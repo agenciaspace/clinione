@@ -30,17 +30,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar as CalendarIcon, Clock, UserPlus, User, Stethoscope } from 'lucide-react';
 import { Doctor, Patient } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { cpfValidationRules, maskCPF } from '@/utils/cpf-validation';
+import { cpfValidationRules, maskCPF, validateCPF } from '@/utils/cpf-validation';
 
 const appointmentSchema = z.object({
   patient_name: z.string().min(3, { message: 'Nome do paciente é obrigatório' }),
   patient_phone: z.string().optional(),
   patient_email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
   patient_cpf: z.string().min(1, { message: 'CPF é obrigatório' }).refine(
-    (cpf) => {
-      const { validateCPF } = require('@/utils/cpf-validation');
-      return validateCPF(cpf) === null;
-    },
+    (cpf) => validateCPF(cpf) === null,
     { message: 'CPF inválido' }
   ),
   doctor_id: z.string().min(1, { message: 'Selecione um profissional' }),
