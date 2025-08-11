@@ -37,7 +37,10 @@ const appointmentSchema = z.object({
   patient_phone: z.string().optional(),
   patient_email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
   patient_cpf: z.string().min(1, { message: 'CPF é obrigatório' }).refine(
-    (cpf) => validateCPF(cpf) === null,
+    (cpf) => {
+      // Validação direta sem require - corrigido para build 7CTD6TwpB
+      return validateCPF(cpf) === null;
+    },
     { message: 'CPF inválido' }
   ),
   doctor_id: z.string().min(1, { message: 'Selecione um profissional' }),
