@@ -166,20 +166,27 @@ const Calendar = () => {
       }
     }
     
-    await createAppointment({
-      patient_name: formData.patient_name,
-      patient_phone: formData.patient_phone,
-      patient_email: formData.patient_email,
-      patient_cpf: formData.patient_cpf,
-      doctor_id: formData.doctor_id,
-      doctor_name: doctorName,
-      date: formData.date,
-      time: formData.time,
-      type: formData.type,
-      notes: formData.notes
-    });
-    
-    setIsFormOpen(false);
+    try {
+      await createAppointment({
+        patient_name: formData.patient_name,
+        patient_phone: formData.patient_phone,
+        patient_email: formData.patient_email,
+        patient_cpf: formData.patient_cpf,
+        doctor_id: formData.doctor_id,
+        doctor_name: doctorName,
+        date: formData.date,
+        time: formData.time,
+        type: formData.type,
+        notes: formData.notes
+      });
+      
+      // Só fechar o modal após sucesso da criação
+      setIsFormOpen(false);
+      toast.success('Agendamento criado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar agendamento:', error);
+      toast.error('Erro ao criar agendamento. Tente novamente.');
+    }
   };
 
   const handleDeleteAppointment = (id: string) => {

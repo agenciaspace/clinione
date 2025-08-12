@@ -290,11 +290,15 @@ export function AppointmentFormSimple({
     
     console.log('AppointmentFormSimple: Final data with doctor name:', finalData);
     
-    // Limpar dados salvos após sucesso
-    clearFormData();
-    
     onSubmit(finalData);
+    
+    // Limpar dados salvos e resetar formulário apenas após o submit
+    clearFormData();
     form.reset();
+    
+    // Reset patient selection state for next appointment
+    setSelectedPatientId('new');
+    setIsNewPatient(true);
   }
 
   // Handler para fechamento do modal

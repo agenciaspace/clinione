@@ -53,7 +53,9 @@
       "Bash(GIT_SSH_COMMAND=\"ssh -o BatchMode=yes\" git push origin-ssh clarissa)",
       "Bash(./fix-git-push.sh)",
       "WebFetch(domain:clinione-gq34jm5vl-kofe.vercel.app)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(cat:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }
