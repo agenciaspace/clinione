@@ -9,12 +9,25 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    hmr: mode === 'development' ? {
+      overlay: false // Disable error overlay that might cause reloads
+    } : true,
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        // Force new file names to break cache
+        entryFileNames: `assets/[name]-FIXED-[hash].js`,
+        chunkFileNames: `assets/[name]-FIXED-[hash].js`,
+        assetFileNames: `assets/[name]-FIXED-[hash].[ext]`,
+      },
+    },
   },
   plugins: [
     react(),
     mode === 'development' &&
     componentTagger(),
-    VitePWA({
+    false && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'lovable-uploads/*.png'],
       manifest: {
@@ -55,6 +68,21 @@ export default defineConfig(({ mode }) => ({
         },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        navigateFallback: '/index.html',
+        navigateFallbackAllowlist: [
+          /^\/dashboard/, 
+          /^\/auth/, 
+          /^\/$/,
+          /^\/redefinir-senha/,
+          /^\/reset-pwd/,
+          /^\/reset-password/,
+          /^\/login/,
+          /^\/register/,
+          /^\/forgot-password/,
+          /^\/email-confirmation/,
+          /^\/landing/,
+          /^\/c\//
+        ],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -89,13 +117,6 @@ export default defineConfig(({ mode }) => ({
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // 5 minutes
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              },
               networkTimeoutSeconds: 10
             }
           },
@@ -116,8 +137,7 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       devOptions: {
-        enabled: true,
-        navigateFallbackAllowlist: [/^\/$/],
+        enabled: false, // Disable service worker in development
         type: 'module'
       }
     })

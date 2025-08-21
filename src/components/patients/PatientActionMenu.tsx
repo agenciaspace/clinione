@@ -11,6 +11,7 @@ interface PatientActionMenuProps {
   onToggleStatus: (patient: Patient) => void;
   onDelete: (id: string) => void;
   onOpenRecord: (patient: Patient) => void;
+  onScheduleAppointment: (patient: Patient) => void;
 }
 
 export const PatientActionMenu = ({
@@ -19,6 +20,7 @@ export const PatientActionMenu = ({
   onToggleStatus,
   onDelete,
   onOpenRecord,
+  onScheduleAppointment,
 }: PatientActionMenuProps) => {
   return (
     <DropdownMenu>
@@ -29,7 +31,13 @@ export const PatientActionMenu = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem className="cursor-pointer">
+        <DropdownMenuItem 
+          className="cursor-pointer"
+          onClick={() => {
+            console.log('PatientActionMenu: Clicou em Agendar consulta para:', patient.name);
+            onScheduleAppointment(patient);
+          }}
+        >
           <Calendar className="mr-2 h-4 w-4" />
           <span>Agendar consulta</span>
         </DropdownMenuItem>

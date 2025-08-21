@@ -13,9 +13,10 @@ import { useClinicPublicData } from '@/hooks/useClinicPublicData';
 import { webhookEvents } from '@/utils/webhook-service';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { getClinicSlugFromSubdomain, isSubdomain } from '@/utils/subdomain';
 
 const PublicClinicPage: React.FC = () => {
-  const { slug, clinicId } = useParams<{ slug: string; clinicId: string }>();
+  const { slug: urlSlug, clinicId } = useParams<{ slug: string; clinicId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -24,10 +25,13 @@ const PublicClinicPage: React.FC = () => {
   const [doctors, setDoctors] = useState<any[]>([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   
+  // Determine the slug: from subdomain if available, otherwise from URL params
+  const slug = isSubdomain() ? getClinicSlugFromSubdomain() : urlSlug;
+  
   useEffect(() => {
     const isPreviewMode = location.pathname.includes('/dashboard/public-page');
     setIsPreview(isPreviewMode);
-    console.log("Modo de preview:", isPreviewMode, "Slug:", slug);
+    console.log("Modo de preview:", isPreviewMode, "Slug:", slug, "Is subdomain:", isSubdomain());
   }, [location.pathname, slug]);
 
   const { 

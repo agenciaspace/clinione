@@ -66,14 +66,14 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
   });
   const [isSuccess, setIsSuccess] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<string | null>('all');
   const isMobile = useIsMobile();
   
   // Passar o selectedDoctor para o hook useAvailableSlots
   const { slots, isLoading, error, refetch } = useAvailableSlots(
     clinicId, 
     selectedDate, 
-    selectedDoctor || undefined
+    selectedDoctor === 'all' ? undefined : selectedDoctor || undefined
   );
 
   useEffect(() => {
@@ -231,7 +231,7 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
       email: '',
       notes: ''
     });
-    setSelectedDoctor(null);
+    setSelectedDoctor('all');
   };
 
   const handleClose = () => {
@@ -468,12 +468,12 @@ export const AppointmentScheduler = ({ clinicId, trigger }: AppointmentScheduler
             {doctors.length > 0 && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Profissional (opcional)</Label>
-                <Select value={selectedDoctor || ''} onValueChange={(value) => setSelectedDoctor(value || null)}>
+                <Select value={selectedDoctor || 'all'} onValueChange={(value) => setSelectedDoctor(value === 'all' ? null : value)}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Todos os profissionais" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os profissionais</SelectItem>
+                    <SelectItem value="all">Todos os profissionais</SelectItem>
                     {doctors.map(doctor => (
                       <SelectItem key={doctor.id} value={doctor.id}>
                         {doctor.name}

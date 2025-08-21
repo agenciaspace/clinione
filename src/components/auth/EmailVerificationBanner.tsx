@@ -45,8 +45,18 @@ export const EmailVerificationBanner: React.FC = () => {
       const { data, error } = await supabase.auth.getUser();
       if (error) throw error;
       
-      // Force refresh of user data
-      window.location.reload();
+      // Update user state without reload
+      await supabase.auth.refreshSession();
+      
+      // Check if email is verified
+      if (data.user?.email_confirmed_at) {
+        toast.success('Email confirmado com sucesso!');
+        setIsDismissed(true);
+      } else {
+        toast.info('Email ainda não confirmado', {
+          description: 'Verifique sua caixa de entrada.'
+        });
+      }
     } catch (error) {
       console.error('Error refreshing user:', error);
       toast.error('Erro ao verificar confirmação');

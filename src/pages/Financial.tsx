@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,9 +44,21 @@ import { webhookEvents } from '@/utils/webhook-service';
 
 const Financial = () => {
   const { activeClinic } = useClinic();
-  const [activeTab, setActiveTab] = useState('overview');
+  const navigate = useNavigate();
+  const location = useLocation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Determinar aba ativa baseada na rota
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path.includes('/transactions')) return 'transactions';
+    if (path.includes('/forecasts')) return 'forecasts';
+    if (path.includes('/reports')) return 'reports';
+    return 'overview';
+  };
+  
+  const activeTab = getActiveTab();
   
   // Form states for new transaction
   const [newTransactionDescription, setNewTransactionDescription] = useState('');
@@ -166,7 +179,15 @@ const Financial = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} className="space-y-6" onValueChange={(value) => {
+        const routes = {
+          'overview': '/dashboard/financial',
+          'transactions': '/dashboard/financial/transactions',
+          'forecasts': '/dashboard/financial/forecasts',
+          'reports': '/dashboard/financial/reports'
+        };
+        navigate(routes[value as keyof typeof routes]);
+      }}>
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="transactions">Transações</TabsTrigger>
@@ -267,7 +288,7 @@ const Financial = () => {
                             variant="outline" 
                             size="sm" 
                             className="mt-4" 
-                            onClick={() => setActiveTab('transactions')}
+                            onClick={() => navigate('/dashboard/financial/transactions')}
                           >
                             <Plus className="h-4 w-4 mr-2" /> Adicionar transação
                           </Button>
@@ -285,7 +306,7 @@ const Financial = () => {
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8" 
-                        onClick={() => setActiveTab('transactions')}
+                        onClick={() => navigate('/dashboard/financial/transactions')}
                       >
                         <FileText className="h-4 w-4" />
                       </Button>
@@ -330,7 +351,7 @@ const Financial = () => {
                           <Button 
                             variant="ghost" 
                             className="w-full" 
-                            onClick={() => setActiveTab('transactions')}
+                            onClick={() => navigate('/dashboard/financial/transactions')}
                           >
                             Ver todas
                           </Button>
@@ -343,7 +364,7 @@ const Financial = () => {
                           variant="outline" 
                           size="sm" 
                           className="mt-4" 
-                          onClick={() => setActiveTab('transactions')}
+                          onClick={() => navigate('/dashboard/financial/transactions')}
                         >
                           <Plus className="h-4 w-4 mr-2" /> Adicionar transação
                         </Button>
@@ -504,41 +525,6 @@ const Financial = () => {
               <FinancialForecastDashboard />
             </TabsContent>
 
-            <TabsContent value="reports" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Relatórios financeiros</CardTitle>
-                  <CardDescription>Analise o desempenho financeiro da sua clínica</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center justify-center">
-                      <BarChart className="h-10 w-10 mb-2" />
-                      <span className="font-medium">Relatório de receitas</span>
-                      <span className="text-sm text-gray-500">Análise detalhada de receitas</span>
-                    </Button>
-                    
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center justify-center">
-                      <FileText className="h-10 w-10 mb-2" />
-                      <span className="font-medium">Demonstrativo financeiro</span>
-                      <span className="text-sm text-gray-500">Resumo financeiro completo</span>
-                    </Button>
-                    
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center justify-center">
-                      <BanknoteIcon className="h-10 w-10 mb-2" />
-                      <span className="font-medium">Fluxo de caixa</span>
-                      <span className="text-sm text-gray-500">Entradas e saídas de recursos</span>
-                    </Button>
-                    
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center justify-center">
-                      <DollarSign className="h-10 w-10 mb-2" />
-                      <span className="font-medium">Inadimplência</span>
-                      <span className="text-sm text-gray-500">Controle de contas a receber</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
           </>
         ) : (
           <Card className="mt-4">

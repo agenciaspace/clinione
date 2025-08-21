@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Supabase Produção</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Debug Supabase Produção</h1>
+    <div id="results"></div>
+
+    <script>
+        const supabaseUrl = 'https://tfkchwuphjaauyfqptbk.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2Nod3VwaGphYXV5ZnFwdGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ3MzQyMDMsImV4cCI6MjA2MDMxMDIwM30.5hwAMrI2l_1L-DNvgCP3sYyzvxfajzerORY8AnUIZac';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        const results = document.getElementById('results');
+        
+        async function testConnection() {
+            results.innerHTML = '<p>Testando conexão...</p>';
+            
+            try {
+                // Teste 1: Verificar se consegue acessar o auth
+                const { data: session, error: sessionError } = await supabase.auth.getSession();
+                
+                results.innerHTML += `<h3>Teste 1 - Sessão Atual:</h3>`;
+                results.innerHTML += `<pre>${JSON.stringify({ session: !!session?.session, error: sessionError }, null, 2)}</pre>`;
+                
+                // Teste 2: Tentar fazer uma query simples
+                const { data: clinics, error: clinicsError } = await supabase
+                    .from('clinics')
+                    .select('count')
+                    .limit(1);
+                
+                results.innerHTML += `<h3>Teste 2 - Query Clínicas:</h3>`;
+                results.innerHTML += `<pre>${JSON.stringify({ success: !clinicsError, error: clinicsError?.message }, null, 2)}</pre>`;
+                
+                // Teste 3: Verificar usuários (sem dados sensíveis)
+                const { data: users, error: usersError } = await supabase
+                    .from('user_roles')
+                    .select('count')
+                    .limit(1);
+                
+                results.innerHTML += `<h3>Teste 3 - Query User Roles:</h3>`;
+                results.innerHTML += `<pre>${JSON.stringify({ success: !usersError, error: usersError?.message }, null, 2)}</pre>`;
+                
+                // Teste 4: Tentar fazer login com credencial conhecida
+                results.innerHTML += `<h3>Teste 4 - Tentativa de Login:</h3>`;
+                results.innerHTML += `<p>Digite suas credenciais para testar:</p>`;
+                
+                const email = prompt('Email de teste:');
+                const password = prompt('Senha de teste:');
+                
+                if (email && password) {
+                    const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+                    
+                    results.innerHTML += `<pre>${JSON.stringify({ 
+                        success: !loginError, 
+                        error: loginError?.message,
+                        user: loginData?.user?.email || null
+                    }, null, 2)}</pre>`;
+                    
+                    // Logout imediatamente se o login funcionou
+                    if (!loginError) {
+                        await supabase.auth.signOut();
+                    }
+                }
+                
+            } catch (error) {
+                results.innerHTML += `<h3>Erro Geral:</h3>`;
+                results.innerHTML += `<pre>${JSON.stringify({ error: error.message }, null, 2)}</pre>`;
+            }
+        }
+        
+        // Executar testes automaticamente
+        testConnection();
+    </script>
+</body>
+</html>

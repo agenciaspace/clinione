@@ -121,35 +121,67 @@ export const useFinancialQueries = (clinicId: string | undefined) => {
     queryFn: async () => {
       if (!clinicId) return null;
       
-      const { data, error } = await supabase
-        .from('financial_settings')
-        .select('*')
-        .eq('clinic_id', clinicId)
-        .single();
-        
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Não encontrou configurações, criar padrão
-          const { data: newSettings, error: insertError } = await supabase
-            .from('financial_settings')
-            .insert({
-              clinic_id: clinicId,
-              cancellation_fee_percentage: 0,
-              cancellation_tolerance_hours: 24,
-              default_insurance_payment_term: 30
-            })
-            .select()
-            .single();
-            
-          if (insertError) throw insertError;
-          return newSettings as FinancialSettings;
+      try {
+        const { data, error } = await supabase
+          .from('financial_settings')
+          .select('*')
+          .eq('clinic_id', clinicId)
+          .single();
+          
+        if (error) {
+          if (error.code === 'PGRST116') {
+            // Não encontrou configurações, criar padrão
+            const { data: newSettings, error: insertError } = await supabase
+              .from('financial_settings')
+              .insert({
+                clinic_id: clinicId,
+                cancellation_fee_percentage: 0,
+                cancellation_tolerance_hours: 24,
+                default_insurance_payment_term: 30
+              })
+              .select()
+              .single();
+              
+            if (insertError) {
+              console.warn('Error creating default financial settings:', insertError);
+              // Return default settings if creation fails
+              return {
+                id: 'default',
+                clinic_id: clinicId,
+                cancellation_fee_percentage: 0,
+                cancellation_tolerance_hours: 24,
+                default_insurance_payment_term: 30
+              } as FinancialSettings;
+            }
+            return newSettings as FinancialSettings;
+          }
+          
+          // Log error but don't throw - return default settings
+          console.warn('Error fetching financial settings:', error);
+          return {
+            id: 'default',
+            clinic_id: clinicId,
+            cancellation_fee_percentage: 0,
+            cancellation_tolerance_hours: 24,
+            default_insurance_payment_term: 30
+          } as FinancialSettings;
         }
-        throw error;
+        
+        return data as FinancialSettings;
+      } catch (error) {
+        console.warn('Unexpected error in financial settings query:', error);
+        // Return default settings on any error
+        return {
+          id: 'default',
+          clinic_id: clinicId,
+          cancellation_fee_percentage: 0,
+          cancellation_tolerance_hours: 24,
+          default_insurance_payment_term: 30
+        } as FinancialSettings;
       }
-      
-      return data as FinancialSettings;
     },
-    enabled: !!clinicId
+    enabled: !!clinicId,
+    retry: false // Don't retry on permission errors
   });
 
   // Query para buscar forecasts por status

@@ -30,11 +30,15 @@ export function setupWebhookRealtimeListeners(clinicId: string, channelName?: st
     // Use a custom channel name if provided, otherwise generate one with timestamp
     const uniqueChannelName = channelName || `webhook-${clinicId}-${Date.now()}`;
     
-    console.log('[WEBHOOK] Setting up webhook realtime listeners for clinic', clinicId);
+    if (import.meta.env.DEV) {
+      console.log('[WEBHOOK] Setting up webhook realtime listeners for clinic', clinicId);
+    }
     
     // Remove existing channel with same name if it exists
     if (activeChannels[uniqueChannelName]) {
-      console.log(`[WEBHOOK] Removing existing channel ${uniqueChannelName}`);
+      if (import.meta.env.DEV) {
+        console.log(`[WEBHOOK] Removing existing channel ${uniqueChannelName}`);
+      }
       supabase.removeChannel(activeChannels[uniqueChannelName]);
       delete activeChannels[uniqueChannelName];
     }
@@ -50,12 +54,16 @@ export function setupWebhookRealtimeListeners(clinicId: string, channelName?: st
           filter: `clinic_id=eq.${clinicId}`,
         },
         payload => {
-          console.log('[WEBHOOK] Webhook event change detected:', payload);
+          if (import.meta.env.DEV) {
+            console.log('[WEBHOOK] Webhook event change detected:', payload);
+          }
           // Additional handling as needed
         }
       )
       .subscribe((status) => {
-        console.log(`[WEBHOOK] Subscription status for ${uniqueChannelName}:`, status);
+        if (import.meta.env.DEV) {
+          console.log(`[WEBHOOK] Subscription status for ${uniqueChannelName}:`, status);
+        }
       });
       
     // Store the channel reference

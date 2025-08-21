@@ -1,0 +1,636 @@
+import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+import {
+  ResponsiveDialog as Dialog,
+  ResponsiveDialogContent as DialogContent,
+  ResponsiveDialogDescription as DialogDescription,
+  ResponsiveDialogFooter as DialogFooter,
+  ResponsiveDialogHeader as DialogHeader,
+  ResponsiveDialogTitle as DialogTitle,
+} from '@/components/ui/responsive-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Calendar as CalendarIcon, Clock, UserPlus, User, Stethoscope } from 'lucide-react';
+import { Doctor, Patient } from '@/types';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cpfValidationRules, maskCPF, validateCPF } from '@/utils/cpf-validation';
+
+const appointmentSchema = z.object({
+  patient_name: z.string().min(3, { message: 'Nome do paciente é obrigatório' }),
+  patient_phone: z.string().optional(),
+  patient_email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
+  patient_cpf: z.string().min(1, { message: 'CPF é obrigatório' }).refine(
+    (cpf) => {
+      // Validação direta sem require - corrigido para build 7CTD6TwpB
+      return validateCPF(cpf) === null;
+    },
+    { message: 'CPF inválido' }
+  ),
+  doctor_id: z.string().min(1, { message: 'Selecione um profissional' }),
+  date: z.date().refine(date => date >= new Date(new Date().setHours(0, 0, 0, 0)), {
+    message: 'A data deve ser hoje ou uma data futura',
+  }),
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'Formato de hora inválido. Use HH:MM',
+  }),
+  type: z.enum(['in-person', 'online']),
+  notes: z.string().optional(),
+});
+
+type AppointmentFormValues = z.infer<typeof appointmentSchema>;
+
+interface AppointmentFormSimpleProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: AppointmentFormValues) => void;
+  doctors: Doctor[];
+  selectedDate?: Date;
+  patients?: Patient[];
+  preFilledPatient?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+    cpf?: string;
+  };
+}
+
+export function AppointmentFormSimple({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  doctors, 
+  selectedDate,
+  patients = [],
+  preFilledPatient 
+}: AppointmentFormSimpleProps) {
+  const isMobile = useIsMobile();
+  const [selectedPatientId, setSelectedPatientId] = useState<string>(preFilledPatient ? '' : 'new');
+  const [isNewPatient, setIsNewPatient] = useState(!preFilledPatient);
+  const [hasRestoredData, setHasRestoredData] = useState(false);
+  
+  // Chaves para persistência no localStorage
+  const FORM_STORAGE_KEY = 'appointmentForm_draft';
+  const LAST_OPEN_KEY = 'appointmentForm_lastOpen';
+  
+  console.log('AppointmentFormSimple: Rendering with isOpen:', isOpen);
+  console.log('AppointmentFormSimple: preFilledPatient:', preFilledPatient);
+  console.log('AppointmentFormSimple: doctors count:', doctors.length);
+  console.log('AppointmentFormSimple: patients count:', patients.length);
+  console.log('AppointmentFormSimple: patients data:', patients);
+  console.log('AppointmentFormSimple: selectedPatientId:', selectedPatientId);
+  
+  // Função para salvar dados no localStorage
+  const saveFormData = (formData: any) => {
+    try {
+      const dataToSave = {
+        ...formData,
+        selectedPatientId,
+        isNewPatient,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(dataToSave));
+    } catch (error) {
+      console.warn('Erro ao salvar dados do formulário:', error);
+    }
+  };
+
+  // Função para restaurar dados do localStorage
+  const loadFormData = () => {
+    try {
+      const saved = localStorage.getItem(FORM_STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        // Verificar se os dados não são muito antigos (24 horas)
+        if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+          return data;
+        }
+      }
+    } catch (error) {
+      console.warn('Erro ao carregar dados do formulário:', error);
+    }
+    return null;
+  };
+
+  // Função para limpar dados salvos
+  const clearFormData = () => {
+    try {
+      localStorage.removeItem(FORM_STORAGE_KEY);
+      localStorage.removeItem(LAST_OPEN_KEY);
+    } catch (error) {
+      console.warn('Erro ao limpar dados do formulário:', error);
+    }
+  };
+
+  const form = useForm<AppointmentFormValues>({
+    resolver: zodResolver(appointmentSchema),
+    defaultValues: {
+      patient_name: preFilledPatient?.name || '',
+      patient_phone: preFilledPatient?.phone || '',
+      patient_email: preFilledPatient?.email || '',
+      patient_cpf: preFilledPatient?.cpf || '',
+      doctor_id: '',
+      date: selectedDate || new Date(),
+      time: '09:00',
+      type: 'in-person',
+      notes: '',
+    },
+  });
+
+  // Restaurar dados salvos quando modal abrir
+  useEffect(() => {
+    if (isOpen) {
+      console.log('Modal aberto, verificando dados salvos...');
+      localStorage.setItem(LAST_OPEN_KEY, Date.now().toString());
+      
+      const savedData = loadFormData();
+      if (savedData && !preFilledPatient) {
+        console.log('Restaurando dados salvos:', savedData);
+        setHasRestoredData(true);
+        
+        // Restaurar estado do paciente
+        setSelectedPatientId(savedData.selectedPatientId || 'new');
+        setIsNewPatient(savedData.isNewPatient !== false);
+        
+        // Restaurar dados do formulário
+        form.reset({
+          patient_name: savedData.patient_name || '',
+          patient_phone: savedData.patient_phone || '',
+          patient_email: savedData.patient_email || '',
+          patient_cpf: savedData.patient_cpf || '',
+          doctor_id: savedData.doctor_id || '',
+          date: savedData.date ? new Date(savedData.date) : selectedDate || new Date(),
+          time: savedData.time || '09:00',
+          type: savedData.type || 'in-person',
+          notes: savedData.notes || '',
+        });
+      } else {
+        setHasRestoredData(false);
+      }
+    }
+  }, [isOpen, preFilledPatient, selectedDate, form]);
+
+  // Reset form when preFilledPatient changes
+  useEffect(() => {
+    if (preFilledPatient) {
+      console.log('AppointmentFormSimple: Resetting form with patient data:', preFilledPatient);
+      form.reset({
+        patient_name: preFilledPatient.name || '',
+        patient_phone: preFilledPatient.phone || '',
+        patient_email: preFilledPatient.email || '',
+        patient_cpf: preFilledPatient.cpf || '',
+        doctor_id: '',
+        date: selectedDate || new Date(),
+        time: '09:00',
+        type: 'in-person',
+        notes: '',
+      });
+    }
+  }, [preFilledPatient, selectedDate, form]);
+
+  // Salvar dados no localStorage quando houver mudanças no formulário
+  useEffect(() => {
+    if (isOpen) {
+      const subscription = form.watch((value) => {
+        saveFormData(value);
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, [isOpen, form, selectedPatientId, isNewPatient]);
+
+  // Salvar ao sair da aba (visibilitychange)
+  useEffect(() => {
+    if (isOpen) {
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          const currentValues = form.getValues();
+          saveFormData(currentValues);
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
+  }, [isOpen, form, selectedPatientId, isNewPatient]);
+
+  // Handle patient selection
+  const handlePatientSelection = (patientId: string) => {
+    console.log('handlePatientSelection called with:', patientId);
+    setSelectedPatientId(patientId);
+    
+    if (patientId === 'new') {
+      setIsNewPatient(true);
+      form.reset({
+        patient_name: '',
+        patient_phone: '',
+        patient_email: '',
+        patient_cpf: '',
+        doctor_id: form.getValues('doctor_id'),
+        date: form.getValues('date'),
+        time: form.getValues('time'),
+        type: form.getValues('type'),
+        notes: form.getValues('notes'),
+      });
+    } else {
+      setIsNewPatient(false);
+      const selectedPatient = patients.find(p => p.id === patientId);
+      console.log('Selected patient:', selectedPatient);
+      if (selectedPatient) {
+        form.reset({
+          patient_name: selectedPatient.name,
+          patient_phone: selectedPatient.phone,
+          patient_email: selectedPatient.email,
+          patient_cpf: selectedPatient.cpf,
+          doctor_id: form.getValues('doctor_id'),
+          date: form.getValues('date'),
+          time: form.getValues('time'),
+          type: form.getValues('type'),
+          notes: form.getValues('notes'),
+        });
+      }
+    }
+  };
+
+  function handleSubmit(data: AppointmentFormValues) {
+    console.log('AppointmentFormSimple: Submitting data:', data);
+    
+    // Validate doctor selection
+    if (!data.doctor_id) {
+      console.error('AppointmentFormSimple: No doctor selected');
+      return;
+    }
+    
+    // Find doctor name
+    const selectedDoctor = doctors.find(d => d.id === data.doctor_id);
+    if (!selectedDoctor) {
+      console.error('AppointmentFormSimple: Selected doctor not found');
+      return;
+    }
+    
+    const finalData = {
+      ...data,
+      doctor_name: selectedDoctor.name,
+    };
+    
+    console.log('AppointmentFormSimple: Final data with doctor name:', finalData);
+    
+    onSubmit(finalData);
+    
+    // Limpar dados salvos e resetar formulário apenas após o submit
+    clearFormData();
+    form.reset();
+    
+    // Reset patient selection state for next appointment
+    setSelectedPatientId('new');
+    setIsNewPatient(true);
+  }
+
+  // Handler para fechamento do modal
+  const handleClose = () => {
+    // Não limpar dados salvos ao fechar - apenas quando cancelar explicitamente ou submeter
+    onClose();
+  };
+
+  // Handler para cancelar - limpa os dados salvos
+  const handleCancel = () => {
+    clearFormData();
+    form.reset();
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={open => {
+      console.log('AppointmentFormSimple: Dialog onOpenChange called with:', open);
+      if (!open) handleClose();
+    }}>
+      <DialogContent size="lg">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-lg sm:text-xl">Novo Agendamento</DialogTitle>
+          <DialogDescription className="text-sm">
+            Preencha os dados para criar um novo agendamento
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Indicador de dados restaurados */}
+        {hasRestoredData && (
+          <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md mb-4">
+            <CalendarIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <span className="text-sm text-blue-700 dark:text-blue-300">
+              📋 Dados anteriores restaurados automaticamente. Continue preenchendo de onde parou!
+            </span>
+          </div>
+        )}
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            {/* Patient Selection */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Paciente
+              </label>
+              <select
+                value={selectedPatientId}
+                onChange={(e) => handlePatientSelection(e.target.value)}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="new">➕ Cadastrar Novo Paciente</option>
+                {patients.length > 0 && <option disabled>──────────────</option>}
+                {patients && patients.length > 0 && patients.map((patient) => {
+                  if (!patient.id || !patient.name) {
+                    return null;
+                  }
+                  return (
+                    <option key={patient.id} value={patient.id}>
+                      {patient.name} {patient.cpf ? `- ${patient.cpf}` : ''}
+                    </option>
+                  );
+                })}
+              </select>
+              
+              {/* Visual feedback for new patient */}
+              {selectedPatientId === 'new' && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
+                  <UserPlus className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                    Você está cadastrando um novo paciente. Preencha todos os campos obrigatórios abaixo.
+                  </span>
+                </div>
+              )}
+              
+              {/* Visual feedback for existing patient */}
+              {selectedPatientId !== 'new' && selectedPatientId !== '' && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-md">
+                  <User className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <span className="text-sm text-green-700 dark:text-green-300">
+                    Paciente selecionado. Os dados foram preenchidos automaticamente.
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <FormField
+              control={form.control}
+              name="patient_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm flex items-center gap-2">
+                    Nome do Paciente
+                    {isNewPatient && <span className="text-xs font-normal text-blue-600 dark:text-blue-400">* Obrigatório</span>}
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder={isNewPatient ? "Digite o nome completo do novo paciente" : "Nome do paciente"} 
+                      {...field} 
+                      className={`h-10 ${isNewPatient ? 'border-blue-300 dark:border-blue-700' : ''}`} 
+                      disabled={!isNewPatient}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="patient_cpf"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm flex items-center gap-2">
+                    CPF
+                    {isNewPatient && <span className="text-xs font-normal text-blue-600 dark:text-blue-400">* Obrigatório</span>}
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder={isNewPatient ? "Digite o CPF do novo paciente" : "CPF do paciente"} 
+                      {...field} 
+                      className={`h-10 ${isNewPatient ? 'border-blue-300 dark:border-blue-700' : ''}`}
+                      disabled={!isNewPatient}
+                      onChange={(e) => {
+                        const maskedValue = maskCPF(e.target.value);
+                        field.onChange(maskedValue);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-2 gap-4'}`}>
+              <FormField
+                control={form.control}
+                name="patient_phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Telefone (opcional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="(00) 00000-0000" 
+                        {...field} 
+                        className="h-10" 
+                        disabled={!isNewPatient}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="patient_email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">E-mail (opcional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="email@exemplo.com" 
+                        type="email" 
+                        {...field} 
+                        className="h-10" 
+                        disabled={!isNewPatient}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="doctor_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4" />
+                    Profissional
+                    <span className="text-xs font-normal text-red-600 dark:text-red-400">* Obrigatório</span>
+                  </FormLabel>
+                  <FormControl>
+                    <select
+                      {...field}
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Selecione um profissional</option>
+                      {doctors.length > 0 ? (
+                        doctors.map((doctor) => (
+                          <option key={doctor.id} value={doctor.id}>
+                            {doctor.name}
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>Nenhum profissional encontrado</option>
+                      )}
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                  {doctors.length === 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Cadastre profissionais na aba "Profissionais" antes de criar agendamentos.
+                    </p>
+                  )}
+                </FormItem>
+              )}
+            />
+
+            <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-2 gap-4'}`}>
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel className="text-sm">Data</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className="pl-3 text-left font-normal h-10 justify-start"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? (
+                              format(field.value, "dd 'de' MMMM", { locale: ptBR })
+                            ) : (
+                              <span>Selecione uma data</span>
+                            )}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                          locale={ptBR}
+                          initialFocus
+                          className={isMobile ? 'scale-90' : ''}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Horário</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                          placeholder="HH:MM" 
+                          {...field} 
+                          className="pl-10 h-10"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm">Tipo de Consulta</FormLabel>
+                  <FormControl>
+                    <select
+                      {...field}
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="in-person">Presencial</option>
+                      <option value="online">Teleconsulta</option>
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm">Observações (opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Informações adicionais sobre a consulta..." 
+                      className="resize-none"
+                      rows={3}
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter className={`${isMobile ? 'flex-col gap-2' : 'flex-row gap-2'} pt-4`}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleCancel}
+                className={`${isMobile ? 'w-full order-2' : 'w-auto'}`}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit"
+                className={`${isMobile ? 'w-full order-1' : 'w-auto'}`}
+              >
+                Criar Agendamento
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

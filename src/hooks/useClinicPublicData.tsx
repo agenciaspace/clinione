@@ -37,6 +37,10 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
   const [availableClinics, setAvailableClinics] = useState<{ id: string; name: string }[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
 
+  // Exclude specific routes that should not be treated as clinic slugs
+  const excludedRoutes = ['redefinir-senha', 'reset-password', 'login', 'register', 'forgot-password', 'email-confirmation'];
+  const isExcludedRoute = slug && excludedRoutes.includes(slug);
+
   // Fetch available clinics in preview mode
   useEffect(() => {
     if (isPreview) {
@@ -66,6 +70,13 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
 
   // Fetch clinic data
   useEffect(() => {
+    // Don't fetch clinic data for excluded routes
+    if (isExcludedRoute) {
+      setIsLoading(false);
+      setError("Route not available for clinic lookup");
+      return;
+    }
+
     const fetchClinicData = async () => {
       setIsLoading(true);
       setError(null);
@@ -257,7 +268,7 @@ export const useClinicPublicData = (slug?: string, selectedClinicId?: string | n
     };
     
     fetchClinicData();
-  }, [slug, isPreview, selectedClinicId]);
+  }, [slug, isPreview, selectedClinicId, isExcludedRoute]);
 
   return {
     clinic,

@@ -37,12 +37,14 @@ export const PatientRecordTabs: React.FC<PatientRecordTabsProps> = ({
       <div className="space-y-6">
         {!isViewingHistory && (
           <NewRecordForm
+            patient={patient}
             onSubmit={onSubmit}
             onCancel={() => setActiveEntry(null)}
             onDelete={onDelete}
             isEditing={isEditing}
             defaultValue={defaultValue}
             isPending={isPending}
+            recordId={activeEntry?.id}
           />
         )}
 
