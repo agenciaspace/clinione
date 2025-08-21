@@ -32,12 +32,13 @@ interface ResponsiveDialogContentProps extends React.ComponentPropsWithoutRef<ty
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
   onPointerDownOutside?: (event: CustomEvent<{ originalEvent: PointerEvent }>) => void;
   onEscapeKeyDown?: (event: KeyboardEvent) => void;
+  preventClose?: boolean;
 }
 
 const ResponsiveDialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   ResponsiveDialogContentProps
->(({ className, children, size = 'md', onPointerDownOutside, onEscapeKeyDown, ...props }, ref) => {
+>(({ className, children, size = 'md', onPointerDownOutside, onEscapeKeyDown, preventClose = true, ...props }, ref) => {
   const isMobile = useIsMobile()
   
   const getSizeClasses = () => {

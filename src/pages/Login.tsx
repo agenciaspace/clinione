@@ -63,8 +63,15 @@ const Login = () => {
       if (error.code === 'email_not_confirmed' || error.message?.includes('Email not confirmed')) {
         setNeedsEmailConfirmation(true);
       } else {
+        const isRemoteInstance = window.location.hostname !== 'localhost';
+        let description = error.message || "Verifique suas credenciais e tente novamente";
+        
+        if (error.message?.includes('Invalid login credentials') && isRemoteInstance) {
+          description = "Credenciais inválidas. Para testar localmente, inicie o Docker e execute 'npx supabase start'";
+        }
+        
         toast("Erro de login", {
-          description: "Verifique suas credenciais e tente novamente"
+          description: description
         });
       }
     } finally {

@@ -326,12 +326,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoadingAuth(true);
     try {
+      const isLocalhost = typeof window !== 'undefined' && 
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      
+      console.log('🔍 Debug Login:');
+      console.log('  Environment:', isLocalhost ? 'localhost' : 'production');
+      console.log('  Hostname:', window.location.hostname);
+      console.log('  Port:', window.location.port);
+      console.log('  Full URL:', window.location.href);
+      console.log('  Supabase URL:', supabase.supabaseUrl);
+      console.log('  Email:', email);
+      console.log('  User Agent:', navigator.userAgent.substring(0, 100));
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) {
+        console.log('❌ Erro específico:');
+        console.log('  Environment:', isLocalhost ? 'localhost' : 'production');
+        console.log('  Error message:', error.message);
+        console.log('  Error status:', error.status);
+        console.log('  Full error:', error);
         throw error;
       }
       

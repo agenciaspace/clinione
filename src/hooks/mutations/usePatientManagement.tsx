@@ -6,32 +6,52 @@ import { usePatientMutations } from '@/hooks/mutations/usePatientMutations';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/components/ui/sonner';
+import { useModalPersistence } from '@/hooks/useModalPersistence';
+import { useFormPersistence } from '@/hooks/useFormPersistence';
 
 export const usePatientManagement = () => {
   const queryClient = useQueryClient();
   const { activeClinic } = useClinic();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
-  const [patientForm, setPatientForm] = useState<PatientFormData>({
-    name: '',
-    email: '',
-    phone: '',
-    birthDate: new Date().toISOString().split('T')[0],
-    cpf: ''
+
+  // Usar persistência para o modal de adicionar paciente
+  const addPatientModal = useModalPersistence({
+    key: `add-patient-${activeClinic?.id || 'no-clinic'}`,
+    maxAge: 30 * 60 * 1000, // 30 minutos
+  });
+
+  // Usar persistência para o modal de prontuário
+  const recordModal = useModalPersistence<Patient>({
+    key: `patient-record-${activeClinic?.id || 'no-clinic'}`,
+    maxAge: 60 * 60 * 1000, // 1 hora
+    onRestore: (patient) => {
+      console.log('Restaurando modal de prontuário para:', patient.name);
+    }
+  });
+
+  // Usar persistência para o formulário de paciente
+  const patientFormPersistence = useFormPersistence<PatientFormData>({
+    key: `patient-form-${activeClinic?.id || 'no-clinic'}`,
+    initialValues: {
+      name: '',
+      email: '',
+      phone: '',
+      birthDate: new Date().toISOString().split('T')[0],
+      cpf: ''
+    },
+    maxAge: 60 * 60 * 1000, // 1 hora
+    onRestore: (data) => {
+      console.log('Restaurando dados do formulário de paciente:', data);
+    },
+    onAutoSave: (data) => {
+      console.log('Auto-salvando formulário de paciente:', data);
+    }
   });
 
   const { patients, isLoading } = usePatients(activeClinic?.id);
   const { createPatient, updatePatient, deletePatient, isCreating, isUpdating, isDeleting } = usePatientMutations(activeClinic?.id);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPatientForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  const handleInputChange = patientFormPersistence.handleInputChange;
 
   const handleAddPatient = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,17 +62,11 @@ export const usePatientManagement = () => {
     }
 
     try {
-      await createPatient(patientForm);
+      await createPatient(patientFormPersistence.formData);
       
       // Reset form and close modal
-      setPatientForm({
-        name: '',
-        email: '',
-        phone: '',
-        birthDate: new Date().toISOString().split('T')[0],
-        cpf: ''
-      });
-      setIsAddPatientOpen(false);
+      patientFormPersistence.resetForm();
+      addPatientModal.closeModal();
       
     } catch (error) {
       console.error('Erro ao adicionar paciente:', error);
@@ -70,23 +84,28 @@ export const usePatientManagement = () => {
       console.log("Iniciando exclusão do paciente:", id);
       
       // Fechar o modal se o paciente excluído for o paciente selecionado
-      if (selectedPatient?.id === id) {
-        setIsRecordModalOpen(false);
-        setSelectedPatient(null);
+      if (recordModal.data?.id === id) {
+        recordModal.closeModal();
       }
       
       await deletePatient(id);
       
-      // Forçar a atualização da lista
-      if (activeClinic?.id) {
-        queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
-      }
+      // Reduzir invalidateQueries para evitar recarregamentos excessivos
+      // Usar setQueryData para atualização otimista
+      queryClient.setQueryData(['patients', activeClinic?.id], (oldData: Patient[] = []) => {
+        return oldData.filter(patient => patient.id !== id);
+      });
       
     } catch (error) {
       console.error("Erro ao excluir paciente:", error);
       toast.error("Erro ao excluir paciente");
+      
+      // Em caso de erro, invalidar para garantir consistência
+      if (activeClinic?.id) {
+        queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
+      }
     }
-  }, [selectedPatient, deletePatient, activeClinic?.id, queryClient]);
+  }, [recordModal, deletePatient, activeClinic?.id, queryClient]);
 
   const handleUpdatePatient = useCallback((updatedPatient: Patient) => {
     console.log("Atualizando paciente:", updatedPatient);
@@ -98,27 +117,20 @@ export const usePatientManagement = () => {
       );
     });
     
-    // Also invalidate to ensure eventual consistency with the server
-    if (activeClinic?.id) {
-      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic.id] });
-    }
-    
     // Atualizar o paciente selecionado se estiver aberto no modal
-    if (selectedPatient?.id === updatedPatient.id) {
-      setSelectedPatient(updatedPatient);
+    if (recordModal.data?.id === updatedPatient.id) {
+      recordModal.updateData(updatedPatient);
     }
-  }, [selectedPatient, queryClient, activeClinic?.id]);
+  }, [recordModal, queryClient, activeClinic?.id]);
 
   // Garantir que o estado do modal seja corretamente atualizado
   const handleOpenRecordModal = useCallback((patient: Patient) => {
-    setSelectedPatient(patient);
-    setIsRecordModalOpen(true);
-  }, []);
+    recordModal.openModal(patient);
+  }, [recordModal]);
 
   const handleCloseRecordModal = useCallback(() => {
-    setIsRecordModalOpen(false);
-    setSelectedPatient(null);
-  }, []);
+    recordModal.closeModal();
+  }, [recordModal]);
 
   const filteredPatients = patients.filter(patient => 
     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -129,13 +141,13 @@ export const usePatientManagement = () => {
   return {
     searchTerm,
     setSearchTerm,
-    isAddPatientOpen,
-    setIsAddPatientOpen,
-    selectedPatient,
-    setSelectedPatient,
-    isRecordModalOpen,
-    setIsRecordModalOpen,
-    patientForm,
+    isAddPatientOpen: addPatientModal.isOpen,
+    setIsAddPatientOpen: addPatientModal.setIsOpen,
+    selectedPatient: recordModal.data,
+    setSelectedPatient: recordModal.updateData,
+    isRecordModalOpen: recordModal.isOpen,
+    setIsRecordModalOpen: recordModal.setIsOpen,
+    patientForm: patientFormPersistence.formData,
     handleInputChange,
     handleAddPatient,
     handleToggleStatus,

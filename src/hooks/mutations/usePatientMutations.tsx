@@ -49,7 +49,7 @@ export const usePatientMutations = (clinicId?: string) => {
         email: data.email || '',
         phone: data.phone || '',
         birthDate: data.birth_date,
-        cpf: data.cpf || '',
+        cpf: (data as any).cpf || '',
         created_at: data.created_at,
         updated_at: data.updated_at,
         clinic_id: data.clinic_id,
@@ -65,8 +65,7 @@ export const usePatientMutations = (clinicId?: string) => {
         return [...oldData, data];
       });
       
-      // Invalidate to ensure eventual consistency
-      queryClient.invalidateQueries({ queryKey: ['patients', clinicId] });
+      // Não invalidar imediatamente - confiar na atualização otimista
       toast.success('Paciente cadastrado com sucesso');
     },
     onError: (error: any) => {
@@ -106,7 +105,7 @@ export const usePatientMutations = (clinicId?: string) => {
         email: data.email || '',
         phone: data.phone || '',
         birthDate: data.birth_date,
-        cpf: data.cpf || '',
+        cpf: (data as any).cpf || '',
         created_at: data.created_at,
         updated_at: data.updated_at,
         clinic_id: data.clinic_id,

@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { maskCPF, validateCPF } from '@/utils/cpf-validation';
+import { useNavigationGuard } from '@/hooks/useNavigationGuard';
 
 interface EditPatientDialogProps {
   open: boolean;

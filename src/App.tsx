@@ -50,17 +50,24 @@ const queryClient = new QueryClient({
         if (error instanceof Error && error.message.includes('4')) {
           return false;
         }
-        // Retry up to 3 times with exponential backoff
-        return failureCount < 3;
+        // Retry up to 2 times with exponential backoff (reduzido para evitar loops)
+        return failureCount < 2;
       },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      staleTime: 1000 * 60 * 30, // 30 minutes - aumentado para evitar refetches desnecessários
-      gcTime: 1000 * 60 * 60, // 60 minutes - cache por mais tempo
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 15000),
+      staleTime: 1000 * 60 * 45, // 45 minutes - aumentado ainda mais
+      gcTime: 1000 * 60 * 90, // 90 minutes - cache por mais tempo
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
-      refetchOnMount: false,
-      refetchIntervalInBackground: false, // Não refetch em background
-      refetchInterval: false, // Desabilitar refetch automático por intervalo
+      refetchOnMount: 'always', // Mudado para 'always' para garantir dados atualizados
+      refetchIntervalInBackground: false,
+      refetchInterval: false,
+      // Configurações adicionais para estabilidade
+      networkMode: 'online',
+      notifyOnChangeProps: 'all',
+    },
+    mutations: {
+      retry: 1, // Reduzir tentativas de mutação
+      networkMode: 'online',
     },
   },
 });

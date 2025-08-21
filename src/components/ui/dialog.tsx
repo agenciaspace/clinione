@@ -32,8 +32,9 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     onPointerDownOutside?: (event: CustomEvent<{ originalEvent: PointerEvent }>) => void;
     onEscapeKeyDown?: (event: KeyboardEvent) => void;
+    preventClose?: boolean;
   }
->(({ className, children, onPointerDownOutside, onEscapeKeyDown, ...props }, ref) => (
+>(({ className, children, onPointerDownOutside, onEscapeKeyDown, preventClose = true, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -46,8 +47,8 @@ const DialogContent = React.forwardRef<
         // Prevenir fechamento ao clicar fora para evitar perda de dados
         if (onPointerDownOutside) {
           onPointerDownOutside(event);
-        } else {
-          // Sempre prevenir fechamento ao clicar fora
+        } else if (preventClose) {
+          // Sempre prevenir fechamento ao clicar fora se preventClose estiver ativo
           event.preventDefault();
         }
       }}
@@ -55,8 +56,11 @@ const DialogContent = React.forwardRef<
         // Permitir fechamento com ESC mas deixar o componente decidir
         if (onEscapeKeyDown) {
           onEscapeKeyDown(event);
+        } else if (preventClose) {
+          // Prevenir fechamento com ESC se preventClose estiver ativo
+          event.preventDefault();
         }
-        // Permite comportamento padrão do ESC
+        // Permite comportamento padrão do ESC se preventClose for false
       }}
       {...props}
     >
