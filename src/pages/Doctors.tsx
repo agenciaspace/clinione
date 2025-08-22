@@ -12,7 +12,7 @@ import {
   ResponsiveTableHeader as TableHeader, 
   ResponsiveTableRow as TableRow 
 } from '@/components/ui/responsive-table';
-import { Search, Plus, EditIcon, TrashIcon, UserCircle, Mail, Phone, Calendar, AlertCircle, MapPin } from 'lucide-react';
+import { Search, Plus, EditIcon, TrashIcon, UserCircle, Mail, Phone, Calendar, AlertCircle, MapPin, User } from 'lucide-react';
 import { 
   ResponsiveDialog as Dialog, 
   ResponsiveDialogContent as DialogContent, 
@@ -27,13 +27,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useDoctors } from '@/hooks/useDoctors';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { DoctorPhotoUpload } from '@/components/doctors/DoctorPhotoUpload';
+import { DoctorPhotoUploadClean } from '@/components/doctors/DoctorPhotoUploadClean';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DoctorWorkingHours } from '@/components/doctors/DoctorWorkingHours';
 import { DoctorAddresses } from '@/components/doctors/DoctorAddresses';
 import { DoctorScheduleBlocks } from '@/components/doctors/DoctorScheduleBlocks';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Address {
   name: string;
@@ -82,11 +84,14 @@ const Doctors = () => {
   const { activeClinic } = useClinic();
   const isMobile = useIsMobile();
   const { doctors, isLoading, deleteDoctor, inactivateDoctor } = useDoctors();
+  const queryClient = useQueryClient();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [doctorToDelete, setDoctorToDelete] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState<DoctorFormData>({
     name: '',
@@ -99,6 +104,7 @@ const Doctors = () => {
     addresses: []
   });
   const [isEditing, setIsEditing] = useState(false);
+
 
   const filteredDoctors = doctors.filter(doctor =>
     doctor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -116,6 +122,7 @@ const Doctors = () => {
       ...prev,
       [name]: value
     }));
+    setHasUnsavedChanges(true);
   };
 
   const handleSelectChange = (value: string) => {
@@ -123,6 +130,7 @@ const Doctors = () => {
       ...prev,
       speciality: value
     }));
+    setHasUnsavedChanges(true);
   };
 
   const handleWorkingHoursChange = (workingHours: WorkingHours) => {
@@ -130,6 +138,7 @@ const Doctors = () => {
       ...prev,
       working_hours: workingHours
     }));
+    setHasUnsavedChanges(true);
   };
 
   const handleAddressesChange = (addresses: Address[]) => {
@@ -137,6 +146,7 @@ const Doctors = () => {
       ...prev,
       addresses: addresses
     }));
+    setHasUnsavedChanges(true);
   };
 
   const handleAddDoctor = () => {
@@ -151,6 +161,7 @@ const Doctors = () => {
       working_hours: defaultWorkingHours,
       addresses: []
     });
+    setHasUnsavedChanges(false);
     setIsDialogOpen(true);
   };
 
@@ -164,9 +175,11 @@ const Doctors = () => {
       bio: doctor.bio || '',
       email: doctor.email || '',
       phone: doctor.phone || '',
+      photo_url: doctor.photo_url || '',
       working_hours: doctor.working_hours || defaultWorkingHours,
       addresses: (doctor as any).addresses || []
     });
+    setHasUnsavedChanges(false);
     setIsDialogOpen(true);
   };
 
@@ -187,6 +200,24 @@ const Doctors = () => {
     setDoctorToDelete(null);
   };
 
+  const handleDialogClose = (open: boolean) => {
+    // Permitir fechar o modal normalmente
+    setIsDialogOpen(open);
+    if (!open) {
+      setHasUnsavedChanges(false);
+    }
+  };
+
+  const confirmCloseWithoutSaving = () => {
+    setShowUnsavedChangesDialog(false);
+    setIsDialogOpen(false);
+    setHasUnsavedChanges(false);
+  };
+
+  const cancelClose = () => {
+    setShowUnsavedChangesDialog(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -199,7 +230,7 @@ const Doctors = () => {
     const crmRegex = /^\d{6}-\d{2}\/[A-Z]{2}$/;
     if (formData.licensenumber && !crmRegex.test(formData.licensenumber)) {
       // Apenas um aviso, não bloqueia o cadastro
-      console.warn('CRM não está no formato padrão (123456-78/SP), mas permitindo o cadastro');
+      // CRM format warning - allowing registration
     }
     
     try {
@@ -256,7 +287,11 @@ const Doctors = () => {
         }
       }
       
+      // Invalidar cache para forçar re-fetch dos dados atualizados
+      queryClient.invalidateQueries({ queryKey: ['doctors'] });
+      
       setIsDialogOpen(false);
+      setHasUnsavedChanges(false);
     } catch (error) {
       console.error('Error:', error);
       toast.error('Ocorreu um erro ao salvar o profissional');
@@ -332,10 +367,17 @@ const Doctors = () => {
                   return (
                     <Card key={doctor.id} className="p-4">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg">{doctor.name}</h3>
-                          <p className="text-sm text-muted-foreground">{doctor.speciality}</p>
-                          <p className="text-xs text-muted-foreground mt-1">CRM: {doctor.licensenumber}</p>
+                        <div className="flex items-start space-x-3 flex-1">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={doctor.photo_url || undefined} alt={doctor.name} />
+                            <AvatarFallback>
+                              <User className="h-6 w-6 text-gray-400" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg">{doctor.name}</h3>
+                            <p className="text-sm text-muted-foreground">{doctor.speciality}</p>
+                            <p className="text-xs text-muted-foreground mt-1">CRM: {doctor.licensenumber}</p>
                           {primaryAddress && (
                             <div className="flex items-center text-xs text-muted-foreground mt-2">
                               <MapPin className="h-3 w-3 mr-1" />
@@ -345,6 +387,7 @@ const Doctors = () => {
                               )}
                             </div>
                           )}
+                          </div>
                         </div>
                         <div className="flex flex-col space-y-1">
                           <Button
@@ -380,7 +423,7 @@ const Doctors = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[250px]">Nome</TableHead>
+                    <TableHead className="w-[300px]">Profissional</TableHead>
                     <TableHead>Especialidade</TableHead>
                     <TableHead>CRM</TableHead>
                     <TableHead>Endereços</TableHead>
@@ -403,7 +446,17 @@ const Doctors = () => {
                     
                     return (
                       <TableRow key={doctor.id}>
-                        <TableCell className="font-medium">{doctor.name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={doctor.photo_url || undefined} alt={doctor.name} />
+                              <AvatarFallback>
+                                <User className="h-5 w-5 text-gray-400" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">{doctor.name}</span>
+                          </div>
+                        </TableCell>
                         <TableCell>{doctor.speciality}</TableCell>
                         <TableCell>{doctor.licensenumber}</TableCell>
                         <TableCell>
@@ -453,7 +506,7 @@ const Doctors = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
         <DialogContent size="xl">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Editar Profissional' : 'Adicionar Novo Profissional'}</DialogTitle>
@@ -463,19 +516,27 @@ const Doctors = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-4">
-              {formData.id && (
-                <div className="flex justify-center">
-                  <DoctorPhotoUpload
-                    doctorId={formData.id}
-                    currentPhotoUrl={formData.photo_url}
-                    doctorName={formData.name}
-                    onPhotoUpdated={(url) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        photo_url: url
-                      }));
-                    }}
-                  />
+              {formData.name && (
+                <div className="space-y-2">
+                  <div className="flex justify-center">
+                    <DoctorPhotoUploadClean
+                      doctorId={formData.id || `temp-${Date.now()}`}
+                      currentPhotoUrl={formData.photo_url}
+                      doctorName={formData.name}
+                      onPhotoUpdated={(url) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          photo_url: url
+                        }));
+                        setHasUnsavedChanges(true);
+                      }}
+                    />
+                  </div>
+                  {!formData.id && formData.photo_url && (
+                    <p className="text-sm text-center text-muted-foreground">
+                      A foto será salva quando você clicar em "Adicionar"
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -625,6 +686,25 @@ const Doctors = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteDoctor}>
               Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de confirmação para mudanças não salvas */}
+      <AlertDialog open={showUnsavedChangesDialog} onOpenChange={setShowUnsavedChangesDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mudanças não salvas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem mudanças não salvas, incluindo fotos carregadas. 
+              Deseja realmente fechar sem salvar? Todas as alterações serão perdidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelClose}>Continuar editando</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCloseWithoutSaving} className="bg-red-600 hover:bg-red-700">
+              Descartar mudanças
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

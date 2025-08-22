@@ -78,10 +78,10 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN') {
-        console.log('Auth state changed to SIGNED_IN, fetching clinics.');
+        // Auth state changed to SIGNED_IN, fetching clinics
         fetchClinics();
       } else if (event === 'SIGNED_OUT') {
-        console.log('Auth state changed to SIGNED_OUT, clearing clinics.');
+        // Auth state changed to SIGNED_OUT, clearing clinics
         setClinics([]);
         setActiveClinicState(null);
         localStorage.removeItem('activeClinicId');
@@ -101,7 +101,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (webhookChannel) {
       try {
         if (import.meta.env.DEV) {
-          console.log('[WEBHOOK] Removendo canal webhook anterior');
+          // Removing previous webhook channel
         }
         supabase.removeChannel(webhookChannel);
       } catch (e) {
@@ -116,7 +116,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Use a longer delay to avoid rapid channel creation/destruction
       const setupTimer = setTimeout(() => {
         if (import.meta.env.DEV) {
-          console.log(`[WEBHOOK] Configurando novo canal webhook para clínica ${activeClinic.id}`);
+          // Setting up new webhook channel for clinic
         }
         try {
           // Get all existing channels
@@ -129,7 +129,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           existingChannels.forEach(ch => {
             if (ch.topic && ch.topic.startsWith(`webhook-${activeClinic.id}`)) {
               if (import.meta.env.DEV) {
-                console.log('[WEBHOOK] Removendo canal existente com nome similar:', ch.topic);
+                // Removing existing channel with similar name
               }
               try {
                 supabase.removeChannel(ch);
@@ -159,7 +159,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (webhookChannel) {
         try {
           if (import.meta.env.DEV) {
-            console.log('[WEBHOOK] Cleanup: Removendo canal webhook ao desmontar');
+            // Cleanup: Removing webhook channel on unmount
           }
           supabase.removeChannel(webhookChannel);
         } catch (e) {

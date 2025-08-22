@@ -160,8 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Primeiro definir o listener de mudanças de estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("Evento de autenticação:", event);
-        console.log("Sessão:", session);
+        // Auth event logging removed to prevent excessive re-renders
         
         if (session && session.user) {
           const userData = {
@@ -179,8 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Broadcast login event to other tabs
           broadcastLogin(userData);
           
-          console.log("ID do usuário definido:", session.user.id);
-          console.log("Email verificado:", !!session.user.email_confirmed_at);
+          // User ID and email verification set without logging
         } else {
           setUser(null);
           setUserRoles([]);
@@ -190,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Broadcast logout event to other tabs
           broadcastLogout();
           
-          console.log("Usuário definido como null");
+          // User set to null
         }
         setIsLoadingAuth(false);
       }
@@ -201,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session && session.user) {
-        console.log("Sessão existente encontrada:", session.user.id);
+        // Session found
         const userData = {
           id: session.user.id,
           name: session.user.user_metadata?.name || 'Usuário',
@@ -238,7 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // If we don't have a user but there's a session, login
           if (session?.user) {
-            console.log("Sessão válida detectada no focus, fazendo login...");
+            // Valid session on focus, logging in
             const userData = {
               id: session.user.id,
               name: session.user.user_metadata?.name || 'Usuário',
@@ -271,7 +269,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // If we think we have a user but there's no session, logout
         if (user && !session) {
-          console.log("Sessão expirada detectada, fazendo logout...");
+          // Session expired, logging out
           setUser(null);
           setUserRoles([]);
           setIsEmailVerified(false);
@@ -283,7 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // If we don't have a user but there's a session, login
         if (!user && session?.user) {
-          console.log("Sessão válida detectada, fazendo login...");
+          // Valid session detected, logging in
           const userData = {
             id: session.user.id,
             name: session.user.user_metadata?.name || 'Usuário',

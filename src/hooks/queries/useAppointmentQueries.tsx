@@ -32,7 +32,6 @@ export const useAppointmentQueries = (
     const { data, error } = await query;
     
     if (error) throw error;
-    console.log(`Agendamentos para ${dateStart.toISOString()}:`, data?.length || 0);
     return data as Appointment[];
   };
 

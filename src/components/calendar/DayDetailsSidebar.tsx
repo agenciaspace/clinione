@@ -272,31 +272,9 @@ export const DayDetailsSidebar: React.FC<DayDetailsSidebarProps> = ({
         {/* Empty State */}
         {sortedAppointments.length === 0 && sortedBlocks.length === 0 && (
           <div className="text-center py-8">
-            <div className="text-gray-400 mb-4">
+            <div className="text-gray-400">
               <Calendar className="h-12 w-12 mx-auto mb-2" />
               <p className="text-sm">Nenhum evento neste dia</p>
-            </div>
-            <div className="space-y-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={onNewAppointment}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Agendamento
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={onNewBlock}
-                className="w-full"
-              >
-                <Shield className="h-4 w-4 mr-2" />
-                Novo Bloqueio
-              </Button>
             </div>
           </div>
         )}

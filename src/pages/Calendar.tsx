@@ -10,11 +10,9 @@ import { useAppointments } from '@/hooks/useAppointments';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePatients } from '@/hooks/usePatients';
 import { useScheduleBlocks } from '@/hooks/useScheduleBlocks';
-import { Calendar as CalendarIcon, Plus, Maximize2, Minimize2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GoogleCalendarView } from '@/components/calendar/GoogleCalendarView';
-import { AppointmentCalendar } from '@/components/dashboard/AppointmentCalendar';
-import { AppointmentList } from '@/components/dashboard/AppointmentList';
 import { toast } from '@/components/ui/sonner';
 
 const Calendar = () => {
@@ -29,14 +27,10 @@ const Calendar = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isAppointmentsOpen, setIsAppointmentsOpen] = useState(!isMobile); // Fechado por padrão no mobile
   const [isScheduleBlocksOpen, setIsScheduleBlocksOpen] = useState(false);
-  const [calendarView, setCalendarView] = useState<'compact' | 'expanded'>('expanded');
-  const [view, setView] = useState<'day' | 'week' | 'all'>('day');
+  const [calendarView] = useState<'expanded'>('expanded');
   
   const { 
-    appointments, 
-    monthAppointments,
     allAppointments,
-    isLoading, 
     createAppointment,
     confirmAppointment, 
     cancelAppointment, 
@@ -45,17 +39,8 @@ const Calendar = () => {
   } = useAppointments(selectedDate, selectedDoctor);
 
   const { patients, isLoading: isPatientsLoading } = usePatients(activeClinic?.id);
-  const { getBlocksForDateRange, isTimeSlotBlocked, scheduleBlocks, updateScheduleBlock, deleteScheduleBlock } = useScheduleBlocks(activeClinic?.id, selectedDoctor);
+  const { isTimeSlotBlocked, scheduleBlocks, deleteScheduleBlock } = useScheduleBlocks(activeClinic?.id, selectedDoctor);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Calendar component - activeClinic:', activeClinic);
-    console.log('Calendar component - activeClinic?.id:', activeClinic?.id);
-    console.log('Calendar component - patients:', patients);
-    console.log('Calendar component - patients count:', patients.length);
-    console.log('Calendar component - isPatientsLoading:', isPatientsLoading);
-    console.log('Calendar component - doctors count:', doctors.length);
-  }, [activeClinic, patients, doctors, isPatientsLoading]);
 
   useEffect(() => {
     if (activeClinic) {
@@ -79,7 +64,6 @@ const Calendar = () => {
     }
     
     try {
-      console.log('Fetching doctors for clinic:', activeClinic.id);
       const { data, error } = await supabase
         .from('doctors')
         .select('*')
@@ -92,7 +76,6 @@ const Calendar = () => {
       }
       
       if (data) {
-        console.log('Doctors fetched:', data.length);
         // Convert the data to match our Doctor type
         const convertedDoctors = data.map(doctor => ({
           ...doctor,
@@ -125,9 +108,6 @@ const Calendar = () => {
       toast.error('Por favor, selecione uma clínica primeiro');
       return;
     }
-    console.log('Opening appointment form with activeClinic:', activeClinic);
-    console.log('Current doctors:', doctors.length);
-    console.log('Current patients:', patients.length);
     setIsFormOpen(true);
   };
   
@@ -136,7 +116,6 @@ const Calendar = () => {
   };
   
   const handleCreateAppointment = async (formData: any) => {
-    console.log('Calendar: handleCreateAppointment called with:', formData);
     
     let doctorName = formData.doctor_name;
     if (formData.doctor_id && !doctorName) {
@@ -167,7 +146,7 @@ const Calendar = () => {
     }
     
     try {
-      await createAppointment({
+      createAppointment({
         patient_name: formData.patient_name,
         patient_phone: formData.patient_phone,
         patient_email: formData.patient_email,
@@ -194,10 +173,6 @@ const Calendar = () => {
     setIsDetailsOpen(false);
   };
 
-  const handleEditBlock = (block: ScheduleBlock) => {
-    // TODO: Implement edit block functionality
-    console.log('Edit block:', block);
-  };
 
   const handleDeleteBlock = (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este bloqueio?')) {
@@ -205,32 +180,6 @@ const Calendar = () => {
     }
   };
 
-  const hasAppointmentsOnDate = (date: Date) => {
-    return monthAppointments.some(appointment => {
-      const appointmentDate = new Date(appointment.date);
-      return (
-        appointmentDate.getDate() === date.getDate() &&
-        appointmentDate.getMonth() === date.getMonth() &&
-        appointmentDate.getFullYear() === date.getFullYear()
-      );
-    });
-  };
-
-  const hasScheduleBlocksOnDate = (date: Date) => {
-    const dateStart = new Date(date);
-    dateStart.setHours(0, 0, 0, 0);
-    
-    const dateEnd = new Date(date);
-    dateEnd.setHours(23, 59, 59, 999);
-    
-    const blocks = getBlocksForDateRange(
-      dateStart.toISOString(), 
-      dateEnd.toISOString(), 
-      selectedDoctor && selectedDoctor !== 'all' ? selectedDoctor : undefined
-    );
-    
-    return blocks.length > 0;
-  };
 
   return (
     <DashboardLayout>
@@ -253,82 +202,29 @@ const Calendar = () => {
           </div>
           
           {activeClinic && (
-            <div className="flex items-center gap-2">
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={() => setCalendarView(calendarView === 'expanded' ? 'compact' : 'expanded')}
-                size={isMobile ? "default" : "lg"}
-                title={calendarView === 'expanded' ? 'Visualização Compacta' : 'Visualização Expandida'}
-              >
-                {calendarView === 'expanded' ? (
-                  <Minimize2 className="h-5 w-5" />
-                ) : (
-                  <Maximize2 className="h-5 w-5" />
-                )}
-                {!isMobile && (
-                  <span className="ml-2">
-                    {calendarView === 'expanded' ? 'Compacta' : 'Expandida'}
-                  </span>
-                )}
-              </Button>
-              <Button type="button" onClick={handleOpenForm} size={isMobile ? "default" : "lg"}>
-                <Plus className="h-5 w-5 mr-2" />
-                Novo Agendamento
-              </Button>
-            </div>
+            <Button type="button" onClick={handleOpenForm} size={isMobile ? "default" : "lg"}>
+              <Plus className="h-5 w-5 mr-2" />
+              Novo Agendamento
+            </Button>
           )}
         </div>
       </div>
       
       {/* Calendar Views */}
       {activeClinic && (
-        <>
-          {calendarView === 'expanded' ? (
-            /* Google Calendar View - Full Screen */
-            <GoogleCalendarView
-              selectedDate={selectedDate || new Date()}
-              onDateSelect={setSelectedDate}
-              appointments={allAppointments}
-              scheduleBlocks={scheduleBlocks}
-              doctors={doctors}
-              clinicId={activeClinic.id}
-              selectedDoctorId={selectedDoctor}
-              onNewAppointment={handleOpenForm}
-              onEditAppointment={handleOpenDetails}
-              onDeleteAppointment={handleDeleteAppointment}
-              onDeleteBlock={handleDeleteBlock}
-            />
-          ) : (
-            /* Compact Calendar View */
-            <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-6`}>
-              <div className={`${isMobile ? '' : 'lg:col-span-1'}`}>
-                <AppointmentCalendar
-                  selectedDate={selectedDate}
-                  setSelectedDate={setSelectedDate}
-                  selectedDoctor={selectedDoctor || 'all'}
-                  setSelectedDoctor={(value) => setSelectedDoctor(value === 'all' ? undefined : value)}
-                  doctors={doctors}
-                  view={view}
-                  setView={setView}
-                  hasAppointmentsOnDate={hasAppointmentsOnDate}
-                  hasScheduleBlocksOnDate={hasScheduleBlocksOnDate}
-                />
-              </div>
-              <div className={`${isMobile ? '' : 'lg:col-span-2'}`}>
-                <AppointmentList
-                  appointments={appointments}
-                  selectedDate={selectedDate}
-                  view={view}
-                  onOpenDetails={handleOpenDetails}
-                  doctors={doctors}
-                  isLoading={isLoading}
-                  hasScheduleBlocksOnDate={hasScheduleBlocksOnDate}
-                />
-              </div>
-            </div>
-          )}
-        </>
+        <GoogleCalendarView
+          selectedDate={selectedDate || new Date()}
+          onDateSelect={setSelectedDate}
+          appointments={allAppointments}
+          scheduleBlocks={scheduleBlocks}
+          doctors={doctors}
+          clinicId={activeClinic.id}
+          selectedDoctorId={selectedDoctor}
+          onNewAppointment={handleOpenForm}
+          onEditAppointment={handleOpenDetails}
+          onDeleteAppointment={handleDeleteAppointment}
+          onDeleteBlock={handleDeleteBlock}
+        />
       )}
 
       <AppointmentDetails
