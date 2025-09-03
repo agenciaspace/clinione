@@ -1,179 +1,102 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Theme variables */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222.2 84% 4.9%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222.2 84% 4.9%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --radius: 0.5rem;
-
-  --sidebar-background: 52 100% 50%;
-  --sidebar-foreground: 0 0% 4%;
-  --sidebar-primary: 0 0% 100%;
-  --sidebar-primary-foreground: 0 0% 4%;
-  --sidebar-accent: 60 100% 98%;
-  --sidebar-accent-foreground: 0 0% 4%;
-  --sidebar-border: 55 100% 95%;
-  --sidebar-ring: 52 100% 50%;
-}
-
-.dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 84% 4.9%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 94.1%;
-
-  --sidebar-background: 222.2 84% 4.9%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 217.2 91.2% 59.8%;
-  --sidebar-primary-foreground: 222.2 84% 4.9%;
-  --sidebar-accent: 217.2 32.6% 17.5%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 217.2 32.6% 17.5%;
-  --sidebar-ring: 217.2 91.2% 59.8%;
-}
-
-/* Reduced animations */
-.reduce-motion * {
-  animation-duration: 0.01ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
-}
-
-/* Compact mode */
-.compact-mode {
-  --spacing-scale: 0.75;
-}
-
-.compact-mode .p-4 {
-  padding: calc(1rem * var(--spacing-scale));
-}
-
-.compact-mode .p-6 {
-  padding: calc(1.5rem * var(--spacing-scale));
-}
-
-.compact-mode .space-y-4 > * + * {
-  margin-top: calc(1rem * var(--spacing-scale));
-}
-
-.compact-mode .space-y-6 > * + * {
-  margin-top: calc(1.5rem * var(--spacing-scale));
-}
-
-.compact-mode .gap-4 {
-  gap: calc(1rem * var(--spacing-scale));
-}
-
-.compact-mode .gap-6 {
-  gap: calc(1.5rem * var(--spacing-scale));
+  /* Cores principais baseadas na LP clini.one */
+  --color-primary: #FFD400;
+  --color-primary-hover: #E6C200;
+  --color-primary-disabled: #FFE44D;
+  --color-on-primary: #111111;
+  
+  /* Cores de apoio */
+  --color-background: #FFFFFF;
+  --color-surface: #F9FAFB;
+  --color-border: #E5E7EB;
+  --color-text: #111827;
+  --color-text-muted: #6B7280;
+  
+  /* Feedback */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
 }
 
 * {
-  border-color: hsl(var(--border));
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  transition: background-color 0.3s ease, color 0.3s ease;
-  @apply bg-background text-foreground font-sans;
-  font-feature-settings: "rlig" 1, "calt" 1;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.reduce-motion body {
-  transition: none;
+/* Garantir contraste WCAG AA */
+.text-on-primary {
+  color: var(--color-on-primary);
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
+/* Utility classes para os tokens de design */
+.bg-primary {
+  background-color: var(--color-primary);
 }
 
-@layer components {
-  .btn-menu {
-    @apply flex items-center p-3 my-1 gap-3 rounded-md hover:bg-accent transition-colors text-foreground;
-  }
+.bg-primary-hover:hover {
+  background-color: var(--color-primary-hover);
+}
 
-  .btn-menu.active {
-    @apply bg-accent font-medium text-primary;
-  }
+.bg-primary-disabled:disabled {
+  background-color: var(--color-primary-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
 
-  .logo-flat {
-    /* Remover efeitos anteriores e manter estilo flat */
-    filter: none;
-  }
+/* Focus styles para acessibilidade */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 
-  /* Ensure all cards and containers use theme colors */
-  .bg-white {
-    @apply bg-card;
-  }
+/* Scrollbar customizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
 
-  .text-gray-900 {
-    @apply text-foreground;
-  }
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
 
-  .text-gray-700 {
-    @apply text-muted-foreground;
-  }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-sm);
+}
 
-  .text-gray-600 {
-    @apply text-muted-foreground;
-  }
-
-  .text-gray-500 {
-    @apply text-muted-foreground;
-  }
-
-  .border-gray-200 {
-    @apply border-border;
-  }
-
-  .border-gray-300 {
-    @apply border-border;
-  }
-
-  .bg-gray-50 {
-    @apply bg-muted;
-  }
-
-  .bg-gray-100 {
-    @apply bg-accent;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
 }

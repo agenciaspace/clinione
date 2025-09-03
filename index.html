@@ -1,35 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
   <head>
-    <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#FFD400">
-    <meta name="application-name" content="Clini.One">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Clini.One">
-    <meta name="format-detection" content="telephone=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="msapplication-TileColor" content="#FFD400">
-    <meta name="msapplication-tap-highlight" content="no">
-    
-    <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png">
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#FFD400" />
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Sistema completo de gestão para clínicas médicas com agendamento online">
-    <meta name="keywords" content="clínica, gestão, agendamento, médico, saúde, consultório">
-    <meta property="og:title" content="Clini.One - Gestão de Clínicas">
-    <meta property="og:description" content="Sistema completo de gestão para clínicas médicas com agendamento online">
-    <meta property="og:type" content="website">
+    <title>Clini.One - Sistema de Gestão Médica</title>
+    <meta name="description" content="Sistema completo de gestão para clínicas médicas pequenas no Brasil. Reduza no-shows, organize prontuários e melhore a eficiência da sua clínica." />
+    <meta name="keywords" content="clínica, gestão, agendamento, médico, saúde, consultório, prontuário eletrônico" />
     
-    <title>Clini.One - Gestão de Clínicas</title>
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Clini.One - Sistema de Gestão Médica" />
+    <meta property="og:description" content="Sistema completo de gestão para clínicas médicas pequenas no Brasil" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Clini.One - Sistema de Gestão Médica" />
+    <meta name="twitter:description" content="Sistema completo de gestão para clínicas médicas pequenas no Brasil" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Prevent FOUC -->
+    <style>
+      body { opacity: 0; }
+      body.loaded { opacity: 1; transition: opacity 0.2s ease-in-out; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Prevent FOUC
+      window.addEventListener('load', () => {
+        document.body.classList.add('loaded');
+      });
+    </script>
   </body>
 </html>

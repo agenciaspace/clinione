@@ -1,334 +1,295 @@
-import React, { useState, useEffect } from 'react';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { useAuth } from '@/contexts/AuthContext';
-import { useClinic } from '@/contexts/ClinicContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   Calendar, 
   Users, 
   UserCheck, 
-  TrendingUp, 
+  FileText,
+  TrendingUp,
   Clock,
-  Plus,
-  ArrowRight
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
-import { format, isToday, isTomorrow, addDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+  AlertCircle,
+  CheckCircle2
+} from 'lucide-react'
+import Card from '../components/ui/Card'
 
-interface DashboardStats {
-  todayAppointments: number;
-  tomorrowAppointments: number;
-  weekAppointments: number;
-  totalPatients: number;
-  totalDoctors: number;
-  recentAppointments: any[];
-}
-
-const Dashboard = () => {
-  const { user } = useAuth();
-  const { activeClinic } = useClinic();
-  const isMobile = useIsMobile();
-  const [stats, setStats] = useState<DashboardStats>({
-    todayAppointments: 0,
-    tomorrowAppointments: 0,
-    weekAppointments: 0,
-    totalPatients: 0,
-    totalDoctors: 0,
-    recentAppointments: []
-  });
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (activeClinic) {
-      fetchDashboardStats();
+export default function Dashboard() {
+  // Mock data - em produção viria do Supabase
+  const stats = [
+    {
+      name: 'Consultas Hoje',
+      value: '12',
+      change: '+2.1%',
+      changeType: 'increase',
+      icon: Calendar,
+      color: 'blue'
+    },
+    {
+      name: 'Pacientes Ativos',
+      value: '248',
+      change: '+15.3%',
+      changeType: 'increase',
+      icon: Users,
+      color: 'green'
+    },
+    {
+      name: 'Profissionais',
+      value: '3',
+      change: '0%',
+      changeType: 'neutral',
+      icon: UserCheck,
+      color: 'purple'
+    },
+    {
+      name: 'Taxa de No-Show',
+      value: '8.2%',
+      change: '-2.4%',
+      changeType: 'decrease',
+      icon: AlertCircle,
+      color: 'yellow'
     }
-  }, [activeClinic]);
+  ]
 
-  const fetchDashboardStats = async () => {
-    if (!activeClinic) return;
-    
-    setIsLoading(true);
-    try {
-      const today = new Date();
-      const tomorrow = addDays(today, 1);
-      const weekEnd = addDays(today, 7);
-      
-      // Get today's appointments
-      const { data: todayAppts } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('clinic_id', activeClinic.id)
-        .gte('date', format(today, 'yyyy-MM-dd') + 'T00:00:00.000Z')
-        .lt('date', format(today, 'yyyy-MM-dd') + 'T23:59:59.999Z')
-        .neq('status', 'cancelled');
-
-      // Get tomorrow's appointments
-      const { data: tomorrowAppts } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('clinic_id', activeClinic.id)
-        .gte('date', format(tomorrow, 'yyyy-MM-dd') + 'T00:00:00.000Z')
-        .lt('date', format(tomorrow, 'yyyy-MM-dd') + 'T23:59:59.999Z')
-        .neq('status', 'cancelled');
-
-      // Get week's appointments
-      const { data: weekAppts } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('clinic_id', activeClinic.id)
-        .gte('date', format(today, 'yyyy-MM-dd') + 'T00:00:00.000Z')
-        .lt('date', format(weekEnd, 'yyyy-MM-dd') + 'T23:59:59.999Z')
-        .neq('status', 'cancelled');
-
-      // Get total patients
-      const { data: patients } = await supabase
-        .from('patients')
-        .select('id')
-        .eq('clinic_id', activeClinic.id);
-
-      // Get total doctors
-      const { data: doctors } = await supabase
-        .from('doctors')
-        .select('id')
-        .eq('clinic_id', activeClinic.id);
-
-      // Get recent appointments for quick view
-      const { data: recentAppts } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('clinic_id', activeClinic.id)
-        .gte('date', format(today, 'yyyy-MM-dd') + 'T00:00:00.000Z')
-        .order('date', { ascending: true })
-        .limit(5);
-
-      setStats({
-        todayAppointments: todayAppts?.length || 0,
-        tomorrowAppointments: tomorrowAppts?.length || 0,
-        weekAppointments: weekAppts?.length || 0,
-        totalPatients: patients?.length || 0,
-        totalDoctors: doctors?.length || 0,
-        recentAppointments: recentAppts || []
-      });
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-    } finally {
-      setIsLoading(false);
+  const recentAppointments = [
+    {
+      id: 1,
+      patient: 'Maria Silva',
+      doctor: 'Dr. João Santos',
+      time: '09:00',
+      status: 'confirmed',
+      type: 'Consulta'
+    },
+    {
+      id: 2,
+      patient: 'Carlos Oliveira',
+      doctor: 'Dra. Ana Costa',
+      time: '10:30',
+      status: 'pending',
+      type: 'Retorno'
+    },
+    {
+      id: 3,
+      patient: 'Lucia Ferreira',
+      doctor: 'Dr. João Santos',
+      time: '14:00',
+      status: 'completed',
+      type: 'Consulta'
+    },
+    {
+      id: 4,
+      patient: 'Pedro Mendes',
+      doctor: 'Dra. Ana Costa',
+      time: '15:30',
+      status: 'confirmed',
+      type: 'Exame'
     }
-  };
+  ]
 
-  const formatAppointmentTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return format(date, 'HH:mm', { locale: ptBR });
-  };
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'bg-green-100 text-green-800'
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'completed':
+        return 'bg-blue-100 text-blue-800'
+      case 'cancelled':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
 
-  const formatAppointmentDate = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isToday(date)) return 'Hoje';
-    if (isTomorrow(date)) return 'Amanhã';
-    return format(date, 'dd/MM', { locale: ptBR });
-  };
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'Confirmado'
+      case 'pending':
+        return 'Pendente'
+      case 'completed':
+        return 'Concluído'
+      case 'cancelled':
+        return 'Cancelado'
+      default:
+        return status
+    }
+  }
 
   return (
-    <DashboardLayout>
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>
-              Dashboard
-            </h1>
-            <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>
-              {activeClinic 
-                ? `Visão geral da ${activeClinic.name}`
-                : 'Selecione uma clínica para ver o resumo'
-              }
-            </p>
-          </div>
-          
-          {activeClinic && (
-            <div className="flex gap-2">
-              <Button asChild size={isMobile ? "sm" : "default"}>
-                <Link to="/dashboard/calendar">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  {isMobile ? 'Agenda' : 'Ver Agenda'}
-                </Link>
-              </Button>
-            </div>
-          )}
-        </div>
+    <div className="space-y-8">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-600 mt-1">
+          Visão geral da sua clínica - {new Date().toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
+        </p>
       </div>
 
-      {!activeClinic ? (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">
-              Selecione uma clínica no menu lateral para visualizar o dashboard
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          {/* Stats Cards */}
-          <div className={`grid gap-4 mb-6 ${
-            isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-5'
-          }`}>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Hoje</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.todayAppointments}</div>
-                <p className="text-xs text-muted-foreground">agendamentos</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Amanhã</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.tomorrowAppointments}</div>
-                <p className="text-xs text-muted-foreground">agendamentos</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Esta Semana</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.weekAppointments}</div>
-                <p className="text-xs text-muted-foreground">agendamentos</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pacientes</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalPatients}</div>
-                <p className="text-xs text-muted-foreground">cadastrados</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Médicos</CardTitle>
-                <UserCheck className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalDoctors}</div>
-                <p className="text-xs text-muted-foreground">ativos</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Appointments and Quick Actions */}
-          <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
-            {/* Recent Appointments */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Próximos Agendamentos</CardTitle>
-                  <CardDescription>
-                    Agendamentos para os próximos dias
-                  </CardDescription>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat) => (
+          <Card key={stat.name} className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">{stat.name}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
+                <div className="flex items-center mt-2">
+                  <TrendingUp className={`h-4 w-4 ${
+                    stat.changeType === 'increase' ? 'text-green-500' : 
+                    stat.changeType === 'decrease' ? 'text-red-500' : 'text-gray-500'
+                  }`} />
+                  <span className={`text-sm ml-1 ${
+                    stat.changeType === 'increase' ? 'text-green-600' : 
+                    stat.changeType === 'decrease' ? 'text-red-600' : 'text-gray-600'
+                  }`}>
+                    {stat.change} vs. mês anterior
+                  </span>
                 </div>
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/dashboard/calendar">
-                    Ver Todos
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Link>
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-2">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="animate-pulse bg-gray-200 h-12 rounded"></div>
-                    ))}
-                  </div>
-                ) : stats.recentAppointments.length > 0 ? (
-                  <div className="space-y-3">
-                    {stats.recentAppointments.map((appointment) => (
-                      <div key={appointment.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{appointment.patient_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {appointment.doctor_name || 'Médico não definido'}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">
-                            {formatAppointmentDate(appointment.date)}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatAppointmentTime(appointment.date)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-center py-4">
-                    Nenhum agendamento próximo
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+              </div>
+              <div className={`p-3 rounded-lg ${
+                stat.color === 'blue' ? 'bg-blue-50' :
+                stat.color === 'green' ? 'bg-green-50' :
+                stat.color === 'purple' ? 'bg-purple-50' :
+                'bg-yellow-50'
+              }`}>
+                <stat.icon className={`h-6 w-6 ${
+                  stat.color === 'blue' ? 'text-blue-600' :
+                  stat.color === 'green' ? 'text-green-600' :
+                  stat.color === 'purple' ? 'text-purple-600' :
+                  'text-yellow-600'
+                }`} />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
 
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Ações Rápidas</CardTitle>
-                <CardDescription>
-                  Acesso rápido às principais funcionalidades
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button asChild className="w-full justify-start" variant="outline">
-                  <Link to="/dashboard/calendar">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Ver Calendário Completo
-                  </Link>
-                </Button>
-                
-                <Button asChild className="w-full justify-start" variant="outline">
-                  <Link to="/dashboard/patients">
-                    <Users className="h-4 w-4 mr-2" />
-                    Gerenciar Pacientes
-                  </Link>
-                </Button>
-                
-                <Button asChild className="w-full justify-start" variant="outline">
-                  <Link to="/dashboard/doctors">
-                    <UserCheck className="h-4 w-4 mr-2" />
-                    Gerenciar Médicos
-                  </Link>
-                </Button>
-
-                <Button asChild className="w-full justify-start" variant="outline">
-                  <Link to="/dashboard/reports">
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Ver Relatórios
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+      {/* Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Appointments */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Consultas de Hoje
+            </h2>
+            <a 
+              href="/dashboard/appointments"
+              className="text-primary hover:text-primary-hover text-sm font-medium"
+            >
+              Ver todas
+            </a>
           </div>
-        </>
-      )}
-    </DashboardLayout>
-  );
-};
 
-export default Dashboard;
+          <div className="space-y-4">
+            {recentAppointments.map((appointment) => (
+              <div key={appointment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
+                      <span className="text-primary-foreground font-medium text-sm">
+                        {appointment.patient.split(' ').map(n => n[0]).join('')}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{appointment.patient}</p>
+                    <p className="text-sm text-gray-500">{appointment.doctor}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-900">
+                      {appointment.time}
+                    </span>
+                  </div>
+                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                    getStatusColor(appointment.status)
+                  }`}>
+                    {getStatusText(appointment.status)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">
+            Ações Rápidas
+          </h2>
+
+          <div className="grid grid-cols-2 gap-4">
+            <a
+              href="/dashboard/appointments/new"
+              className="flex flex-col items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <Calendar className="h-8 w-8 text-blue-600 mb-2" />
+              <span className="text-sm font-medium text-blue-900">Nova Consulta</span>
+            </a>
+
+            <a
+              href="/dashboard/patients/new"
+              className="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+            >
+              <Users className="h-8 w-8 text-green-600 mb-2" />
+              <span className="text-sm font-medium text-green-900">Novo Paciente</span>
+            </a>
+
+            <a
+              href="/dashboard/records/new"
+              className="flex flex-col items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+            >
+              <FileText className="h-8 w-8 text-purple-600 mb-2" />
+              <span className="text-sm font-medium text-purple-900">Prontuário</span>
+            </a>
+
+            <a
+              href="/dashboard/reports"
+              className="flex flex-col items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
+            >
+              <TrendingUp className="h-8 w-8 text-yellow-600 mb-2" />
+              <span className="text-sm font-medium text-yellow-900">Relatórios</span>
+            </a>
+          </div>
+        </Card>
+      </div>
+
+      {/* Alerts and Notifications */}
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Alertas e Lembretes
+        </h2>
+        
+        <div className="space-y-3">
+          <div className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-yellow-800">
+                3 pacientes sem confirmação
+              </p>
+              <p className="text-xs text-yellow-700 mt-1">
+                Consultas para hoje que ainda não foram confirmadas
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
+            <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-green-800">
+                Taxa de no-show melhorou 15%
+              </p>
+              <p className="text-xs text-green-700 mt-1">
+                Comparado ao mês anterior - continue assim!
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  )
+}
